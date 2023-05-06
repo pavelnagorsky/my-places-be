@@ -1,7 +1,7 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Translation } from './entities/translation.entity';
-import { Equal, Not, Repository } from 'typeorm';
+import { Repository } from 'typeorm';
 import { Language } from '../languages/entities/language.entity';
 import { UpdateTranslationDto } from './dto/update-translation.dto';
 import { v2 } from '@google-cloud/translate';
@@ -19,6 +19,12 @@ export class TranslationsService {
     private configService: ConfigService,
     private languagesService: LanguagesService,
   ) {}
+
+  private translateClient = new v2.Translate({
+    key: this.configService.get<IGoogleCloudConfig>('googleCloud')?.apiKey,
+    projectId:
+      this.configService.get<IGoogleCloudConfig>('googleCloud')?.projectId,
+  });
 
   // get last max textId
   async getMaxTextId(): Promise<number> {
@@ -60,13 +66,7 @@ export class TranslationsService {
     sourceLanguage?: string,
   ): Promise<string> {
     try {
-      const translateClient = new v2.Translate({
-        key: this.configService.get<IGoogleCloudConfig>('googleCloud')?.apiKey,
-        projectId:
-          this.configService.get<IGoogleCloudConfig>('googleCloud')?.projectId,
-      });
-
-      const [translation] = await translateClient.translate(text, {
+      const [translation] = await this.translateClient.translate(text, {
         from: sourceLanguage,
         to: targetLanguage,
       });

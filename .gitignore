@@ -3,6 +3,7 @@
 /node_modules
 
 .env
+cloud-storage.json
 
 # Logs
 logs

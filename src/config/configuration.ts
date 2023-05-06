@@ -4,6 +4,8 @@ export default () => {
     googleCloud: {
       projectId: process.env['GOOGLE_PROJECT_ID'],
       apiKey: process.env['GOOGLE_API_KEY'],
+      bucketName: process.env['GOOGLE_BUCKET_NAME'],
+      keyFilename: process.env['GOOGLE_CLOUD_KEY_NAME'],
     },
     database: {
       host: process.env['DATABASE_HOST'],
@@ -15,6 +17,8 @@ export default () => {
 };
 
 export interface IGoogleCloudConfig {
+  keyFilename: string;
+  bucketName: string;
   projectId: string;
   apiKey: string;
 }

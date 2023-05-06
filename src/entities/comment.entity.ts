@@ -1,10 +1,4 @@
-import {
-  Entity,
-  PrimaryGeneratedColumn,
-  OneToOne,
-  ManyToOne,
-  JoinColumn,
-} from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, ManyToOne, Column } from 'typeorm';
 import { Place } from './place.entity';
 import { Translation } from '../translations/entities/translation.entity';
 import { User } from './user.entity';
@@ -14,8 +8,7 @@ export class Comment {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @OneToOne(() => Translation, (translation) => translation.textId)
-  @JoinColumn()
+  @Column({ type: 'varchar', length: 1000 })
   text: Translation;
 
   @ManyToOne(() => User, (user) => user.comments)

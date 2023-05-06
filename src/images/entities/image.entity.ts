@@ -5,8 +5,8 @@ import {
   ManyToOne,
   OneToOne,
 } from 'typeorm';
-import { Place } from './place.entity';
-import { PlaceType } from '../place-types/entities/place-type.entity';
+import { Place } from '../../entities/place.entity';
+import { PlaceType } from '../../place-types/entities/place-type.entity';
 
 @Entity()
 export class Image {
@@ -15,6 +15,9 @@ export class Image {
 
   @Column()
   url: string;
+
+  @Column({ type: 'tinyint', default: 0 })
+  order: number;
 
   @Column({ default: () => 'CURRENT_TIMESTAMP' })
   createdAt: Date;

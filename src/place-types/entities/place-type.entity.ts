@@ -8,7 +8,7 @@ import {
   JoinColumn,
 } from 'typeorm';
 import { Place } from '../../entities/place.entity';
-import { Image } from '../../entities/image.entity';
+import { Image } from '../../images/entities/image.entity';
 
 @Entity()
 export class PlaceType {

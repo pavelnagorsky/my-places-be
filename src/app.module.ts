@@ -8,6 +8,8 @@ import { DatabaseModule } from './database/database.module';
 import { PlaceTypesModule } from './place-types/place-types.module';
 import { LanguagesModule } from './languages/languages.module';
 import { TranslationsModule } from './translations/translations.module';
+import { StorageModule } from './storage/storage.module';
+import { ImagesModule } from './images/images.module';
 
 @Module({
   imports: [
@@ -19,6 +21,8 @@ import { TranslationsModule } from './translations/translations.module';
     PlaceTypesModule,
     LanguagesModule,
     TranslationsModule,
+    StorageModule,
+    ImagesModule,
   ],
   controllers: [AppController],
   providers: [AppService],
