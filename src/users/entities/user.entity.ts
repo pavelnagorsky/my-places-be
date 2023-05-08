@@ -5,28 +5,31 @@ import {
   OneToMany,
   OneToOne,
   JoinColumn,
+  JoinTable,
+  ManyToMany,
 } from 'typeorm';
 
-import { Place } from './place.entity';
-import { Admin } from './admin.entity';
-import { Like } from './like.entity';
-import { Comment } from './comment.entity';
+import { Place } from '../../entities/place.entity';
+import { Admin } from '../../entities/admin.entity';
+import { Like } from '../../entities/like.entity';
+import { Comment } from '../../entities/comment.entity';
+import { Role } from '../../roles/entities/role.entity';
 
 @Entity()
 export class User {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column({ type: 'char', length: 30 })
+  @Column({ type: 'varchar', length: 30 })
   firstName: string;
 
-  @Column({ type: 'char', length: 30 })
+  @Column({ type: 'varchar', length: 30 })
   lastName: string;
 
-  @Column({ type: 'char', length: 30 })
+  @Column({ type: 'varchar', length: 30 })
   email: string;
 
-  @Column({ type: 'char' })
+  @Column({ type: 'varchar' })
   password: string;
 
   @Column({ default: () => 'CURRENT_TIMESTAMP' })
@@ -38,6 +41,10 @@ export class User {
   @OneToOne(() => Admin, (admin) => admin.user, { cascade: true })
   @JoinColumn()
   admin: Admin;
+
+  @ManyToMany(() => Role, (role) => role.users)
+  @JoinTable()
+  roles: Role[];
 
   @OneToMany(() => Like, (like) => like.user)
   likes: Like[];

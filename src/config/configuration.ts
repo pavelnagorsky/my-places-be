@@ -13,6 +13,10 @@ export default () => {
       user: process.env['DATABASE_USER'],
       password: process.env['DATABASE_PASSWORD'],
     },
+    jwt: {
+      secret: process.env['JWT_SECRET'],
+      expirationTime: process.env['JWT_EXPIRATION'],
+    },
   };
 };
 
@@ -28,4 +32,9 @@ export interface IDatabaseConfig {
   name: string;
   user: string;
   password: string;
+}
+
+export interface IJwtConfig {
+  secret: string;
+  expirationTime: string;
 }

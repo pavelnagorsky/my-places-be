@@ -10,6 +10,9 @@ import { LanguagesModule } from './languages/languages.module';
 import { TranslationsModule } from './translations/translations.module';
 import { StorageModule } from './storage/storage.module';
 import { ImagesModule } from './images/images.module';
+import { AuthModule } from './auth/auth.module';
+import { UsersModule } from './users/users.module';
+import { RolesModule } from './roles/roles.module';
 
 @Module({
   imports: [
@@ -23,6 +26,9 @@ import { ImagesModule } from './images/images.module';
     TranslationsModule,
     StorageModule,
     ImagesModule,
+    AuthModule,
+    UsersModule,
+    RolesModule,
   ],
   controllers: [AppController],
   providers: [AppService],

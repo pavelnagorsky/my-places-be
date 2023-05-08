@@ -7,9 +7,9 @@ import {
   ManyToMany,
 } from 'typeorm';
 
-import { User } from './user.entity';
+import { User } from '../users/entities/user.entity';
 import { Place } from './place.entity';
-import { Role } from './role.entity';
+import { Role } from '../roles/entities/role.entity';
 
 @Entity()
 export class Admin {
@@ -19,15 +19,12 @@ export class Admin {
   @OneToOne(() => User, (user) => user.admin)
   user: User;
 
-  @Column({ type: 'char', length: 50 })
+  @Column({ type: 'varchar', length: 50 })
   address: string;
 
-  @Column({ type: 'char', length: 20 })
+  @Column({ type: 'varchar', length: 20 })
   phone: string;
 
   @OneToMany(() => Place, (place) => place.admin)
   places: Place[];
-
-  @ManyToMany(() => Role, (role) => role.admins)
-  roles: Role[];
 }

@@ -6,7 +6,7 @@ import {
   OneToMany,
   PrimaryColumn,
 } from 'typeorm';
-import { User } from './user.entity';
+import { User } from '../users/entities/user.entity';
 import { PlaceType } from '../place-types/entities/place-type.entity';
 import { Admin } from './admin.entity';
 import { Image } from '../images/entities/image.entity';

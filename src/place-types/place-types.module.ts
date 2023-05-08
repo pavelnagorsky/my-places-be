@@ -3,15 +3,10 @@ import { PlaceTypesService } from './place-types.service';
 import { PlaceTypesController } from './place-types.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { PlaceType } from './entities/place-type.entity';
-import { Translation } from '../translations/entities/translation.entity';
-import { Language } from '../languages/entities/language.entity';
 import { TranslationsModule } from '../translations/translations.module';
 
 @Module({
-  imports: [
-    TypeOrmModule.forFeature([PlaceType, Translation, Language]),
-    TranslationsModule,
-  ],
+  imports: [TypeOrmModule.forFeature([PlaceType]), TranslationsModule],
   controllers: [PlaceTypesController],
   providers: [PlaceTypesService],
 })

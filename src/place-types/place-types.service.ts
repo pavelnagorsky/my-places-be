@@ -3,8 +3,6 @@ import { CreatePlaceTypeDto } from './dto/create-place-type.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { PlaceType } from './entities/place-type.entity';
-import { Translation } from '../translations/entities/translation.entity';
-import { Language } from '../languages/entities/language.entity';
 import { TranslationsService } from '../translations/translations.service';
 import { PlaceTypeDto } from './dto/place-type.dto';
 
@@ -13,10 +11,6 @@ export class PlaceTypesService {
   constructor(
     @InjectRepository(PlaceType)
     private placeTypesRepository: Repository<PlaceType>,
-    @InjectRepository(Translation)
-    private translationsRepository: Repository<Translation>,
-    @InjectRepository(Language)
-    private languagesRepository: Repository<Language>,
     private translationsService: TranslationsService,
   ) {}
 
