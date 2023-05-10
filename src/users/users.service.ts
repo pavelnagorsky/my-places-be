@@ -2,7 +2,7 @@ import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Equal, Repository } from 'typeorm';
 import { User } from './entities/user.entity';
 import { RolesService } from '../roles/roles.service';
 import { RoleNamesEnum } from '../roles/enums/role-names.enum';
@@ -20,25 +20,37 @@ export class UsersService {
     const defaultRole = await this.rolesService.getRoleByName(
       RoleNamesEnum.USER,
     );
-    if (!defaultRole) throw new UnauthorizedException('No default role found');
+    if (!defaultRole)
+      throw new UnauthorizedException({ message: 'No default role found' });
     user.roles = [defaultRole];
     return await this.usersRepository.save(user);
   }
 
-  async userByEmailExists(email: string): Promise<boolean> {
-    const count = await this.usersRepository
-      .createQueryBuilder('u')
-      .where('u.email = :email', { email })
-      .getCount();
-    return count > 0;
+  async getUserByEmail(email: string) {
+    return await this.usersRepository.findOne({
+      relations: {
+        roles: true,
+      },
+      where: {
+        email: Equal(email),
+      },
+    });
   }
 
   async findAll() {
-    return await this.usersRepository.find();
+    return await this.usersRepository.find({ relations: { roles: true } });
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} user`;
+  async findOneById(id: number) {
+    return await this.usersRepository.findOne({
+      relations: {
+        roles: true,
+        admin: true,
+      },
+      where: {
+        id: Equal(id),
+      },
+    });
   }
 
   update(id: number, updateUserDto: UpdateUserDto) {

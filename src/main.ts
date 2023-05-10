@@ -9,10 +9,21 @@ async function bootstrap() {
     .setTitle('My-Places API')
     .setDescription('The My-Places API description')
     .setVersion('1.0')
+    .addBearerAuth(
+      {
+        // I was also testing it without prefix 'Bearer ' before the JWT
+        description: 'Please enter token in following format: Bearer <JWT>',
+        name: 'Authorization',
+        scheme: 'Bearer',
+        type: 'http',
+        in: 'Header',
+      },
+      'access-token',
+    )
     .build();
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api', app, document);
 
-  await app.listen(3000);
+  await app.listen(process.env['PORT'] || 3000);
 }
 bootstrap();

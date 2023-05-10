@@ -1,14 +1,15 @@
 import {
+  Body,
   Controller,
   Get,
-  Post,
-  Body,
-  Param,
   NotFoundException,
+  Param,
+  Post,
 } from '@nestjs/common';
 import { RolesService } from './roles.service';
 import { CreateRoleDto } from './dto/create-role.dto';
 import {
+  ApiBadRequestResponse,
   ApiBody,
   ApiNotFoundResponse,
   ApiOkResponse,
@@ -18,6 +19,7 @@ import {
 } from '@nestjs/swagger';
 import { RoleDto } from './dto/role.dto';
 import { RoleNamesEnum } from './enums/role-names.enum';
+import { Auth } from '../auth/decorators/auth.decorator';
 
 @ApiTags('Roles')
 @Controller('roles')
@@ -29,7 +31,9 @@ export class RolesController {
     description: 'OK',
     type: RoleDto,
   })
+  @ApiBadRequestResponse({ description: 'Role already exists' })
   @ApiBody({ type: CreateRoleDto })
+  @Auth(RoleNamesEnum.OWNER)
   @Post()
   create(@Body() createRoleDto: CreateRoleDto) {
     return this.rolesService.create(createRoleDto);

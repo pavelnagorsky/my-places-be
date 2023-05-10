@@ -1,18 +1,21 @@
-import { Module } from '@nestjs/common';
+import { Global, Module } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
 import { UsersModule } from '../users/users.module';
 import { JwtModule } from '@nestjs/jwt';
-import { ConfigModule, ConfigService } from '@nestjs/config';
+import { ConfigService } from '@nestjs/config';
 import { IJwtConfig } from '../config/configuration';
+import { PayloadFromTokenPipe } from './pipes/payload-from-token.pipe';
+import { UserFromTokenPipe } from './pipes/user-from-token.pipe';
 
+@Global()
 @Module({
   imports: [
     UsersModule,
     JwtModule.registerAsync({
-      imports: [ConfigModule],
       useFactory: (configService: ConfigService) => ({
         secret: configService.get<IJwtConfig>('jwt')?.secret,
+        global: true,
         signOptions: {
           expiresIn: configService.get<IJwtConfig>('jwt')?.expirationTime,
         },
@@ -21,6 +24,7 @@ import { IJwtConfig } from '../config/configuration';
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthService],
+  providers: [AuthService, PayloadFromTokenPipe, UserFromTokenPipe],
+  exports: [AuthService, JwtModule, PayloadFromTokenPipe, UserFromTokenPipe],
 })
 export class AuthModule {}

@@ -1,14 +1,15 @@
-import { Body, Controller, Post } from '@nestjs/common';
+import { Body, Controller, Post, UnauthorizedException } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import {
-  ApiBadRequestResponse,
   ApiBody,
   ApiOkResponse,
   ApiOperation,
   ApiTags,
+  ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 import { CreateUserDto } from '../users/dto/create-user.dto';
 import { AuthDto } from './dto/auth.dto';
+import { LoginDto } from './dto/login.dto';
 
 @ApiTags('Authentication')
 @Controller('auth')
@@ -17,11 +18,12 @@ export class AuthController {
 
   @ApiOperation({ summary: 'Register' })
   @ApiOkResponse({
-    description: 'auth response',
+    description: 'token response',
     type: AuthDto,
   })
-  @ApiBadRequestResponse({
+  @ApiUnauthorizedResponse({
     description: 'User already exists',
+    type: UnauthorizedException,
   })
   @ApiBody({
     type: CreateUserDto,
@@ -29,6 +31,24 @@ export class AuthController {
   @Post('/register')
   async create(@Body() createUserDto: CreateUserDto) {
     const token = await this.authService.register(createUserDto);
+    return new AuthDto(token);
+  }
+
+  @ApiOperation({ summary: 'Login' })
+  @ApiOkResponse({
+    description: 'token response',
+    type: AuthDto,
+  })
+  @ApiUnauthorizedResponse({
+    description: 'Invalid credentials',
+    type: UnauthorizedException,
+  })
+  @ApiBody({
+    type: LoginDto,
+  })
+  @Post('/login')
+  async login(@Body() loginDto: LoginDto) {
+    const token = await this.authService.login(loginDto);
     return new AuthDto(token);
   }
 }
