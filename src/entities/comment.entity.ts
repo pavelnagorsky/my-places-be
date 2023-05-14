@@ -1,5 +1,5 @@
 import { Entity, PrimaryGeneratedColumn, ManyToOne, Column } from 'typeorm';
-import { Place } from './place.entity';
+import { Place } from '../places/entities/place.entity';
 import { Translation } from '../translations/entities/translation.entity';
 import { User } from '../users/entities/user.entity';
 

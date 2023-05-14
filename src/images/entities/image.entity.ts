@@ -5,7 +5,7 @@ import {
   ManyToOne,
   OneToOne,
 } from 'typeorm';
-import { Place } from '../../entities/place.entity';
+import { Place } from '../../places/entities/place.entity';
 import { PlaceType } from '../../place-types/entities/place-type.entity';
 
 @Entity()

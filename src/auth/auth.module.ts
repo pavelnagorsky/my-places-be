@@ -1,4 +1,4 @@
-import { Global, Module } from '@nestjs/common';
+import { forwardRef, Global, Module } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
 import { UsersModule } from '../users/users.module';
@@ -7,11 +7,13 @@ import { ConfigService } from '@nestjs/config';
 import { IJwtConfig } from '../config/configuration';
 import { PayloadFromTokenPipe } from './pipes/payload-from-token.pipe';
 import { UserFromTokenPipe } from './pipes/user-from-token.pipe';
+import { MailingModule } from '../mailing/mailing.module';
 
 @Global()
 @Module({
   imports: [
     UsersModule,
+    MailingModule,
     JwtModule.registerAsync({
       useFactory: (configService: ConfigService) => ({
         secret: configService.get<IJwtConfig>('jwt')?.secret,

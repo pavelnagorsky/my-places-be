@@ -6,12 +6,14 @@ import * as bcrypt from 'bcrypt';
 import { User } from '../users/entities/user.entity';
 import { LoginDto } from './dto/login.dto';
 import { TokenPayloadDto } from './dto/token-payload.dto';
+import { MailingService } from '../mailing/mailing.service';
 
 @Injectable()
 export class AuthService {
   constructor(
     private readonly usersService: UsersService,
     private readonly jwtService: JwtService,
+    private readonly mailingService: MailingService,
   ) {}
 
   async register(dto: CreateUserDto) {
@@ -22,8 +24,9 @@ export class AuthService {
       });
     const hashPassword = await bcrypt.hash(dto.password, 12);
     dto.password = hashPassword;
-    const user = await this.usersService.create(dto);
-    return this.generateToken(user);
+    const users = await this.usersService.create(dto);
+    //await this.mailingService.sendEmailConfirm(dto, 'token');
+    return this.generateToken(users);
   }
 
   async login(loginDto: LoginDto) {
@@ -35,7 +38,7 @@ export class AuthService {
     const user = await this.usersService.getUserByEmail(loginDto.email);
     if (!user)
       throw new UnauthorizedException({
-        message: 'No user with this email found',
+        message: 'No users with this email found',
       });
     const passwordEquals = await bcrypt.compare(
       loginDto.password,

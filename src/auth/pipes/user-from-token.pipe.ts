@@ -22,7 +22,7 @@ export class UserFromTokenPipe implements PipeTransform {
       const user = await this.usersService.findOneById(payload.id);
 
       if (!user) {
-        throw new UnauthorizedException('Invalid user');
+        throw new UnauthorizedException('Invalid users');
       }
 
       return user;

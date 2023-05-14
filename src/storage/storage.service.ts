@@ -70,6 +70,8 @@ export class StorageService {
     const file = this.bucket.file(sanitizedFileName);
     try {
       await file.delete();
+      this.logger.warn('file deleted');
+      return;
     } catch (error) {
       throw new BadRequestException(error?.message);
     }

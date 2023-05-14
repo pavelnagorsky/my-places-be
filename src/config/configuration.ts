@@ -17,6 +17,10 @@ export default () => {
       secret: process.env['JWT_SECRET'],
       expirationTime: process.env['JWT_EXPIRATION'],
     },
+    emailConfig: {
+      email: process.env['EMAIL'],
+      emailPw: process.env['EMAIL_PW'],
+    },
   };
 };
 
@@ -37,4 +41,9 @@ export interface IDatabaseConfig {
 export interface IJwtConfig {
   secret: string;
   expirationTime: string;
+}
+
+export interface IMailerConfig {
+  email: string;
+  emailPw: string;
 }

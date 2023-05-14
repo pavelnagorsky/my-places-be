@@ -9,7 +9,7 @@ import {
   ManyToMany,
 } from 'typeorm';
 
-import { Place } from '../../entities/place.entity';
+import { Place } from '../../places/entities/place.entity';
 import { Admin } from '../../entities/admin.entity';
 import { Like } from '../../entities/like.entity';
 import { Comment } from '../../entities/comment.entity';

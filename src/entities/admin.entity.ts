@@ -8,7 +8,7 @@ import {
 } from 'typeorm';
 
 import { User } from '../users/entities/user.entity';
-import { Place } from './place.entity';
+import { Place } from '../places/entities/place.entity';
 import { Role } from '../roles/entities/role.entity';
 
 @Entity()

@@ -1,30 +1,26 @@
 import {
   Entity,
-  Column,
   PrimaryGeneratedColumn,
-  OneToMany,
   PrimaryColumn,
   OneToOne,
   JoinColumn,
+  ManyToMany,
 } from 'typeorm';
 import { Place } from '../../places/entities/place.entity';
 import { Image } from '../../images/entities/image.entity';
 
 @Entity()
-export class PlaceType {
+export class PlaceCategory {
   @PrimaryGeneratedColumn()
   id: number;
 
   @PrimaryColumn({ type: 'int' })
   title: number;
 
-  @Column({ default: false })
-  commercial: boolean;
-
   @OneToOne(() => Image, (image) => image.id)
   @JoinColumn()
   image: Image;
 
-  @OneToMany(() => Place, (place) => place.type)
+  @ManyToMany(() => Place, (place) => place.categories)
   places: Place[];
 }

@@ -13,7 +13,6 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { UserDto } from './dto/user.dto';
 import { Auth } from '../auth/decorators/auth.decorator';
-import { RoleNamesEnum } from '../roles/enums/role-names.enum';
 
 @ApiTags('Users')
 @Controller('users')
@@ -27,7 +26,7 @@ export class UsersController {
     isArray: true,
   })
   @UseInterceptors(ClassSerializerInterceptor)
-  @Auth(RoleNamesEnum.ADMIN)
+  @Auth()
   @Get()
   async findAll() {
     const users = await this.usersService.findAll();

@@ -13,9 +13,9 @@ import { ImagesModule } from './images/images.module';
 import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
 import { RolesModule } from './roles/roles.module';
-import { APP_GUARD } from '@nestjs/core';
-import { RolesGuard } from './roles/guards/RolesGuard';
-import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
+import { MailingModule } from './mailing/mailing.module';
+import { MailingService } from './mailing/mailing.service';
+import { PlaceCategoriesModule } from './place-categories/place-categories.module';
 
 @Module({
   imports: [
@@ -33,18 +33,10 @@ import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
     AuthModule,
     UsersModule,
     RolesModule,
+    MailingModule,
+    PlaceCategoriesModule,
   ],
   controllers: [AppController],
-  providers: [
-    AppService,
-    {
-      provide: APP_GUARD,
-      useClass: RolesGuard,
-    },
-    {
-      provide: APP_GUARD,
-      useClass: JwtAuthGuard,
-    },
-  ],
+  providers: [AppService],
 })
 export class AppModule {}

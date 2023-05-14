@@ -31,7 +31,7 @@ export class ImagesService {
     });
     if (!image) throw new NotFoundException();
     await this.storageService.removeFile(image.url);
-    await this.imagesRepository.delete(image);
+    await this.imagesRepository.delete({ id: image.id });
     return;
   }
 }

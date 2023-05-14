@@ -30,8 +30,7 @@ export class AuthController {
   })
   @Post('/register')
   async create(@Body() createUserDto: CreateUserDto) {
-    const token = await this.authService.register(createUserDto);
-    return new AuthDto(token);
+    return await this.authService.register(createUserDto);
   }
 
   @ApiOperation({ summary: 'Login' })

@@ -5,14 +5,17 @@ import {
   ManyToOne,
   OneToMany,
   PrimaryColumn,
+  ManyToMany,
+  JoinTable,
 } from 'typeorm';
-import { User } from '../users/entities/user.entity';
-import { PlaceType } from '../place-types/entities/place-type.entity';
-import { Admin } from './admin.entity';
-import { Image } from '../images/entities/image.entity';
-import { Translation } from '../translations/entities/translation.entity';
-import { Like } from './like.entity';
-import { Comment } from './comment.entity';
+import { User } from '../../users/entities/user.entity';
+import { PlaceType } from '../../place-types/entities/place-type.entity';
+import { Admin } from '../../entities/admin.entity';
+import { Image } from '../../images/entities/image.entity';
+import { Translation } from '../../translations/entities/translation.entity';
+import { Like } from '../../entities/like.entity';
+import { Comment } from '../../entities/comment.entity';
+import { PlaceCategory } from '../../place-categories/entities/place-category.entity';
 
 @Entity()
 export class Place {
@@ -40,8 +43,9 @@ export class Place {
   @ManyToOne(() => PlaceType, (type) => type.places)
   type: PlaceType;
 
-  @Column({ default: true })
-  free: boolean;
+  @ManyToMany(() => PlaceCategory, (placeCategory) => placeCategory.places)
+  @JoinTable()
+  categories: PlaceCategory[];
 
   @Column()
   coordinates: string;
@@ -58,7 +62,7 @@ export class Place {
   @ManyToOne(() => Admin, (admin) => admin.places)
   admin: Admin;
 
-  @Column()
+  @Column({ default: 0 })
   likesCount: number;
 
   @OneToMany(() => Like, (like) => like.place)
