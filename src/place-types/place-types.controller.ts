@@ -24,10 +24,11 @@ import {
 import { PlaceTypeDto } from './dto/place-type.dto';
 
 @ApiTags('Place types')
-@Controller('place-types')
+@Controller('placeTypes')
 export class PlaceTypesController {
   constructor(private readonly placeTypesService: PlaceTypesService) {}
 
+  @ApiOperation({ summary: 'Create Place type' })
   @ApiOkResponse({
     description: 'OK',
     type: PlaceTypeDto,
@@ -40,7 +41,6 @@ export class PlaceTypesController {
   @ApiBody({
     type: CreatePlaceTypeDto,
   })
-  @ApiOperation({ summary: 'Create Place type' })
   @Post()
   async create(
     @Query('lang', ParseIntPipe) langId: number,
@@ -49,6 +49,7 @@ export class PlaceTypesController {
     return await this.placeTypesService.create(langId, createPlaceTypeDto);
   }
 
+  @ApiOperation({ summary: 'Get all place types by language id' })
   @ApiOkResponse({
     description: 'OK',
     type: PlaceTypeDto,
@@ -59,7 +60,6 @@ export class PlaceTypesController {
     type: Number,
     description: 'The ID of the language',
   })
-  @ApiOperation({ summary: 'Get all place types by language id' })
   @UseInterceptors(ClassSerializerInterceptor)
   @Get()
   async findAll(

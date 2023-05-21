@@ -27,7 +27,7 @@ export class CreatePlaceDto {
   })
   imagesIds: number[];
 
-  @ApiProperty({ type: String, description: 'Place coordinates [lat,lng]' })
+  @ApiProperty({ type: String, description: 'Place coordinates [lat;lng]' })
   coordinates: string;
 
   @ApiProperty({

@@ -10,4 +10,7 @@ export class CreatePlaceTypeDto {
     default: false,
   })
   commercial: boolean;
+
+  @ApiProperty({ title: 'Place type image', type: Number, required: false })
+  imageId?: number;
 }

@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import { Image } from './entities/image.entity';
 import { StorageService } from '../storage/storage.service';
 
@@ -20,6 +20,22 @@ export class ImagesService {
 
   async findAll() {
     return await this.imagesRepository.find();
+  }
+
+  async updatePositions(imageIds: number[]): Promise<Image[]> {
+    const images = await this.imagesRepository.findBy({
+      id: In(imageIds),
+    });
+
+    return await this.imagesRepository.save(
+      images.map((image) => {
+        const newPosition = imageIds.findIndex((i) => i === image.id);
+        return {
+          ...image,
+          position: newPosition,
+        };
+      }),
+    );
   }
 
   async remove(id: number) {

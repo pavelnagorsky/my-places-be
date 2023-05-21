@@ -4,25 +4,19 @@ import {
   PipeTransform,
   UnauthorizedException,
 } from '@nestjs/common';
-import { JwtService } from '@nestjs/jwt';
 import { UsersService } from '../../users/users.service';
 import { TokenPayloadDto } from '../dto/token-payload.dto';
 
 @Injectable()
 export class UserFromTokenPipe implements PipeTransform {
-  public constructor(
-    private readonly jwtService: JwtService,
-    private readonly usersService: UsersService,
-  ) {}
+  public constructor(private readonly usersService: UsersService) {}
 
-  async transform(token: string, _metadata: ArgumentMetadata) {
+  async transform(tokenPayload: TokenPayloadDto, _metadata: ArgumentMetadata) {
     try {
-      const payload = this.jwtService.verify<TokenPayloadDto>(token);
-
-      const user = await this.usersService.findOneById(payload.id);
+      const user = await this.usersService.findOneById(tokenPayload.id);
 
       if (!user) {
-        throw new UnauthorizedException('Invalid users');
+        throw new UnauthorizedException({ message: 'Invalid user' });
       }
 
       return user;
@@ -31,7 +25,7 @@ export class UserFromTokenPipe implements PipeTransform {
         throw error;
       }
 
-      throw new UnauthorizedException('Invalid token');
+      throw new UnauthorizedException({ message: 'Invalid token' });
     }
   }
 }

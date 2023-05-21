@@ -17,7 +17,7 @@ export class Image {
   url: string;
 
   @Column({ type: 'tinyint', default: 0 })
-  order: number;
+  position: number;
 
   @Column({ default: () => 'CURRENT_TIMESTAMP' })
   createdAt: Date;

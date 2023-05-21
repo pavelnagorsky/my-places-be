@@ -13,6 +13,10 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { UserDto } from './dto/user.dto';
 import { Auth } from '../auth/decorators/auth.decorator';
+import { TokenPayload } from '../auth/decorators/token-payload.decorator';
+import { UserFromTokenPipe } from '../auth/pipes/user-from-token.pipe';
+import { User } from './entities/user.entity';
+import { TokenPayloadDto } from '../auth/dto/token-payload.dto';
 
 @ApiTags('Users')
 @Controller('users')

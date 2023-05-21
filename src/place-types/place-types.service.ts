@@ -5,6 +5,7 @@ import { Repository } from 'typeorm';
 import { PlaceType } from './entities/place-type.entity';
 import { TranslationsService } from '../translations/translations.service';
 import { PlaceTypeDto } from './dto/place-type.dto';
+import { Image } from '../images/entities/image.entity';
 
 @Injectable()
 export class PlaceTypesService {
@@ -26,6 +27,10 @@ export class PlaceTypesService {
       title: titleTranslation.textId,
       commercial: createPlaceTypeDto.commercial,
     });
+    if (createPlaceTypeDto.imageId) {
+      placeType.image = new Image();
+      placeType.image.id = createPlaceTypeDto.imageId;
+    }
     await this.placeTypesRepository.save(placeType);
     await this.translationsService.translateAll(
       titleTranslation.text,
