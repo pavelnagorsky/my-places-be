@@ -15,7 +15,7 @@ export class PlaceType {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @PrimaryColumn({ type: 'int' })
+  @Column({ type: 'int', unique: true })
   title: number;
 
   @Column({ default: false })

@@ -21,10 +21,10 @@ export class Place {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @PrimaryColumn({ type: 'int' })
+  @Column({ type: 'int', unique: true })
   title: number;
 
-  @PrimaryColumn({ type: 'int' })
+  @Column({ type: 'int', unique: true })
   description: number;
 
   @OneToMany(() => Image, (image) => image.place)
@@ -33,7 +33,7 @@ export class Place {
   @OneToMany(() => Comment, (comment) => comment.place)
   comments: Comment[];
 
-  @PrimaryColumn({ type: 'int' })
+  @Column({ type: 'int', unique: true })
   address: number;
 
   @Column({ nullable: true })

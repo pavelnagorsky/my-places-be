@@ -78,9 +78,9 @@ export class PlacesService {
       throw new BadRequestException({ message: 'Invalid text data' });
 
     const place = this.placesRepository.create();
-    place.title = titleTranslation.id;
-    place.description = descriptionTranslation.id;
-    place.address = addressTranslation.id;
+    place.title = titleTranslation.textId;
+    place.description = descriptionTranslation.textId;
+    place.address = addressTranslation.textId;
     place.type = placeType;
     place.coordinates = createPlaceDto.coordinates;
     place.categories = placeCategories;
@@ -91,18 +91,72 @@ export class PlacesService {
     return await this.placesRepository.save(place);
   }
 
-  async findAll(): Promise<Place[]> {
-    return await this.placesRepository.find({
-      relations: {
-        images: true,
-        type: {
-          image: true,
-        },
-        categories: {
-          image: true,
-        },
-        comments: true,
-      },
-    });
+  async findAll(langId: number) {
+    return this.placesRepository
+      .createQueryBuilder('place')
+      .leftJoinAndSelect('place.images', 'images')
+      .leftJoinAndSelect('place.categories', 'categories')
+      .leftJoinAndSelect('place.type', 'type')
+      .leftJoinAndMapOne(
+        'type.image',
+        'image',
+        'type_image',
+        'type.image = type_image.id',
+      )
+      .leftJoinAndMapOne(
+        'categories.image',
+        'image',
+        'categories_image',
+        'categories.image = categories_image.id',
+      )
+      .leftJoinAndMapOne(
+        'type.title',
+        'translation',
+        'type_t',
+        'type.title = type_t.textId AND type_t.language = :langId',
+        { langId },
+      )
+      .leftJoinAndMapOne(
+        'categories.title',
+        'translation',
+        'categories_t',
+        'categories.title = categories_t.textId AND categories_t.language = :langId',
+        { langId },
+      )
+      .leftJoinAndMapOne(
+        'place.title',
+        'translation',
+        'title_t',
+        'place.title = title_t.textId AND title_t.language = :langId',
+        { langId },
+      )
+      .leftJoinAndMapOne(
+        'place.description',
+        'translation',
+        'description_t',
+        'place.description = description_t.textId AND description_t.language = :langId',
+        { langId },
+      )
+      .leftJoinAndMapOne(
+        'place.address',
+        'translation',
+        'address_t',
+        'place.address = address_t.textId AND address_t.language = :langId',
+        { langId },
+      )
+      .getMany();
+
+    //   return await this.placesRepository.find({
+    //     relations: {
+    //       images: true,
+    //       type: {
+    //         image: true,
+    //       },
+    //       categories: {
+    //         image: true,
+    //       },
+    //       comments: true,
+    //     },
+    //   });
   }
 }

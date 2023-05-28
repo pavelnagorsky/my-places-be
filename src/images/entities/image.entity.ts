@@ -7,6 +7,7 @@ import {
 } from 'typeorm';
 import { Place } from '../../places/entities/place.entity';
 import { PlaceType } from '../../place-types/entities/place-type.entity';
+import { PlaceCategory } from '../../place-categories/entities/place-category.entity';
 
 @Entity()
 export class Image {
@@ -27,4 +28,7 @@ export class Image {
 
   @OneToOne(() => PlaceType, (placeType) => placeType.image)
   placeType: PlaceType;
+
+  @OneToOne(() => PlaceCategory, (placeCategory) => placeCategory.image)
+  placeCategory: PlaceCategory;
 }

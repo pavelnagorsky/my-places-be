@@ -65,8 +65,8 @@ export class PlacesController {
   })
   @UseInterceptors(ClassSerializerInterceptor)
   @Get()
-  async getAll() {
-    const places = await this.placesService.findAll();
+  async getAll(@Query('lang', ParseIntPipe) langId: number) {
+    const places = await this.placesService.findAll(langId);
     return places.map((p) => new PlaceDto(p));
   }
 }

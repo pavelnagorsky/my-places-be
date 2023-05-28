@@ -7,28 +7,35 @@ import { PlaceType } from '../../place-types/entities/place-type.entity';
 import { PlaceCategoryDto } from '../../place-categories/dto/place-category.dto';
 import { PlaceCategory } from '../../place-categories/entities/place-category.entity';
 import { Image } from '../../images/entities/image.entity';
+import { Translation } from '../../translations/entities/translation.entity';
 
 export class PlaceDto {
   @ApiProperty({ title: 'Place id', type: Number })
   id: number;
 
   @ApiProperty({ type: String, description: 'Place title' })
-  @Transform(({ value }: { value: Partial<TranslationDto> }) => value.text)
+  @Transform(
+    ({ value }: { value: Partial<Translation> }) => value?.text ?? null,
+  )
   title: string;
 
   @ApiProperty({ type: String, description: 'Place description' })
-  @Transform(({ value }: { value: Partial<TranslationDto> }) => value.text)
+  @Transform(
+    ({ value }: { value: Partial<Translation> }) => value?.text ?? null,
+  )
   description: string;
 
   @ApiProperty({ type: String, description: 'Place address' })
-  @Transform(({ value }: { value: Partial<TranslationDto> }) => value.text)
+  @Transform(
+    ({ value }: { value: Partial<Translation> }) => value?.text ?? null,
+  )
   address: string;
 
   @ApiProperty({ type: PlaceTypeDto, description: 'Place type' })
   @Transform(
     ({ value }: { value: Partial<PlaceType> }) => new PlaceTypeDto(value),
   )
-  placeType: PlaceTypeDto;
+  type: PlaceTypeDto;
 
   @ApiProperty({
     type: PlaceCategoryDto,
@@ -46,7 +53,7 @@ export class PlaceDto {
     isArray: true,
   })
   @Transform(({ value }: { value: Partial<Image>[] }) =>
-    value.filter((image) => image.url).map((image) => image.url),
+    value.filter((image) => Boolean(image.url)).map((image) => image.url),
   )
   images: string[];
 

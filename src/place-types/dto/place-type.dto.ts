@@ -1,15 +1,15 @@
 import { Transform } from 'class-transformer';
 import { PlaceType } from '../entities/place-type.entity';
 import { ApiProperty } from '@nestjs/swagger';
-import { TranslationDto } from '../../translations/dto/translation.dto';
 import { Image } from '../../images/entities/image.entity';
+import { Translation } from '../../translations/entities/translation.entity';
 
 export class PlaceTypeDto {
   @ApiProperty({ title: 'Place type id', type: Number })
   id: number;
 
   @ApiProperty({ title: 'Place type title', type: String })
-  @Transform(({ value }: { value: Partial<TranslationDto> }) => value.text)
+  @Transform(({ value }: { value: Partial<Translation> }) => value?.text)
   title: string;
 
   @ApiProperty({

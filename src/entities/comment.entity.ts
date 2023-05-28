@@ -1,6 +1,5 @@
 import { Entity, PrimaryGeneratedColumn, ManyToOne, Column } from 'typeorm';
 import { Place } from '../places/entities/place.entity';
-import { Translation } from '../translations/entities/translation.entity';
 import { User } from '../users/entities/user.entity';
 
 @Entity()
@@ -9,7 +8,7 @@ export class Comment {
   id: number;
 
   @Column({ type: 'varchar', length: 1000 })
-  text: Translation;
+  text: string;
 
   @ManyToOne(() => User, (user) => user.comments)
   user: User;

@@ -5,6 +5,7 @@ import {
   OneToOne,
   JoinColumn,
   ManyToMany,
+  Column,
 } from 'typeorm';
 import { Place } from '../../places/entities/place.entity';
 import { Image } from '../../images/entities/image.entity';
@@ -14,7 +15,7 @@ export class PlaceCategory {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @PrimaryColumn({ type: 'int' })
+  @Column({ type: 'int', unique: true })
   title: number;
 
   @OneToOne(() => Image, (image) => image.id)
