@@ -14,6 +14,7 @@ import { Admin } from '../../entities/admin.entity';
 import { Like } from '../../entities/like.entity';
 import { Comment } from '../../entities/comment.entity';
 import { Role } from '../../roles/entities/role.entity';
+import { Image } from '../../images/entities/image.entity';
 
 @Entity()
 export class User {
@@ -48,6 +49,9 @@ export class User {
 
   @OneToMany(() => Like, (like) => like.user)
   likes: Like[];
+
+  @OneToMany(() => Image, (image) => image.user)
+  images: Image[];
 
   @OneToMany(() => Comment, (comment) => comment.user)
   comments: Comment[];

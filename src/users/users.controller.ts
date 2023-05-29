@@ -6,6 +6,7 @@ import {
   Get,
   Param,
   Patch,
+  Put,
   UseInterceptors,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
@@ -13,10 +14,9 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { UserDto } from './dto/user.dto';
 import { Auth } from '../auth/decorators/auth.decorator';
-import { TokenPayload } from '../auth/decorators/token-payload.decorator';
 import { UserFromTokenPipe } from '../auth/pipes/user-from-token.pipe';
 import { User } from './entities/user.entity';
-import { TokenPayloadDto } from '../auth/dto/token-payload.dto';
+import { TokenPayload } from '../auth/decorators/token-payload.decorator';
 
 @ApiTags('Users')
 @Controller('users')
@@ -37,7 +37,19 @@ export class UsersController {
     return users.map((u) => new UserDto(u));
   }
 
-  @Patch(':id')
+  @ApiOperation({ summary: 'Get user data' })
+  @ApiOkResponse({
+    description: 'user',
+    type: UserDto,
+  })
+  @UseInterceptors(ClassSerializerInterceptor)
+  @Auth()
+  @Get('/userData')
+  async userData(@TokenPayload(UserFromTokenPipe) user: User) {
+    return new UserDto(user);
+  }
+
+  @Put(':id')
   update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
     return this.usersService.update(+id, updateUserDto);
   }

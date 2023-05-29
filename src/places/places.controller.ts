@@ -17,7 +17,7 @@ import {
   ApiQuery,
   ApiTags,
 } from '@nestjs/swagger';
-import { PlaceDto } from './dto/place.dto';
+import { SearchPlaceDto } from './dto/search-place.dto';
 import { CreatePlaceDto } from './dto/create-place.dto';
 import { UserFromTokenPipe } from '../auth/pipes/user-from-token.pipe';
 import { User } from '../users/entities/user.entity';
@@ -32,7 +32,7 @@ export class PlacesController {
   @ApiOperation({ summary: 'Create Place' })
   @ApiOkResponse({
     description: 'OK',
-    type: PlaceDto,
+    type: SearchPlaceDto,
   })
   @ApiQuery({
     name: 'lang',
@@ -55,7 +55,7 @@ export class PlacesController {
   @ApiOperation({ summary: 'Get all places by language id' })
   @ApiOkResponse({
     description: 'OK',
-    type: PlaceDto,
+    type: SearchPlaceDto,
     isArray: true,
   })
   @ApiQuery({
@@ -67,6 +67,6 @@ export class PlacesController {
   @Get()
   async getAll(@Query('lang', ParseIntPipe) langId: number) {
     const places = await this.placesService.findAll(langId);
-    return places.map((p) => new PlaceDto(p));
+    return places.map((p) => new SearchPlaceDto(p));
   }
 }

@@ -3,6 +3,8 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository } from 'typeorm';
 import { Image } from './entities/image.entity';
 import { StorageService } from '../storage/storage.service';
+import { User } from '../users/entities/user.entity';
+import { TokenPayloadDto } from '../auth/dto/token-payload.dto';
 
 @Injectable()
 export class ImagesService {
@@ -12,9 +14,11 @@ export class ImagesService {
     private readonly storageService: StorageService,
   ) {}
 
-  async create(imageUrl: string) {
+  async create(imageUrl: string, tokenPayload: TokenPayloadDto) {
     const image = this.imagesRepository.create();
     image.url = imageUrl;
+    image.user = new User();
+    image.user.id = tokenPayload.id;
     return await this.imagesRepository.save(image);
   }
 

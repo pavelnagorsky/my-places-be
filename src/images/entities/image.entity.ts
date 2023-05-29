@@ -4,10 +4,12 @@ import {
   PrimaryGeneratedColumn,
   ManyToOne,
   OneToOne,
+  OneToMany,
 } from 'typeorm';
 import { Place } from '../../places/entities/place.entity';
 import { PlaceType } from '../../place-types/entities/place-type.entity';
 import { PlaceCategory } from '../../place-categories/entities/place-category.entity';
+import { User } from '../../users/entities/user.entity';
 
 @Entity()
 export class Image {
@@ -25,6 +27,9 @@ export class Image {
 
   @ManyToOne(() => Place, (place) => place.images)
   place: Place;
+
+  @ManyToOne(() => User, (user) => user.images)
+  user: User;
 
   @OneToOne(() => PlaceType, (placeType) => placeType.image)
   placeType: PlaceType;

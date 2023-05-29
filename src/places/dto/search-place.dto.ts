@@ -1,7 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Place } from '../entities/place.entity';
-import { Exclude, Transform } from 'class-transformer';
-import { TranslationDto } from '../../translations/dto/translation.dto';
+import { Exclude, Expose, Transform } from 'class-transformer';
 import { PlaceTypeDto } from '../../place-types/dto/place-type.dto';
 import { PlaceType } from '../../place-types/entities/place-type.entity';
 import { PlaceCategoryDto } from '../../place-categories/dto/place-category.dto';
@@ -9,7 +8,7 @@ import { PlaceCategory } from '../../place-categories/entities/place-category.en
 import { Image } from '../../images/entities/image.entity';
 import { Translation } from '../../translations/entities/translation.entity';
 
-export class PlaceDto {
+export class SearchPlaceDto {
   @ApiProperty({ title: 'Place id', type: Number })
   id: number;
 
@@ -19,10 +18,11 @@ export class PlaceDto {
   )
   title: string;
 
-  @ApiProperty({ type: String, description: 'Place description' })
-  @Transform(
-    ({ value }: { value: Partial<Translation> }) => value?.text ?? null,
-  )
+  //@ApiProperty({ type: String, description: 'Place description' })
+  @Exclude()
+  // @Transform(
+  //   ({ value }: { value: Partial<Translation> }) => value?.text ?? null,
+  // )
   description: string;
 
   @ApiProperty({ type: String, description: 'Place address' })
@@ -49,13 +49,11 @@ export class PlaceDto {
 
   @ApiProperty({
     type: String,
-    description: 'Place images',
-    isArray: true,
+    description: 'Place image',
   })
-  @Transform(({ value }: { value: Partial<Image>[] }) =>
-    value.filter((image) => Boolean(image.url)).map((image) => image.url),
-  )
-  images: string[];
+  @Expose({ name: 'image' })
+  @Transform(({ value }: { value: Partial<Image> }) => value?.url ?? null)
+  images: string;
 
   @ApiProperty({ type: String, description: 'Place coordinates [lat;lng]' })
   coordinates: string;

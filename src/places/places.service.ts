@@ -88,15 +88,22 @@ export class PlacesService {
     if (createPlaceDto.website) place.website = createPlaceDto.website;
     place.author = author;
 
-    return await this.placesRepository.save(place);
+    const { id } = await this.placesRepository.save(place);
+    return { id: id };
   }
 
   async findAll(langId: number) {
     return this.placesRepository
       .createQueryBuilder('place')
-      .leftJoinAndSelect('place.images', 'images')
       .leftJoinAndSelect('place.categories', 'categories')
       .leftJoinAndSelect('place.type', 'type')
+      .leftJoinAndMapOne(
+        'place.images',
+        'image',
+        'place_image',
+        'place_image.place = place.id AND place_image.position = :position',
+        { position: 0 },
+      )
       .leftJoinAndMapOne(
         'type.image',
         'image',
@@ -128,13 +135,6 @@ export class PlacesService {
         'translation',
         'title_t',
         'place.title = title_t.textId AND title_t.language = :langId',
-        { langId },
-      )
-      .leftJoinAndMapOne(
-        'place.description',
-        'translation',
-        'description_t',
-        'place.description = description_t.textId AND description_t.language = :langId',
         { langId },
       )
       .leftJoinAndMapOne(

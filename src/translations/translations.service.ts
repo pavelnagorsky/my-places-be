@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Translation } from './entities/translation.entity';
 import { Repository } from 'typeorm';
@@ -11,6 +11,8 @@ import { LanguagesService } from '../languages/languages.service';
 
 @Injectable()
 export class TranslationsService {
+  private readonly logger = new Logger('Translation service');
+
   constructor(
     @InjectRepository(Translation)
     private translationsRepository: Repository<Translation>,
@@ -18,13 +20,15 @@ export class TranslationsService {
     private languagesRepository: Repository<Language>,
     private configService: ConfigService,
     private languagesService: LanguagesService,
-  ) {}
+  ) {
+    this.translateClient = new v2.Translate({
+      key: this.configService.get<IGoogleCloudConfig>('googleCloud')?.apiKey,
+      projectId:
+        this.configService.get<IGoogleCloudConfig>('googleCloud')?.projectId,
+    });
+  }
 
-  private translateClient = new v2.Translate({
-    key: this.configService.get<IGoogleCloudConfig>('googleCloud')?.apiKey,
-    projectId:
-      this.configService.get<IGoogleCloudConfig>('googleCloud')?.projectId,
-  });
+  private translateClient: v2.Translate;
 
   // get last max textId
   async getMaxTextId(): Promise<number> {
@@ -73,6 +77,7 @@ export class TranslationsService {
 
       return translation;
     } catch (e) {
+      this.logger.error('Translation failed', e.message);
       return text;
     }
   }

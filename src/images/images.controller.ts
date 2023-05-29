@@ -23,6 +23,9 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { memoryStorage } from 'multer';
 import { StorageService } from '../storage/storage.service';
 import { ImageDto } from './dto/image.dto';
+import { Auth } from '../auth/decorators/auth.decorator';
+import { TokenPayload } from '../auth/decorators/token-payload.decorator';
+import { TokenPayloadDto } from '../auth/dto/token-payload.dto';
 
 @ApiTags('Images')
 @Controller('images')
@@ -52,16 +55,22 @@ export class ImagesController {
     }),
   )
   @UseInterceptors(ClassSerializerInterceptor)
+  @Auth()
   @Post()
   async create(
     @Body()
     fileDto: CreateImageDto,
     @UploadedFile()
     image: Express.Multer.File,
+    @TokenPayload()
+    tokenPayload: TokenPayloadDto,
   ): Promise<ImageDto> {
     if (!image) throw new BadRequestException('No file provided');
     const uploaded = await this.storageService.uploadFile(image, 'images');
-    const savedImage = await this.imagesService.create(uploaded.publicUrl);
+    const savedImage = await this.imagesService.create(
+      uploaded.publicUrl,
+      tokenPayload,
+    );
     return new ImageDto(savedImage);
   }
 
