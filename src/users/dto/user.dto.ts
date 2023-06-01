@@ -5,6 +5,9 @@ import { RoleDto } from '../../roles/dto/role.dto';
 import { User } from '../entities/user.entity';
 
 export class UserDto {
+  @ApiProperty({ title: 'User id', type: Number, default: 1 })
+  id: number;
+
   @ApiProperty({ title: 'First Name', type: String, default: 'John' })
   firstName: string;
 

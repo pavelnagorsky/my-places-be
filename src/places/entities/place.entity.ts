@@ -64,6 +64,9 @@ export class Place {
   @Column({ default: 0 })
   likesCount: number;
 
+  @Column({ default: 0 })
+  viewsCount: number;
+
   @OneToMany(() => Like, (like) => like.place)
   likes: Like[];
 

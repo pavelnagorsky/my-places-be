@@ -14,8 +14,8 @@ import {
   Get,
   Param,
   ParseIntPipe,
-  Patch,
   Post,
+  Put,
   UseInterceptors,
 } from '@nestjs/common';
 import { TranslationsService } from './translations.service';
@@ -28,6 +28,7 @@ import { TranslationDto } from './dto/translation.dto';
 export class TranslationsController {
   constructor(private readonly translationsService: TranslationsService) {}
 
+  @ApiOperation({ summary: 'Create Translation' })
   @ApiOkResponse({
     description: 'OK',
     type: TranslationDto,
@@ -35,7 +36,6 @@ export class TranslationsController {
   @ApiBody({
     type: CreateTranslationDto,
   })
-  @ApiOperation({ summary: 'Create Translation' })
   @UseInterceptors(ClassSerializerInterceptor)
   @Post()
   async create(@Body() createTranslationDto: CreateTranslationDto) {
@@ -48,6 +48,7 @@ export class TranslationsController {
     return new TranslationDto(translation);
   }
 
+  @ApiOperation({ summary: 'Update Translation' })
   @ApiOkResponse({
     description: 'OK',
     type: PickType(TranslationDto, ['id'] as const),
@@ -60,8 +61,7 @@ export class TranslationsController {
   @ApiBody({
     type: UpdateTranslationDto,
   })
-  @ApiOperation({ summary: 'Update Translation' })
-  @Patch('/:id')
+  @Put('/:id')
   async update(
     @Param('id', ParseIntPipe) id: number,
     @Body() updateTranslationDto: UpdateTranslationDto,
@@ -69,18 +69,19 @@ export class TranslationsController {
     return await this.translationsService.update(id, updateTranslationDto);
   }
 
+  @ApiOperation({ summary: 'Find all translations' })
   @ApiOkResponse({
     description: 'OK',
     type: TranslationDto,
     isArray: true,
   })
-  @ApiOperation({ summary: 'Find all translations' })
   @Get()
   async getAll() {
     const translations = await this.translationsService.getAll();
     return translations.map((t) => new TranslationDto(t));
   }
 
+  @ApiOperation({ summary: 'Delete Translation' })
   @ApiOkResponse({
     description: 'OK',
     type: PickType(TranslationDto, ['id'] as const),
@@ -90,7 +91,6 @@ export class TranslationsController {
     description: 'translation id',
     type: Number,
   })
-  @ApiOperation({ summary: 'Delete Translation' })
   @Delete('/:id')
   async delete(@Param('id', ParseIntPipe) id: number) {
     return await this.translationsService.deleteTranslation(id);

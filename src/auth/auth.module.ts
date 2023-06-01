@@ -7,6 +7,7 @@ import { ConfigService } from '@nestjs/config';
 import { IJwtConfig } from '../config/configuration';
 import { UserFromTokenPipe } from './pipes/user-from-token.pipe';
 import { MailingModule } from '../mailing/mailing.module';
+import { PayloadFromTokenPipe } from './pipes/payload-from-token.pipe';
 
 @Global()
 @Module({
@@ -25,7 +26,7 @@ import { MailingModule } from '../mailing/mailing.module';
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthService, UserFromTokenPipe],
+  providers: [AuthService, UserFromTokenPipe, PayloadFromTokenPipe],
   exports: [AuthService, JwtModule, UserFromTokenPipe, UsersModule],
 })
 export class AuthModule {}

@@ -10,6 +10,9 @@ export class Comment {
   @Column({ type: 'varchar', length: 1000 })
   text: string;
 
+  @Column({ default: () => 'CURRENT_TIMESTAMP' })
+  createdAt: Date;
+
   @ManyToOne(() => User, (user) => user.comments)
   user: User;
 

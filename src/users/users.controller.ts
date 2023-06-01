@@ -49,6 +49,18 @@ export class UsersController {
     return new UserDto(user);
   }
 
+  @ApiOperation({ summary: 'Get user relations (likes, comments)' })
+  @ApiOkResponse({
+    description: 'user',
+    type: UserDto,
+  })
+  @UseInterceptors(ClassSerializerInterceptor)
+  @Auth()
+  @Get('/userRelations')
+  async userRelations(@TokenPayload(UserFromTokenPipe) user: User) {
+    return new UserDto(user);
+  }
+
   @Put(':id')
   update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
     return this.usersService.update(+id, updateUserDto);

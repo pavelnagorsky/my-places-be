@@ -1,15 +1,15 @@
 import {
-  Controller,
-  Get,
-  Post,
-  Body,
-  Param,
-  Delete,
-  UseInterceptors,
   BadRequestException,
-  UploadedFile,
+  Body,
   ClassSerializerInterceptor,
+  Controller,
+  Delete,
+  Get,
+  Param,
   ParseIntPipe,
+  Post,
+  UploadedFile,
+  UseInterceptors,
 } from '@nestjs/common';
 import { ImagesService } from './images.service';
 import { CreateImageDto } from './dto/create-image.dto';
@@ -17,6 +17,7 @@ import {
   ApiConsumes,
   ApiOkResponse,
   ApiOperation,
+  ApiParam,
   ApiTags,
 } from '@nestjs/swagger';
 import { FileInterceptor } from '@nestjs/platform-express';
@@ -26,6 +27,7 @@ import { ImageDto } from './dto/image.dto';
 import { Auth } from '../auth/decorators/auth.decorator';
 import { TokenPayload } from '../auth/decorators/token-payload.decorator';
 import { TokenPayloadDto } from '../auth/dto/token-payload.dto';
+import { RoleNamesEnum } from '../roles/enums/role-names.enum';
 
 @ApiTags('Images')
 @Controller('images')
@@ -82,6 +84,11 @@ export class ImagesController {
   }
 
   @ApiOperation({ summary: 'Delete image by id' })
+  @ApiParam({
+    name: 'id',
+    description: 'image id',
+  })
+  @Auth(RoleNamesEnum.OWNER, RoleNamesEnum.ADMIN)
   @Delete(':id')
   async remove(@Param('id', ParseIntPipe) id: number) {
     return await this.imagesService.remove(id);

@@ -1,14 +1,14 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Place } from '../entities/place.entity';
-import { Exclude, Expose, Transform } from 'class-transformer';
+import { Exclude, Transform } from 'class-transformer';
+import { Translation } from '../../translations/entities/translation.entity';
 import { PlaceTypeDto } from '../../place-types/dto/place-type.dto';
 import { PlaceType } from '../../place-types/entities/place-type.entity';
 import { PlaceCategoryDto } from '../../place-categories/dto/place-category.dto';
 import { PlaceCategory } from '../../place-categories/entities/place-category.entity';
 import { Image } from '../../images/entities/image.entity';
-import { Translation } from '../../translations/entities/translation.entity';
+import { Place } from '../entities/place.entity';
 
-export class SearchPlaceDto {
+export class PlaceDto {
   @ApiProperty({ title: 'Place id', type: Number })
   id: number;
 
@@ -18,14 +18,11 @@ export class SearchPlaceDto {
   )
   title: string;
 
-  @Exclude()
+  @ApiProperty({ type: String, description: 'Place description' })
+  @Transform(
+    ({ value }: { value: Partial<Translation> }) => value?.text ?? null,
+  )
   description: string;
-
-  @ApiProperty({ type: Number, description: 'Likes count' })
-  likesCount: number;
-
-  @ApiProperty({ type: Number, description: 'Views count' })
-  viewsCount: number;
 
   @ApiProperty({ type: String, description: 'Place address' })
   @Transform(
@@ -38,6 +35,15 @@ export class SearchPlaceDto {
     ({ value }: { value: Partial<PlaceType> }) => new PlaceTypeDto(value),
   )
   type: PlaceTypeDto;
+
+  @ApiProperty({ type: Number, description: 'Likes count' })
+  likesCount: number;
+
+  @ApiProperty({ type: Number, description: 'Views count' })
+  viewsCount: number;
+
+  @ApiProperty({ type: Boolean, description: 'Is liked by user' })
+  isLiked: boolean;
 
   @ApiProperty({
     type: PlaceCategoryDto,
@@ -53,9 +59,11 @@ export class SearchPlaceDto {
     type: String,
     description: 'Place image',
   })
-  @Expose({ name: 'image' })
-  @Transform(({ value }: { value: Partial<Image> }) => value?.url ?? null)
-  images: string;
+  @Transform(
+    ({ value }: { value: Partial<Image>[] }) =>
+      value?.filter((v) => Boolean(v.url)).map((v) => v.url) ?? [],
+  )
+  images: string[];
 
   @ApiProperty({ type: String, description: 'Place coordinates [lat;lng]' })
   coordinates: string;
