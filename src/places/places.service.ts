@@ -13,14 +13,17 @@ import { PlaceCategory } from '../place-categories/entities/place-category.entit
 import { ImagesService } from '../images/images.service';
 import { User } from '../users/entities/user.entity';
 import { TokenPayloadDto } from '../auth/dto/token-payload.dto';
-import { Like } from '../entities/like.entity';
+import { Like } from './entities/like.entity';
 import { UpdatePlaceDto } from './dto/update-place.dto';
+import { Admin } from '../entities/admin.entity';
 
 @Injectable()
 export class PlacesService {
   constructor(
     @InjectRepository(Place)
     private placesRepository: Repository<Place>,
+    @InjectRepository(Like)
+    private likesRepository: Repository<Like>,
     @InjectRepository(PlaceType)
     private placeTypesRepository: Repository<PlaceType>,
     @InjectRepository(PlaceCategory)
@@ -177,6 +180,11 @@ export class PlacesService {
         'place.address = address_t.textId AND address_t.language = :langId',
         { langId },
       )
+      .orderBy({
+        'place.likesCount': 'DESC',
+        'place.viewsCount': 'DESC',
+        'place.createdAt': 'DESC',
+      })
       .getMany();
   }
 
@@ -212,9 +220,9 @@ export class PlacesService {
       .leftJoinAndSelect('place.categories', 'categories')
       .leftJoinAndSelect('place.type', 'type')
       .leftJoinAndSelect('place.images', 'image')
+      .addOrderBy('image.position')
       .leftJoinAndSelect('place.likes', 'like')
-      .leftJoinAndSelect('place.comments', 'comment')
-      .orderBy('image.position')
+      .leftJoinAndSelect('like.user', 'likeUser')
       .leftJoinAndMapOne(
         'type.image',
         'image',
@@ -265,18 +273,85 @@ export class PlacesService {
       .getOne();
     if (!place) throw new NotFoundException({ message: 'Place not found' });
     this.addView(place.id);
-
     return {
       ...place,
-      isLiked:
+      isLiked: Boolean(
         tokenPayload?.id && this.isLikedByUser(place.likes, tokenPayload.id),
+      ),
     };
+  }
+
+  async checkUserRelation(userId: number, placeId: number) {
+    return await this.placesRepository.exist({
+      where: {
+        author: {
+          id: Equal(userId),
+        },
+        id: Equal(placeId),
+      },
+    });
+  }
+
+  private createLike() {
+    const like = this.likesRepository.create();
+    like.place = new Place();
+    like.user = new User();
+    return like;
+  }
+
+  async changeLike(userId: number, placeId: number) {
+    const place = await this.placesRepository.findOne({
+      where: { id: Equal(placeId) },
+      relations: {
+        likes: true,
+      },
+      select: {
+        id: true,
+        likes: true,
+        likesCount: true,
+      },
+    });
+    if (!place) throw new NotFoundException({ message: 'Place not found' });
+    const likeExists = await this.likesRepository.exist({
+      where: {
+        user: {
+          id: Equal(userId),
+        },
+        place: {
+          id: Equal(placeId),
+        },
+      },
+    });
+    if (likeExists) {
+      place.likesCount = --place.likesCount;
+      await this.placesRepository.save(place);
+      await this.likesRepository.delete({
+        place: {
+          id: Equal(placeId),
+        },
+        user: {
+          id: Equal(userId),
+        },
+      });
+      await this.placesRepository.save(place);
+      return;
+    } else {
+      place.likesCount = ++place.likesCount;
+      const like = this.createLike();
+      like.place.id = placeId;
+      like.user.id = userId;
+      const savedLike = await this.likesRepository.save(like);
+      place.likes.push(savedLike);
+      await this.placesRepository.save(place);
+      return;
+    }
   }
 
   async updatePlace(
     placeId: number,
     langId: number,
     updatePlaceDto: UpdatePlaceDto,
+    admin?: Admin,
   ) {
     try {
       const exist = await this.checkExist(placeId);
@@ -307,7 +382,8 @@ export class PlacesService {
         coordinates: updatePlaceDto.coordinates,
         categories: placeCategories,
         website: updatePlaceDto.website,
-        moderation: true,
+        moderation: !admin,
+        admin: admin,
       });
 
       return { id: placeId };

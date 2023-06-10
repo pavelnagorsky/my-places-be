@@ -1,12 +1,13 @@
 import {
-  BadRequestException,
   Body,
   ClassSerializerInterceptor,
   Controller,
+  ForbiddenException,
   Get,
   Param,
   ParseIntPipe,
   Post,
+  Put,
   Query,
   UseInterceptors,
 } from '@nestjs/common';
@@ -19,6 +20,7 @@ import {
   ApiParam,
   ApiQuery,
   ApiTags,
+  PickType,
 } from '@nestjs/swagger';
 import { SearchPlaceDto } from './dto/search-place.dto';
 import { CreatePlaceDto } from './dto/create-place.dto';
@@ -30,6 +32,8 @@ import { PlaceDto } from './dto/place.dto';
 import { TokenPayloadDto } from '../auth/dto/token-payload.dto';
 import { Token } from '../auth/decorators/token.decorator';
 import { PayloadFromTokenPipe } from '../auth/pipes/payload-from-token.pipe';
+import { Place } from './entities/place.entity';
+import { UpdatePlaceDto } from './dto/update-place.dto';
 
 @ApiTags('Places')
 @Controller('/places')
@@ -39,7 +43,7 @@ export class PlacesController {
   @ApiOperation({ summary: 'Create Place' })
   @ApiOkResponse({
     description: 'OK',
-    type: SearchPlaceDto,
+    type: PickType(Place, ['id']),
   })
   @ApiQuery({
     name: 'lang',
@@ -106,5 +110,60 @@ export class PlacesController {
       tokenPayload,
     );
     return new PlaceDto(place);
+  }
+
+  @ApiOperation({ summary: 'Update Place' })
+  @ApiOkResponse({
+    description: 'OK',
+    type: PickType(Place, ['id']),
+  })
+  @ApiParam({
+    name: 'id',
+    type: Number,
+    description: 'The ID of the place',
+  })
+  @ApiQuery({
+    name: 'lang',
+    type: Number,
+    description: 'The ID of the language',
+  })
+  @ApiBody({
+    type: UpdatePlaceDto,
+  })
+  @Auth()
+  @Put(':id')
+  async update(
+    @Param('id', ParseIntPipe) id: number,
+    @Query('lang', ParseIntPipe) langId: number,
+    @TokenPayload() tokenPayload: TokenPayloadDto,
+    @Body() updatePlaceDto: UpdatePlaceDto,
+  ) {
+    const userIsPlaceAuthor = await this.placesService.checkUserRelation(
+      tokenPayload.id,
+      id,
+    );
+    if (!userIsPlaceAuthor)
+      throw new ForbiddenException({
+        message: 'Forbidden, user is not author',
+      });
+    return await this.placesService.updatePlace(id, langId, updatePlaceDto);
+  }
+
+  @ApiOperation({ summary: 'Change like' })
+  @ApiOkResponse({
+    description: 'OK',
+  })
+  @ApiParam({
+    name: 'id',
+    type: Number,
+    description: 'The ID of the place',
+  })
+  @Auth()
+  @Put('likes/:id')
+  async changeLike(
+    @Param('id', ParseIntPipe) id: number,
+    @TokenPayload() tokenPayload: TokenPayloadDto,
+  ) {
+    return await this.placesService.changeLike(tokenPayload.id, id);
   }
 }

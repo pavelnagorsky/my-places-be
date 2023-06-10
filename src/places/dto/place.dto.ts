@@ -7,6 +7,7 @@ import { PlaceCategoryDto } from '../../place-categories/dto/place-category.dto'
 import { PlaceCategory } from '../../place-categories/entities/place-category.entity';
 import { Image } from '../../images/entities/image.entity';
 import { Place } from '../entities/place.entity';
+import { Like } from '../entities/like.entity';
 
 export class PlaceDto {
   @ApiProperty({ title: 'Place id', type: Number })
@@ -54,6 +55,12 @@ export class PlaceDto {
     value.map((category) => new PlaceCategoryDto(category)),
   )
   categories: PlaceCategoryDto[];
+
+  @Exclude()
+  comments: Comment[];
+
+  @Exclude()
+  likes: Like[];
 
   @ApiProperty({
     type: String,

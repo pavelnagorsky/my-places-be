@@ -4,7 +4,6 @@ import {
   PrimaryGeneratedColumn,
   ManyToOne,
   OneToMany,
-  PrimaryColumn,
   ManyToMany,
   JoinTable,
 } from 'typeorm';
@@ -12,7 +11,7 @@ import { User } from '../../users/entities/user.entity';
 import { PlaceType } from '../../place-types/entities/place-type.entity';
 import { Admin } from '../../entities/admin.entity';
 import { Image } from '../../images/entities/image.entity';
-import { Like } from '../../entities/like.entity';
+import { Like } from './like.entity';
 import { Comment } from '../../entities/comment.entity';
 import { PlaceCategory } from '../../place-categories/entities/place-category.entity';
 

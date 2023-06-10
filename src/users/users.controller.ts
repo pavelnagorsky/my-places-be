@@ -1,16 +1,10 @@
 import {
-  Body,
   ClassSerializerInterceptor,
   Controller,
-  Delete,
   Get,
-  Param,
-  Patch,
-  Put,
   UseInterceptors,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
-import { UpdateUserDto } from './dto/update-user.dto';
 import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { UserDto } from './dto/user.dto';
 import { Auth } from '../auth/decorators/auth.decorator';
@@ -49,25 +43,13 @@ export class UsersController {
     return new UserDto(user);
   }
 
-  @ApiOperation({ summary: 'Get user relations (likes, comments)' })
-  @ApiOkResponse({
-    description: 'user',
-    type: UserDto,
-  })
-  @UseInterceptors(ClassSerializerInterceptor)
-  @Auth()
-  @Get('/userRelations')
-  async userRelations(@TokenPayload(UserFromTokenPipe) user: User) {
-    return new UserDto(user);
-  }
-
-  @Put(':id')
-  update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
-    return this.usersService.update(+id, updateUserDto);
-  }
-
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.usersService.remove(+id);
-  }
+  // @Put(':id')
+  // update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
+  //   return this.usersService.update(+id, updateUserDto);
+  // }
+  //
+  // @Delete(':id')
+  // remove(@Param('id') id: string) {
+  //   return this.usersService.remove(+id);
+  // }
 }

@@ -7,10 +7,11 @@ import { TranslationsModule } from '../translations/translations.module';
 import { PlaceType } from '../place-types/entities/place-type.entity';
 import { PlaceCategory } from '../place-categories/entities/place-category.entity';
 import { ImagesModule } from '../images/images.module';
+import { Like } from './entities/like.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Place, PlaceType, PlaceCategory]),
+    TypeOrmModule.forFeature([Place, PlaceType, PlaceCategory, Like]),
     ImagesModule,
     TranslationsModule,
   ],
