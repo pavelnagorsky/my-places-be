@@ -16,6 +16,7 @@ import { RolesModule } from './roles/roles.module';
 import { MailingModule } from './mailing/mailing.module';
 import { MailingService } from './mailing/mailing.service';
 import { PlaceCategoriesModule } from './place-categories/place-categories.module';
+import { CommentsModule } from './comments/comments.module';
 
 @Module({
   imports: [
@@ -35,6 +36,7 @@ import { PlaceCategoriesModule } from './place-categories/place-categories.modul
     RolesModule,
     MailingModule,
     PlaceCategoriesModule,
+    CommentsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

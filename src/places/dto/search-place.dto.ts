@@ -12,6 +12,9 @@ export class SearchPlaceDto {
   @ApiProperty({ title: 'Place id', type: Number })
   id: number;
 
+  @ApiProperty({ type: String, description: 'Place url path' })
+  slug: string;
+
   @ApiProperty({ type: String, description: 'Place title' })
   @Transform(
     ({ value }: { value: Partial<Translation> }) => value?.text ?? null,

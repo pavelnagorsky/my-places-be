@@ -4,7 +4,6 @@ import {
   PrimaryGeneratedColumn,
   ManyToOne,
   OneToOne,
-  OneToMany,
 } from 'typeorm';
 import { Place } from '../../places/entities/place.entity';
 import { PlaceType } from '../../place-types/entities/place-type.entity';
@@ -25,7 +24,7 @@ export class Image {
   @Column({ default: () => 'CURRENT_TIMESTAMP' })
   createdAt: Date;
 
-  @ManyToOne(() => Place, (place) => place.images)
+  @ManyToOne(() => Place, (place) => place.images, { onDelete: 'CASCADE' })
   place: Place;
 
   @ManyToOne(() => User, (user) => user.images)

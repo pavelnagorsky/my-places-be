@@ -1,6 +1,6 @@
 import { Entity, PrimaryGeneratedColumn, ManyToOne, Column } from 'typeorm';
-import { Place } from '../places/entities/place.entity';
-import { User } from '../users/entities/user.entity';
+import { Place } from '../../places/entities/place.entity';
+import { User } from '../../users/entities/user.entity';
 
 @Entity()
 export class Comment {
@@ -16,6 +16,9 @@ export class Comment {
   @ManyToOne(() => User, (user) => user.comments)
   user: User;
 
-  @ManyToOne(() => Place, (place) => place.comments)
+  @ManyToOne(() => Place, (place) => place.comments, { onDelete: 'CASCADE' })
   place: Place;
+
+  // calculated field
+  canManage: boolean;
 }

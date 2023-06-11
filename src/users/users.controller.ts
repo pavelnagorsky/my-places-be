@@ -2,6 +2,7 @@ import {
   ClassSerializerInterceptor,
   Controller,
   Get,
+  Post,
   UseInterceptors,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
@@ -11,6 +12,7 @@ import { Auth } from '../auth/decorators/auth.decorator';
 import { UserFromTokenPipe } from '../auth/pipes/user-from-token.pipe';
 import { User } from './entities/user.entity';
 import { TokenPayload } from '../auth/decorators/token-payload.decorator';
+import { TokenPayloadDto } from '../auth/dto/token-payload.dto';
 
 @ApiTags('Users')
 @Controller('users')
@@ -41,6 +43,17 @@ export class UsersController {
   @Get('/userData')
   async userData(@TokenPayload(UserFromTokenPipe) user: User) {
     return new UserDto(user);
+  }
+
+  @ApiOperation({ summary: 'Confirm user email' })
+  @ApiOkResponse({
+    description: 'OK',
+  })
+  @Auth()
+  @Post('/confirm')
+  async confirmEmail(@TokenPayload() tokenPayload: TokenPayloadDto) {
+    await this.usersService.confirmEmail(tokenPayload.id);
+    return;
   }
 
   // @Put(':id')

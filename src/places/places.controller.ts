@@ -1,7 +1,9 @@
 import {
+  BadRequestException,
   Body,
   ClassSerializerInterceptor,
   Controller,
+  Delete,
   ForbiddenException,
   Get,
   Param,
@@ -13,8 +15,10 @@ import {
 } from '@nestjs/common';
 import { PlacesService } from './places.service';
 import {
+  ApiBadRequestResponse,
   ApiBearerAuth,
   ApiBody,
+  ApiForbiddenResponse,
   ApiOkResponse,
   ApiOperation,
   ApiParam,
@@ -34,11 +38,19 @@ import { Token } from '../auth/decorators/token.decorator';
 import { PayloadFromTokenPipe } from '../auth/pipes/payload-from-token.pipe';
 import { Place } from './entities/place.entity';
 import { UpdatePlaceDto } from './dto/update-place.dto';
+import { CommentsService } from '../comments/comments.service';
+import { CommentDto } from '../comments/dto/comment.dto';
+import { CreateCommentDto } from '../comments/dto/create-comment.dto';
+import { UpdateCommentDto } from '../comments/dto/update-comment.dto';
+import { RoleNamesEnum } from '../roles/enums/role-names.enum';
 
 @ApiTags('Places')
 @Controller('/places')
 export class PlacesController {
-  constructor(private readonly placesService: PlacesService) {}
+  constructor(
+    private readonly placesService: PlacesService,
+    private readonly commentsService: CommentsService,
+  ) {}
 
   @ApiOperation({ summary: 'Create Place' })
   @ApiOkResponse({
@@ -81,16 +93,16 @@ export class PlacesController {
     return places.map((p) => new SearchPlaceDto(p));
   }
 
-  @ApiOperation({ summary: 'Get place by id and language id' })
+  @ApiOperation({ summary: 'Get place by slug and language id' })
   @ApiBearerAuth('access-token')
   @ApiOkResponse({
     description: 'OK',
     type: PlaceDto,
   })
   @ApiParam({
-    name: 'id',
-    type: Number,
-    description: 'The ID of the place',
+    name: 'slug',
+    type: String,
+    description: 'The slug of the place',
   })
   @ApiQuery({
     name: 'lang',
@@ -98,14 +110,14 @@ export class PlacesController {
     description: 'The ID of the language',
   })
   @UseInterceptors(ClassSerializerInterceptor)
-  @Get(':id')
+  @Get(':slug')
   async getById(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('slug') slug: string,
     @Query('lang', ParseIntPipe) langId: number,
     @Token(PayloadFromTokenPipe) tokenPayload: TokenPayloadDto | null,
   ) {
-    const place = await this.placesService.findOneById(
-      id,
+    const place = await this.placesService.findOneBySlug(
+      slug,
       langId,
       tokenPayload,
     );
@@ -159,11 +171,172 @@ export class PlacesController {
     description: 'The ID of the place',
   })
   @Auth()
-  @Put('likes/:id')
+  @Put(':id/likes')
   async changeLike(
     @Param('id', ParseIntPipe) id: number,
     @TokenPayload() tokenPayload: TokenPayloadDto,
   ) {
     return await this.placesService.changeLike(tokenPayload.id, id);
+  }
+
+  @ApiOperation({ summary: 'Get comments' })
+  @ApiBearerAuth('access-token')
+  @ApiOkResponse({
+    description: 'OK',
+    type: CommentDto,
+    isArray: true,
+  })
+  @ApiParam({
+    name: 'id',
+    type: Number,
+    description: 'The ID of the place',
+  })
+  @UseInterceptors(ClassSerializerInterceptor)
+  @Get(':id/comments')
+  async getAllComments(
+    @Param('id', ParseIntPipe) id: number,
+    @Token(PayloadFromTokenPipe) tokenPayload: TokenPayloadDto | null,
+  ) {
+    const comments = await this.commentsService.findAllPlaceComments(
+      id,
+      tokenPayload?.id,
+    );
+    return comments.map((c) => new CommentDto(c));
+  }
+
+  @ApiOperation({ summary: 'Create comment' })
+  @ApiOkResponse({
+    description: 'OK',
+    type: CommentDto,
+  })
+  @ApiParam({
+    name: 'id',
+    type: Number,
+    description: 'The ID of the place',
+  })
+  @UseInterceptors(ClassSerializerInterceptor)
+  @Auth()
+  @Post(':id/comments')
+  async createComment(
+    @Param('id', ParseIntPipe) id: number,
+    @TokenPayload() tokenPayload: TokenPayloadDto,
+    @Body() createCommentDto: CreateCommentDto,
+  ) {
+    const comment = await this.commentsService.createPlaceComment(
+      id,
+      tokenPayload.id,
+      createCommentDto,
+    );
+    return new CommentDto(comment);
+  }
+
+  @ApiOperation({ summary: 'Update your comment' })
+  @ApiOkResponse({
+    description: 'OK',
+    type: CommentDto,
+  })
+  @ApiForbiddenResponse({
+    type: ForbiddenException,
+  })
+  @ApiParam({
+    name: 'commentId',
+    type: Number,
+    description: 'The ID of the comment',
+  })
+  @UseInterceptors(ClassSerializerInterceptor)
+  @Auth()
+  @Put('comments/:commentId')
+  async updateComment(
+    @Param('commentId', ParseIntPipe) commentId: number,
+    @TokenPayload() tokenPayload: TokenPayloadDto,
+    @Body() updateCommentDto: UpdateCommentDto,
+  ) {
+    const userIsCommentOwner = await this.commentsService.checkCanManage(
+      tokenPayload.id,
+      commentId,
+    );
+    if (!userIsCommentOwner)
+      throw new ForbiddenException({ message: 'Access forbidden' });
+    const comment = await this.commentsService.updatePlaceComment(
+      commentId,
+      updateCommentDto,
+    );
+    return new CommentDto(comment);
+  }
+
+  @ApiOperation({ summary: 'Administration - Update comment' })
+  @ApiOkResponse({
+    description: 'OK',
+    type: CommentDto,
+  })
+  @ApiParam({
+    name: 'commentId',
+    type: Number,
+    description: 'The ID of the comment',
+  })
+  @UseInterceptors(ClassSerializerInterceptor)
+  @Auth(RoleNamesEnum.OWNER, RoleNamesEnum.ADMIN)
+  @Put('comments/:commentId/administration')
+  async administrationUpdateComment(
+    @Param('commentId', ParseIntPipe) commentId: number,
+    @Body() updateCommentDto: UpdateCommentDto,
+  ) {
+    const comment = await this.commentsService.updatePlaceComment(
+      commentId,
+      updateCommentDto,
+    );
+    return new CommentDto(comment);
+  }
+
+  @ApiOperation({ summary: 'Delete your comment' })
+  @ApiOkResponse({
+    description: 'OK',
+  })
+  @ApiForbiddenResponse({
+    type: ForbiddenException,
+  })
+  @ApiBadRequestResponse({
+    type: BadRequestException,
+  })
+  @ApiParam({
+    name: 'commentId',
+    type: Number,
+    description: 'The ID of the comment',
+  })
+  @Auth()
+  @Delete('comments/:commentId')
+  async deleteComment(
+    @Param('commentId', ParseIntPipe) commentId: number,
+    @TokenPayload() tokenPayload: TokenPayloadDto,
+  ) {
+    const userIsCommentOwner = await this.commentsService.checkCanManage(
+      tokenPayload.id,
+      commentId,
+    );
+    if (!userIsCommentOwner)
+      throw new ForbiddenException({ message: 'Access forbidden' });
+    await this.commentsService.deleteComment(commentId);
+    return;
+  }
+
+  @ApiOperation({ summary: 'Administration - Delete comment' })
+  @ApiOkResponse({
+    description: 'OK',
+  })
+  @ApiBadRequestResponse({
+    type: BadRequestException,
+  })
+  @ApiParam({
+    name: 'commentId',
+    type: Number,
+    description: 'The ID of the comment',
+  })
+  @Auth(RoleNamesEnum.OWNER, RoleNamesEnum.ADMIN)
+  @Delete('comments/:commentId/administration')
+  async administrationDeleteComment(
+    @Param('commentId', ParseIntPipe) commentId: number,
+  ) {
+    await this.commentsService.deleteComment(commentId);
+    return;
   }
 }

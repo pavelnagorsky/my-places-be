@@ -103,7 +103,20 @@ export class PlacesService {
     return placeCategories ?? [];
   }
 
+  private async validateSlugExists(slug: string) {
+    return this.placesRepository.exist({
+      where: {
+        slug: Equal(slug),
+      },
+    });
+  }
+
   async create(langId: number, author: User, createPlaceDto: CreatePlaceDto) {
+    const slugExists = await this.validateSlugExists(createPlaceDto.slug);
+    if (slugExists)
+      throw new BadRequestException({
+        message: `Slug ${createPlaceDto.slug} already exists!`,
+      });
     const placeType = await this.validatePlaceType(createPlaceDto);
     const placeCategories = await this.validatePlaceCategories(createPlaceDto);
 
@@ -114,6 +127,7 @@ export class PlacesService {
     const translations = await this.createTranslations(langId, createPlaceDto);
 
     const place = this.placesRepository.create();
+    place.slug = createPlaceDto.slug;
     place.title = translations.titleTranslation.textId;
     place.description = translations.descriptionTranslation.textId;
     place.address = translations.addressTranslation.textId;
@@ -209,14 +223,14 @@ export class PlacesService {
     });
   }
 
-  async findOneById(
-    id: number,
+  async findOneBySlug(
+    slug: string,
     langId: number,
     tokenPayload: TokenPayloadDto | null = null,
   ) {
     const place = await this.placesRepository
       .createQueryBuilder('place')
-      .where('place.id = :id', { id })
+      .where('place.slug = :slug', { slug })
       .leftJoinAndSelect('place.categories', 'categories')
       .leftJoinAndSelect('place.type', 'type')
       .leftJoinAndSelect('place.images', 'image')
@@ -374,6 +388,7 @@ export class PlacesService {
 
       await this.placesRepository.save({
         id: placeId,
+        slug: updatePlaceDto.slug,
         images: placeImages,
         title: translations.titleTranslation.textId,
         description: translations.descriptionTranslation.textId,

@@ -17,6 +17,9 @@ export class UserDto {
   @ApiProperty({ title: 'Email', type: String, default: 'johndoe@gmail.com' })
   email: string;
 
+  @ApiProperty({ title: 'Is email confirmed', type: Boolean })
+  isEmailConfirmed: boolean;
+
   @Exclude()
   password: string;
 

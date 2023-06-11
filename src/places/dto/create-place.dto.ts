@@ -1,6 +1,9 @@
 import { ApiProperty } from '@nestjs/swagger';
 
 export class CreatePlaceDto {
+  @ApiProperty({ type: String, description: 'Place url path' })
+  slug: string;
+
   @ApiProperty({ type: String, description: 'Place title' })
   title: string;
 

@@ -26,6 +26,16 @@ export class UsersService {
     return await this.usersRepository.save(user);
   }
 
+  async confirmEmail(userId: number) {
+    await this.usersRepository
+      .createQueryBuilder('user')
+      .update()
+      .set({ isEmailConfirmed: true })
+      .where('id = :id', { id: userId })
+      .execute();
+    return;
+  }
+
   async getUserByEmail(email: string) {
     return await this.usersRepository.findOne({
       relations: {

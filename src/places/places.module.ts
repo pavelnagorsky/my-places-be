@@ -8,12 +8,14 @@ import { PlaceType } from '../place-types/entities/place-type.entity';
 import { PlaceCategory } from '../place-categories/entities/place-category.entity';
 import { ImagesModule } from '../images/images.module';
 import { Like } from './entities/like.entity';
+import { CommentsModule } from '../comments/comments.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([Place, PlaceType, PlaceCategory, Like]),
     ImagesModule,
     TranslationsModule,
+    CommentsModule,
   ],
   controllers: [PlacesController],
   providers: [PlacesService],

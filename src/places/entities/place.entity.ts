@@ -6,13 +6,14 @@ import {
   OneToMany,
   ManyToMany,
   JoinTable,
+  Index,
 } from 'typeorm';
 import { User } from '../../users/entities/user.entity';
 import { PlaceType } from '../../place-types/entities/place-type.entity';
 import { Admin } from '../../entities/admin.entity';
 import { Image } from '../../images/entities/image.entity';
 import { Like } from './like.entity';
-import { Comment } from '../../entities/comment.entity';
+import { Comment } from '../../comments/entities/comment.entity';
 import { PlaceCategory } from '../../place-categories/entities/place-category.entity';
 
 @Entity()
@@ -20,16 +21,20 @@ export class Place {
   @PrimaryGeneratedColumn()
   id: number;
 
+  @Index({ unique: true })
+  @Column({ unique: true })
+  slug: string;
+
   @Column({ type: 'int', unique: true })
   title: number;
 
   @Column({ type: 'int', unique: true })
   description: number;
 
-  @OneToMany(() => Image, (image) => image.place)
+  @OneToMany(() => Image, (image) => image.place, { cascade: true })
   images: Image[];
 
-  @OneToMany(() => Comment, (comment) => comment.place)
+  @OneToMany(() => Comment, (comment) => comment.place, { cascade: true })
   comments: Comment[];
 
   @Column({ type: 'int', unique: true })
@@ -66,7 +71,7 @@ export class Place {
   @Column({ default: 0 })
   viewsCount: number;
 
-  @OneToMany(() => Like, (like) => like.place)
+  @OneToMany(() => Like, (like) => like.place, { cascade: true })
   likes: Like[];
 
   @Column({ default: true })

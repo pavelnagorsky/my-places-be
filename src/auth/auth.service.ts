@@ -40,6 +40,10 @@ export class AuthService {
       throw new UnauthorizedException({
         message: 'No users with this email found',
       });
+    if (!user.isEmailConfirmed)
+      throw new UnauthorizedException({
+        message: 'Email is not confirmed',
+      });
     const passwordEquals = await bcrypt.compare(
       loginDto.password,
       user.password,

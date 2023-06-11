@@ -12,7 +12,7 @@ import {
 import { Place } from '../../places/entities/place.entity';
 import { Admin } from '../../entities/admin.entity';
 import { Like } from '../../places/entities/like.entity';
-import { Comment } from '../../entities/comment.entity';
+import { Comment } from '../../comments/entities/comment.entity';
 import { Role } from '../../roles/entities/role.entity';
 import { Image } from '../../images/entities/image.entity';
 
@@ -29,6 +29,9 @@ export class User {
 
   @Column({ type: 'varchar', length: 30 })
   email: string;
+
+  @Column({ default: false })
+  isEmailConfirmed: boolean;
 
   @Column({ type: 'varchar' })
   password: string;
