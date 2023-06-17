@@ -13,6 +13,7 @@ import {
 import { PlaceTypesService } from './place-types.service';
 import { CreatePlaceTypeDto } from './dto/create-place-type.dto';
 import {
+  ApiBadRequestResponse,
   ApiBody,
   ApiNotFoundResponse,
   ApiOkResponse,
@@ -22,6 +23,7 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { PlaceTypeDto } from './dto/place-type.dto';
+import { ValidationExceptionDto } from '../shared/validation/validation-exception.dto';
 
 @ApiTags('Place types')
 @Controller('placeTypes')
@@ -32,6 +34,10 @@ export class PlaceTypesController {
   @ApiOkResponse({
     description: 'OK',
     type: PlaceTypeDto,
+  })
+  @ApiBadRequestResponse({
+    description: 'Validation failed',
+    type: ValidationExceptionDto,
   })
   @ApiQuery({
     name: 'lang',

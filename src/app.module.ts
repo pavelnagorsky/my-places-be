@@ -1,6 +1,5 @@
 import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
-import { AppService } from './app.service';
 import { PlacesModule } from './places/places.module';
 import { ConfigModule } from '@nestjs/config';
 import configuration from './config/configuration';
@@ -14,7 +13,6 @@ import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
 import { RolesModule } from './roles/roles.module';
 import { MailingModule } from './mailing/mailing.module';
-import { MailingService } from './mailing/mailing.service';
 import { PlaceCategoriesModule } from './place-categories/place-categories.module';
 import { CommentsModule } from './comments/comments.module';
 
@@ -39,6 +37,5 @@ import { CommentsModule } from './comments/comments.module';
     CommentsModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
 })
 export class AppModule {}

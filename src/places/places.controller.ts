@@ -43,6 +43,7 @@ import { CommentDto } from '../comments/dto/comment.dto';
 import { CreateCommentDto } from '../comments/dto/create-comment.dto';
 import { UpdateCommentDto } from '../comments/dto/update-comment.dto';
 import { RoleNamesEnum } from '../roles/enums/role-names.enum';
+import { PlaceSlugDto } from './dto/place-slug.dto';
 
 @ApiTags('Places')
 @Controller('/places')
@@ -91,6 +92,18 @@ export class PlacesController {
   async getAll(@Query('lang', ParseIntPipe) langId: number) {
     const places = await this.placesService.findAll(langId);
     return places.map((p) => new SearchPlaceDto(p));
+  }
+
+  @ApiOperation({ summary: 'Get all places slugs' })
+  @ApiOkResponse({
+    description: 'OK',
+    type: PlaceSlugDto,
+    isArray: true,
+  })
+  @Get('slugs')
+  async getPlacesSlugs() {
+    const slugs = await this.placesService.getPlacesSlugs();
+    return slugs;
   }
 
   @ApiOperation({ summary: 'Get place by slug and language id' })

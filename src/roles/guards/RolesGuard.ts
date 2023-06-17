@@ -6,7 +6,7 @@ import {
   Logger,
   UnauthorizedException,
 } from '@nestjs/common';
-import { RequestWithTokenPayload } from '../../types';
+import { RequestWithTokenPayload } from '../../shared/types';
 import { ROLES_KEY } from '../decorators/roles.decorator';
 import { RoleNamesEnum } from '../enums/role-names.enum';
 

@@ -306,6 +306,13 @@ export class PlacesService {
     });
   }
 
+  async getPlacesSlugs() {
+    return this.placesRepository
+      .createQueryBuilder('place')
+      .select(['place.id', 'place.slug'])
+      .getMany();
+  }
+
   private createLike() {
     const like = this.likesRepository.create();
     like.place = new Place();
