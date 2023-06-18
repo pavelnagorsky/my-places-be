@@ -7,6 +7,7 @@ import { PlaceCategoryDto } from '../../place-categories/dto/place-category.dto'
 import { PlaceCategory } from '../../place-categories/entities/place-category.entity';
 import { Image } from '../../images/entities/image.entity';
 import { Translation } from '../../translations/entities/translation.entity';
+import { CoordinatesDto } from './coordinates.dto';
 
 export class SearchPlaceDto {
   @ApiProperty({ title: 'Place id', type: Number })
@@ -60,8 +61,12 @@ export class SearchPlaceDto {
   @Transform(({ value }: { value: Partial<Image> }) => value?.url ?? null)
   images: string;
 
-  @ApiProperty({ type: String, description: 'Place coordinates [lat;lng]' })
-  coordinates: string;
+  @ApiProperty({
+    type: CoordinatesDto,
+    description: 'Place coordinates [lat;lng]',
+  })
+  @Transform(({ value }: { value: string }) => new CoordinatesDto(value))
+  coordinates: CoordinatesDto;
 
   @ApiProperty({
     type: String,
