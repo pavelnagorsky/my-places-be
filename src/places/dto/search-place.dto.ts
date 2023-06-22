@@ -22,7 +22,10 @@ export class SearchPlaceDto {
   )
   title: string;
 
-  @Exclude()
+  @ApiProperty({ type: String, description: 'Place description' })
+  @Transform(
+    ({ value }: { value: Partial<Translation> }) => value?.text ?? null,
+  )
   description: string;
 
   @ApiProperty({ type: Number, description: 'Likes count' })

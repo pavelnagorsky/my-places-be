@@ -142,6 +142,8 @@ export class PlacesService {
     return { id: id };
   }
 
+  private filterByCoordinates() {}
+
   async findAll(langId: number) {
     return this.placesRepository
       .createQueryBuilder('place')
@@ -171,6 +173,13 @@ export class PlacesService {
         'translation',
         'type_t',
         'type.title = type_t.textId AND type_t.language = :langId',
+        { langId },
+      )
+      .leftJoinAndMapOne(
+        'place.description',
+        'translation',
+        'description_t',
+        'place.description = description_t.textId AND description_t.language = :langId',
         { langId },
       )
       .leftJoinAndMapOne(
