@@ -16,6 +16,7 @@ import { TokenPayloadDto } from '../auth/dto/token-payload.dto';
 import { Like } from './entities/like.entity';
 import { UpdatePlaceDto } from './dto/update-place.dto';
 import { Admin } from '../entities/admin.entity';
+import { CoordinatesDto } from './dto/coordinates.dto';
 
 @Injectable()
 export class PlacesService {
@@ -142,7 +143,25 @@ export class PlacesService {
     return { id: id };
   }
 
-  private filterByCoordinates() {}
+  private getLatLng(coordinatesString: string): CoordinatesDto {
+    return new CoordinatesDto(coordinatesString);
+  }
+
+  private filterByCoordinates(
+    placeCoordinates: string,
+    searchCoordinates: string,
+    radius: number,
+  ) {
+    const origin = this.getLatLng(placeCoordinates);
+    const search = this.getLatLng(searchCoordinates);
+    const RADIAN = 0.1988;
+    return (
+      origin.lat >= search.lat - 100 * RADIAN &&
+      origin.lat <= search.lat + (radius * RADIAN) / 2 &&
+      origin.lng >= search.lng - 100 * RADIAN &&
+      origin.lng <= search.lng + (radius * RADIAN) / 2
+    );
+  }
 
   async findAll(langId: number) {
     return this.placesRepository
