@@ -1,6 +1,7 @@
 import { Body, Controller, Post, UnauthorizedException } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import {
+  ApiBadRequestResponse,
   ApiBody,
   ApiOkResponse,
   ApiOperation,
@@ -10,6 +11,7 @@ import {
 import { CreateUserDto } from '../users/dto/create-user.dto';
 import { AuthDto } from './dto/auth.dto';
 import { LoginDto } from './dto/login.dto';
+import { ValidationExceptionDto } from '../shared/validation/validation-exception.dto';
 
 @ApiTags('Authentication')
 @Controller('auth')
@@ -18,8 +20,11 @@ export class AuthController {
 
   @ApiOperation({ summary: 'Register' })
   @ApiOkResponse({
-    description: 'token response',
-    type: AuthDto,
+    description: 'Ok',
+  })
+  @ApiBadRequestResponse({
+    description: 'Validation failed',
+    type: ValidationExceptionDto,
   })
   @ApiUnauthorizedResponse({
     description: 'User already exists',
@@ -30,7 +35,8 @@ export class AuthController {
   })
   @Post('/register')
   async create(@Body() createUserDto: CreateUserDto) {
-    return await this.authService.register(createUserDto);
+    await this.authService.register(createUserDto);
+    return;
   }
 
   @ApiOperation({ summary: 'Login' })
