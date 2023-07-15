@@ -255,6 +255,7 @@ export class PlacesService {
   }
 
   private countTotalPages(totalResults: number, resultsPerPage: number) {
+    if (totalResults === 0) return 0;
     if (resultsPerPage === 0)
       throw new BadRequestException({
         message: 'Results per page must be greater than 0',
