@@ -44,6 +44,9 @@ import { CreateCommentDto } from '../comments/dto/create-comment.dto';
 import { UpdateCommentDto } from '../comments/dto/update-comment.dto';
 import { RoleNamesEnum } from '../roles/enums/role-names.enum';
 import { PlaceSlugDto } from './dto/place-slug.dto';
+import { SearchResponseDto } from './dto/search-response.dto';
+import { SearchRequestDto } from './dto/search-request.dto';
+import { ValidationExceptionDto } from '../shared/validation/validation-exception.dto';
 
 @ApiTags('Places')
 @Controller('/places')
@@ -104,6 +107,40 @@ export class PlacesController {
   async getPlacesSlugs() {
     const slugs = await this.placesService.getPlacesSlugs();
     return slugs;
+  }
+
+  @ApiOperation({ summary: 'Search places' })
+  @ApiOkResponse({
+    description: 'OK',
+    type: SearchResponseDto,
+  })
+  @ApiBadRequestResponse({
+    description: 'Validation failed',
+    type: ValidationExceptionDto,
+  })
+  @ApiBody({
+    type: SearchRequestDto,
+  })
+  @ApiQuery({
+    name: 'lang',
+    type: Number,
+    description: 'The ID of the language',
+  })
+  @UseInterceptors(ClassSerializerInterceptor)
+  @Post('search')
+  async search(
+    @Query('lang', ParseIntPipe) langId: number,
+    @Body() searchDto: SearchRequestDto,
+  ): Promise<SearchResponseDto> {
+    const result = await this.placesService.search(langId, searchDto);
+    const mappedPlaces = result.places.map((p) => new SearchPlaceDto(p));
+    const response = new SearchResponseDto(
+      mappedPlaces,
+      result.currentPage,
+      result.totalPages,
+      result.totalResults,
+    );
+    return response;
   }
 
   @ApiOperation({ summary: 'Get place by slug and language id' })

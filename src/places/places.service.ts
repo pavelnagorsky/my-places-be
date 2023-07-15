@@ -1,11 +1,12 @@
 import {
   BadRequestException,
   Injectable,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Place } from './entities/place.entity';
-import { Equal, In, Repository } from 'typeorm';
+import { Equal, In, Repository, SelectQueryBuilder } from 'typeorm';
 import { CreatePlaceDto } from './dto/create-place.dto';
 import { TranslationsService } from '../translations/translations.service';
 import { PlaceType } from '../place-types/entities/place-type.entity';
@@ -17,9 +18,12 @@ import { Like } from './entities/like.entity';
 import { UpdatePlaceDto } from './dto/update-place.dto';
 import { Admin } from '../entities/admin.entity';
 import { CoordinatesDto } from './dto/coordinates.dto';
+import { SearchRequestDto } from './dto/search-request.dto';
+import { ISearchServiceResponse } from './interfaces';
 
 @Injectable()
 export class PlacesService {
+  private readonly logger = new Logger('Places service');
   constructor(
     @InjectRepository(Place)
     private placesRepository: Repository<Place>,
@@ -143,29 +147,45 @@ export class PlacesService {
     return { id: id };
   }
 
-  private getLatLng(coordinatesString: string): CoordinatesDto {
-    return new CoordinatesDto(coordinatesString);
-  }
+  // private getLatLng(coordinatesString: string): CoordinatesDto {
+  //   return new CoordinatesDto(coordinatesString);
+  // }
 
-  private filterByCoordinates(
-    placeCoordinates: string,
-    searchCoordinates: string,
-    radius: number,
-  ) {
-    const origin = this.getLatLng(placeCoordinates);
-    const search = this.getLatLng(searchCoordinates);
-    const RADIAN = 0.1988;
-    return (
-      origin.lat >= search.lat - 100 * RADIAN &&
-      origin.lat <= search.lat + (radius * RADIAN) / 2 &&
-      origin.lng >= search.lng - 100 * RADIAN &&
-      origin.lng <= search.lng + (radius * RADIAN) / 2
-    );
-  }
+  // private filterByCoordinates(
+  //   placeCoordinates: string,
+  //   searchCoordinates: string,
+  //   radius: number,
+  // ): boolean {
+  //   const origin = this.getLatLng(placeCoordinates);
+  //   const search = this.getLatLng(searchCoordinates);
+  //
+  //   const EarthRadius = 6371; // km
+  //   const originLatRadian = (origin.lat * Math.PI) / 180; // origin latitude in radians
+  //   const searchLatRadian = (search.lat * Math.PI) / 180; // search latitude in radians
+  //   const deltaLatRadian = ((search.lat - origin.lat) * Math.PI) / 180; // delta between latitudes radians
+  //   const deltaLngRadian = ((search.lng - origin.lng) * Math.PI) / 180; // delta between longitude radians
+  //
+  //   const a =
+  //     Math.sin(deltaLatRadian / 2) * Math.sin(deltaLatRadian / 2) +
+  //     Math.cos(originLatRadian) *
+  //       Math.cos(searchLatRadian) *
+  //       Math.sin(deltaLngRadian / 2) *
+  //       Math.sin(deltaLngRadian / 2);
+  //   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  //
+  //   const distance = EarthRadius * c; // in metres
+  //   this.logger.debug(
+  //     `distance in km between search radius: ${distance - radius}`,
+  //   );
+  //
+  //   return distance <= radius;
+  // }
 
-  async findAll(langId: number) {
-    return this.placesRepository
-      .createQueryBuilder('place')
+  private selectPlacesQuery(
+    qb: SelectQueryBuilder<Place>,
+    langId: number,
+  ): SelectQueryBuilder<Place> {
+    return qb
       .leftJoinAndSelect('place.categories', 'categories')
       .leftJoinAndSelect('place.type', 'type')
       .leftJoinAndMapOne(
@@ -226,8 +246,104 @@ export class PlacesService {
         'place.likesCount': 'DESC',
         'place.viewsCount': 'DESC',
         'place.createdAt': 'DESC',
-      })
-      .getMany();
+      });
+  }
+
+  async findAll(langId: number) {
+    const qb = this.placesRepository.createQueryBuilder('place');
+    return this.selectPlacesQuery(qb, langId).getMany();
+  }
+
+  private countTotalPages(totalResults: number, resultsPerPage: number) {
+    if (resultsPerPage === 0)
+      throw new BadRequestException({
+        message: 'Results per page must be greater than 0',
+      });
+    const defaultCount = 1;
+    return (
+      (totalResults - (totalResults % resultsPerPage)) / resultsPerPage ||
+      defaultCount
+    );
+  }
+
+  private readonly geolocationSQLQuery = `
+    geography::Point(
+      LEFT(place.coordinates, PATINDEX('%;%', place.coordinates) - 1), 
+      RIGHT(place.coordinates, LEN(place.coordinates) - PATINDEX('%;%', place.coordinates)), 
+      4326
+    ).STDistance(
+      geography::Point(
+        LEFT(:searchCoordinates, PATINDEX('%;%', :searchCoordinates) - 1), 
+        RIGHT(:searchCoordinates, LEN(:searchCoordinates) - PATINDEX('%;%', :searchCoordinates)), 
+        4326
+      )
+    ) 
+    <= :radius    
+  `;
+
+  async search(
+    langId: number,
+    searchDto: SearchRequestDto,
+  ): Promise<ISearchServiceResponse> {
+    try {
+      let totalResults = 0;
+      let totalPages = 0;
+      const limit = searchDto.itemsPerPage;
+      const skip = (searchDto.pageToReturn - 1) * limit;
+      const isSearchByTitle = searchDto.title?.length > 0;
+      // initial query builder to provide base sql request with all joins and mappings
+      const initialQb = this.placesRepository
+        .createQueryBuilder('place')
+        .skip(skip)
+        .take(limit);
+      const qb = this.selectPlacesQuery(initialQb, langId);
+      // if search is by place titles
+      if (isSearchByTitle) {
+        const resultQueryTitle = qb.where('title_t.text LIKE :title', {
+          title: `%${searchDto.title}%`,
+        });
+        totalResults = await resultQueryTitle.getCount();
+        totalPages = this.countTotalPages(totalResults, searchDto.itemsPerPage);
+        const places = await resultQueryTitle.getMany();
+        return {
+          places,
+          currentPage: searchDto.pageToReturn,
+          totalPages: totalPages,
+          totalResults: totalResults,
+        };
+      }
+      let resultQuery = qb;
+      // if there is place type filter with > 0 items
+      if (searchDto.typesIds && searchDto.typesIds.length > 0) {
+        resultQuery = resultQuery.where('type.id IN (:...typeIds)', {
+          typeIds: searchDto.typesIds,
+        });
+      }
+      // if there is search circle
+      if (searchDto.searchCoordinates) {
+        resultQuery = resultQuery.andWhere(this.geolocationSQLQuery, {
+          searchCoordinates: searchDto.searchCoordinates,
+          radius: searchDto.radius * 1000, // km to meters
+        });
+      }
+      totalResults = await resultQuery.getCount();
+      totalPages = this.countTotalPages(totalResults, searchDto.itemsPerPage);
+      const places = await resultQuery.getMany();
+      // console.log(
+      //   searchDto.searchCoordinates,
+      //   places[0]?.coordinates,
+      //   searchDto.radius * 1000,
+      // );
+      return {
+        places,
+        currentPage: searchDto.pageToReturn,
+        totalPages: totalPages,
+        totalResults: totalResults,
+      };
+    } catch (e) {
+      this.logger.error('Error occured while search request', e);
+      throw new BadRequestException({ message: 'Error occured' });
+    }
   }
 
   private async addView(placeId: number) {
