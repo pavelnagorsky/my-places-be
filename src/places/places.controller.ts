@@ -47,6 +47,7 @@ import { PlaceSlugDto } from './dto/place-slug.dto';
 import { SearchResponseDto } from './dto/search-response.dto';
 import { SearchRequestDto } from './dto/search-request.dto';
 import { ValidationExceptionDto } from '../shared/validation/validation-exception.dto';
+import { SelectPlaceDto } from './dto/select-place.dto';
 
 @ApiTags('Places')
 @Controller('/places')
@@ -107,6 +108,39 @@ export class PlacesController {
   async getPlacesSlugs() {
     const slugs = await this.placesService.getPlacesSlugs();
     return slugs;
+  }
+
+  @ApiOperation({ summary: 'Get places select' })
+  @ApiOkResponse({
+    description: 'OK',
+    type: SelectPlaceDto,
+    isArray: true,
+  })
+  @ApiQuery({
+    name: 'lang',
+    type: Number,
+    description: 'The ID of the language',
+  })
+  @ApiQuery({
+    name: 'search',
+    type: String,
+    required: false,
+    description: 'Search query by place title',
+  })
+  @UseInterceptors(ClassSerializerInterceptor)
+  @Auth()
+  @Get('select')
+  async getPlacesSelect(
+    @Query('lang', ParseIntPipe) langId: number,
+    @Query('search') search: string,
+    @TokenPayload() tokenPayload: TokenPayloadDto,
+  ) {
+    const places = await this.placesService.getPlacesSelect(
+      tokenPayload,
+      langId,
+      search?.trim ? search.trim() : '',
+    );
+    return places.map((p) => new SelectPlaceDto(p));
   }
 
   @ApiOperation({ summary: 'Search places' })

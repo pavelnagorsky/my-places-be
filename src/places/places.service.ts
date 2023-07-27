@@ -17,7 +17,6 @@ import { TokenPayloadDto } from '../auth/dto/token-payload.dto';
 import { Like } from './entities/like.entity';
 import { UpdatePlaceDto } from './dto/update-place.dto';
 import { Admin } from '../entities/admin.entity';
-import { CoordinatesDto } from './dto/coordinates.dto';
 import { SearchRequestDto } from './dto/search-request.dto';
 import { ISearchServiceResponse } from './interfaces';
 
@@ -265,6 +264,43 @@ export class PlacesService {
       (totalResults - (totalResults % resultsPerPage)) / resultsPerPage ||
       defaultCount
     );
+  }
+
+  private generateSelectBaseQuery(langId: number, search: string) {
+    let query = this.placesRepository
+      .createQueryBuilder('place')
+      .select(['place.title', 'place.id'])
+      .take(6)
+      .leftJoinAndMapOne(
+        'place.title',
+        'translation',
+        'title_t',
+        'place.title = title_t.textId AND title_t.language = :langId',
+        { langId },
+      );
+    if (search?.length > 0)
+      query = query.where('title_t.text LIKE :search', {
+        search: `${search}%`,
+      });
+    return query;
+  }
+
+  async getPlacesSelect(
+    tokenPayload: TokenPayloadDto,
+    langId: number,
+    search: string,
+  ) {
+    // select places on moderation, that belongs to user
+    const userPlaces = await this.generateSelectBaseQuery(langId, search)
+      .andWhere('place.author = :userId', { userId: tokenPayload.id })
+      .andWhere('place.moderation = :onModeration', { onModeration: true })
+      .getMany();
+    // select public places
+    const placesSearch = await this.generateSelectBaseQuery(langId, search)
+      .andWhere('place.moderation = :onModeration', { onModeration: true })
+      .getMany();
+
+    return userPlaces.concat(placesSearch);
   }
 
   private readonly geolocationSQLQuery = `
