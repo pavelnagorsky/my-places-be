@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { In, Repository } from 'typeorm';
+import { In, Repository, Equal } from 'typeorm';
 import { Image } from './entities/image.entity';
 import { StorageService } from '../storage/storage.service';
 import { User } from '../users/entities/user.entity';
@@ -24,6 +24,17 @@ export class ImagesService {
 
   async findAll() {
     return await this.imagesRepository.find();
+  }
+
+  async findByIdAndUserId(id: number, userId: number) {
+    return await this.imagesRepository.findOne({
+      where: {
+        id: Equal(id),
+        user: {
+          id: Equal(userId),
+        },
+      },
+    });
   }
 
   async updatePositions(imageIds: number[]): Promise<Image[]> {

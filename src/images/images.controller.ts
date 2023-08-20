@@ -9,6 +9,7 @@ import {
   ParseIntPipe,
   Post,
   UploadedFile,
+  UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
 import { ImagesService } from './images.service';
@@ -27,7 +28,8 @@ import { ImageDto } from './dto/image.dto';
 import { Auth } from '../auth/decorators/auth.decorator';
 import { TokenPayload } from '../auth/decorators/token-payload.decorator';
 import { TokenPayloadDto } from '../auth/dto/token-payload.dto';
-import { RoleNamesEnum } from '../roles/enums/role-names.enum';
+import { DeleteImageGuard } from './guards/delete-image.guard';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 
 @ApiTags('Images')
 @Controller('images')
@@ -88,7 +90,7 @@ export class ImagesController {
     name: 'id',
     description: 'image id',
   })
-  @Auth(RoleNamesEnum.OWNER, RoleNamesEnum.ADMIN)
+  @UseGuards(JwtAuthGuard, DeleteImageGuard)
   @Delete(':id')
   async remove(@Param('id', ParseIntPipe) id: number) {
     return await this.imagesService.remove(id);

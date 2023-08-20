@@ -8,6 +8,7 @@ import { PlaceCategory } from '../../place-categories/entities/place-category.en
 import { Image } from '../../images/entities/image.entity';
 import { Translation } from '../../translations/entities/translation.entity';
 import { CoordinatesDto } from './coordinates.dto';
+import { PlaceStatusesEnum } from '../enums/place-statuses.enum';
 
 export class SearchPlaceDto {
   @ApiProperty({ title: 'Place id', type: Number })
@@ -92,7 +93,7 @@ export class SearchPlaceDto {
   advEndDate: Date | null;
 
   @Exclude()
-  moderation: boolean;
+  status: PlaceStatusesEnum;
 
   @ApiProperty({
     type: Date,

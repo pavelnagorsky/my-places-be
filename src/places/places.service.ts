@@ -19,6 +19,7 @@ import { UpdatePlaceDto } from './dto/update-place.dto';
 import { Admin } from '../entities/admin.entity';
 import { SearchRequestDto } from './dto/search-request.dto';
 import { ISearchServiceResponse } from './interfaces';
+import { PlaceStatusesEnum } from './enums/place-statuses.enum';
 
 @Injectable()
 export class PlacesService {
@@ -293,14 +294,22 @@ export class PlacesService {
     // select places on moderation, that belongs to user
     const userPlaces = await this.generateSelectBaseQuery(langId, search)
       .andWhere('place.author = :userId', { userId: tokenPayload.id })
-      .andWhere('place.moderation = :onModeration', { onModeration: true })
+      .andWhere('place.status = :onModeration', {
+        onModeration: PlaceStatusesEnum.MODERATION,
+      })
       .getMany();
     // select public places
     const placesSearch = await this.generateSelectBaseQuery(langId, search)
-      .andWhere('place.moderation = :onModeration', { onModeration: true })
+      .andWhere('place.status = :onModeration', {
+        onModeration: PlaceStatusesEnum.MODERATION,
+      })
       .getMany();
 
-    return userPlaces.concat(placesSearch);
+    const filteredSearchPlaces = placesSearch.filter(
+      (pSearch) => !userPlaces.map((pUser) => pUser.id).includes(pSearch.id),
+    );
+
+    return userPlaces.concat(filteredSearchPlaces);
   }
 
   private readonly geolocationSQLQuery = `
@@ -585,7 +594,9 @@ export class PlacesService {
         coordinates: updatePlaceDto.coordinates,
         categories: placeCategories,
         website: updatePlaceDto.website,
-        moderation: !admin,
+        status: admin
+          ? PlaceStatusesEnum.APPROVED
+          : PlaceStatusesEnum.MODERATION,
         admin: admin,
       });
 

@@ -15,6 +15,7 @@ import { Image } from '../../images/entities/image.entity';
 import { Like } from './like.entity';
 import { Comment } from '../../comments/entities/comment.entity';
 import { PlaceCategory } from '../../place-categories/entities/place-category.entity';
+import { PlaceStatusesEnum } from '../enums/place-statuses.enum';
 
 @Entity()
 export class Place {
@@ -74,8 +75,8 @@ export class Place {
   @OneToMany(() => Like, (like) => like.place, { cascade: true })
   likes: Like[];
 
-  @Column({ default: true })
-  moderation: boolean;
+  @Column({ default: PlaceStatusesEnum.MODERATION })
+  status: PlaceStatusesEnum;
 
   @Column({ default: () => 'CURRENT_TIMESTAMP' })
   createdAt: Date;

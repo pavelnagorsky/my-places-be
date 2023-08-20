@@ -8,6 +8,7 @@ import { PlaceCategory } from '../../place-categories/entities/place-category.en
 import { Image } from '../../images/entities/image.entity';
 import { Place } from '../entities/place.entity';
 import { Like } from '../entities/like.entity';
+import { PlaceStatusesEnum } from '../enums/place-statuses.enum';
 
 export class PlaceDto {
   @ApiProperty({ title: 'Place id', type: Number })
@@ -99,7 +100,7 @@ export class PlaceDto {
   advEndDate: Date | null;
 
   @Exclude()
-  moderation: boolean;
+  status: PlaceStatusesEnum;
 
   @ApiProperty({
     type: Date,
