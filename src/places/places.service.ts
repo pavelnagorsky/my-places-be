@@ -558,6 +558,14 @@ export class PlacesService {
     }
   }
 
+  async findSlugExist(slug: string) {
+    return await this.placesRepository.exist({
+      where: {
+        slug: Equal(slug),
+      },
+    });
+  }
+
   async updatePlace(
     placeId: number,
     langId: number,

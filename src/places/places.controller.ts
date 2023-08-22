@@ -48,6 +48,7 @@ import { SearchResponseDto } from './dto/search-response.dto';
 import { SearchRequestDto } from './dto/search-request.dto';
 import { ValidationExceptionDto } from '../shared/validation/validation-exception.dto';
 import { SelectPlaceDto } from './dto/select-place.dto';
+import { CreateSlugDto } from './dto/create-slug.dto';
 
 @ApiTags('Places')
 @Controller('/places')
@@ -108,6 +109,25 @@ export class PlacesController {
   async getPlacesSlugs() {
     const slugs = await this.placesService.getPlacesSlugs();
     return slugs;
+  }
+
+  @ApiOperation({ summary: 'Validate place slug' })
+  @ApiOkResponse({
+    description: 'OK',
+  })
+  @ApiBody({
+    type: CreateSlugDto,
+  })
+  @Post('slugs/validate')
+  async checkSlugValidity(@Body() createSlugDto: CreateSlugDto) {
+    const slugExists = await this.placesService.findSlugExist(
+      createSlugDto.slug,
+    );
+    if (slugExists)
+      throw new BadRequestException({
+        message: 'slug already exists',
+      });
+    return;
   }
 
   @ApiOperation({ summary: 'Get places select' })
