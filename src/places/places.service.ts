@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Place } from './entities/place.entity';
-import { Equal, In, Repository, SelectQueryBuilder } from 'typeorm';
+import { Equal, In, Not, Repository, SelectQueryBuilder } from 'typeorm';
 import { CreatePlaceDto } from './dto/create-place.dto';
 import { TranslationsService } from '../translations/translations.service';
 import { PlaceType } from '../place-types/entities/place-type.entity';
@@ -20,6 +20,7 @@ import { Admin } from '../entities/admin.entity';
 import { SearchRequestDto } from './dto/search-request.dto';
 import { ISearchServiceResponse } from './interfaces';
 import { PlaceStatusesEnum } from './enums/place-statuses.enum';
+import { CreateSlugDto } from './dto/create-slug.dto';
 
 @Injectable()
 export class PlacesService {
@@ -558,10 +559,11 @@ export class PlacesService {
     }
   }
 
-  async findSlugExist(slug: string) {
+  async validateSlug(createSlugDto: CreateSlugDto) {
     return await this.placesRepository.exist({
       where: {
-        slug: Equal(slug),
+        slug: Equal(createSlugDto.slug),
+        id: createSlugDto.id ? Not(createSlugDto.id) : undefined,
       },
     });
   }

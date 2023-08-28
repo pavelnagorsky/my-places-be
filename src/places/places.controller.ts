@@ -120,9 +120,7 @@ export class PlacesController {
   })
   @Post('slugs/validate')
   async checkSlugValidity(@Body() createSlugDto: CreateSlugDto) {
-    const slugExists = await this.placesService.findSlugExist(
-      createSlugDto.slug,
-    );
+    const slugExists = await this.placesService.validateSlug(createSlugDto);
     if (slugExists)
       throw new BadRequestException({
         message: 'slug already exists',
