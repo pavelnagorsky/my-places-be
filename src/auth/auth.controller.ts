@@ -44,6 +44,10 @@ export class AuthController {
     description: 'token response',
     type: AuthDto,
   })
+  @ApiBadRequestResponse({
+    description: 'Validation failed',
+    type: ValidationExceptionDto,
+  })
   @ApiUnauthorizedResponse({
     description: 'Invalid credentials',
     type: UnauthorizedException,

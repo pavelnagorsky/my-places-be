@@ -7,6 +7,7 @@ import { User } from '../users/entities/user.entity';
 import { LoginDto } from './dto/login.dto';
 import { TokenPayloadDto } from './dto/token-payload.dto';
 import { MailingService } from '../mailing/mailing.service';
+import LoginErrorEnum from './enums/login-error.enum';
 
 @Injectable()
 export class AuthService {
@@ -39,17 +40,22 @@ export class AuthService {
     if (!user)
       throw new UnauthorizedException({
         message: 'No users with this email found',
+        loginError: LoginErrorEnum.INVALID_DATA,
       });
     if (!user.isEmailConfirmed)
       throw new UnauthorizedException({
         message: 'Email is not confirmed',
+        loginError: LoginErrorEnum.EMAIL_NOT_CONFIRMED,
       });
     const passwordEquals = await bcrypt.compare(
       loginDto.password,
       user.password,
     );
     if (!passwordEquals)
-      throw new UnauthorizedException({ message: 'Incorrect password' });
+      throw new UnauthorizedException({
+        message: 'Incorrect password',
+        loginError: LoginErrorEnum.INVALID_DATA,
+      });
     return user;
   }
 

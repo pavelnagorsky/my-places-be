@@ -63,6 +63,10 @@ export class PlacesController {
     description: 'OK',
     type: PickType(Place, ['id']),
   })
+  @ApiBadRequestResponse({
+    description: 'Validation failed',
+    type: ValidationExceptionDto,
+  })
   @ApiQuery({
     name: 'lang',
     type: Number,
@@ -114,6 +118,10 @@ export class PlacesController {
   @ApiOperation({ summary: 'Validate place slug' })
   @ApiOkResponse({
     description: 'OK',
+  })
+  @ApiBadRequestResponse({
+    description: 'Validation failed',
+    type: ValidationExceptionDto,
   })
   @ApiBody({
     type: CreateSlugDto,
@@ -231,6 +239,10 @@ export class PlacesController {
     description: 'OK',
     type: PickType(Place, ['id']),
   })
+  @ApiBadRequestResponse({
+    description: 'Validation failed',
+    type: ValidationExceptionDto,
+  })
   @ApiParam({
     name: 'id',
     type: Number,
@@ -311,6 +323,10 @@ export class PlacesController {
     description: 'OK',
     type: CommentDto,
   })
+  @ApiBadRequestResponse({
+    description: 'Validation failed',
+    type: ValidationExceptionDto,
+  })
   @ApiParam({
     name: 'id',
     type: Number,
@@ -336,6 +352,10 @@ export class PlacesController {
   @ApiOkResponse({
     description: 'OK',
     type: CommentDto,
+  })
+  @ApiBadRequestResponse({
+    description: 'Validation failed',
+    type: ValidationExceptionDto,
   })
   @ApiForbiddenResponse({
     type: ForbiddenException,
