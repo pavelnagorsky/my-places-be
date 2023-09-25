@@ -15,6 +15,8 @@ import { RolesModule } from './roles/roles.module';
 import { MailingModule } from './mailing/mailing.module';
 import { PlaceCategoriesModule } from './place-categories/place-categories.module';
 import { CommentsModule } from './comments/comments.module';
+import { ReviewsModule } from './reviews/reviews.module';
+import { LikesModule } from './likes/likes.module';
 
 @Module({
   imports: [
@@ -35,6 +37,8 @@ import { CommentsModule } from './comments/comments.module';
     MailingModule,
     PlaceCategoriesModule,
     CommentsModule,
+    ReviewsModule,
+    LikesModule,
   ],
   controllers: [AppController],
 })

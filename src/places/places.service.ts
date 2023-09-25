@@ -14,7 +14,7 @@ import { PlaceCategory } from '../place-categories/entities/place-category.entit
 import { ImagesService } from '../images/images.service';
 import { User } from '../users/entities/user.entity';
 import { TokenPayloadDto } from '../auth/dto/token-payload.dto';
-import { Like } from './entities/like.entity';
+import { Like } from '../likes/entities/like.entity';
 import { UpdatePlaceDto } from './dto/update-place.dto';
 import { Admin } from '../entities/admin.entity';
 import { SearchRequestDto } from './dto/search-request.dto';
@@ -28,8 +28,6 @@ export class PlacesService {
   constructor(
     @InjectRepository(Place)
     private placesRepository: Repository<Place>,
-    @InjectRepository(Like)
-    private likesRepository: Repository<Like>,
     @InjectRepository(PlaceType)
     private placeTypesRepository: Repository<PlaceType>,
     @InjectRepository(PlaceCategory)
@@ -402,10 +400,6 @@ export class PlacesService {
       .execute();
   }
 
-  private isLikedByUser(placeLikes: Like[], userId: number): boolean {
-    return placeLikes.findIndex((pl) => pl.user?.id === userId) !== -1;
-  }
-
   private async checkExist(placeId: number): Promise<boolean> {
     return this.placesRepository.exist({
       where: {
@@ -414,11 +408,7 @@ export class PlacesService {
     });
   }
 
-  async findOneBySlug(
-    slug: string,
-    langId: number,
-    tokenPayload: TokenPayloadDto | null = null,
-  ) {
+  async findOneBySlug(slug: string, langId: number) {
     const place = await this.placesRepository
       .createQueryBuilder('place')
       .where('place.slug = :slug', { slug })
@@ -478,12 +468,7 @@ export class PlacesService {
       .getOne();
     if (!place) throw new NotFoundException({ message: 'Place not found' });
     this.addView(place.id);
-    return {
-      ...place,
-      isLiked: Boolean(
-        tokenPayload?.id && this.isLikedByUser(place.likes, tokenPayload.id),
-      ),
-    };
+    return place;
   }
 
   async checkUserRelation(userId: number, placeId: number) {
@@ -504,61 +489,6 @@ export class PlacesService {
       .getMany();
   }
 
-  private createLike() {
-    const like = this.likesRepository.create();
-    like.place = new Place();
-    like.user = new User();
-    return like;
-  }
-
-  async changeLike(userId: number, placeId: number) {
-    const place = await this.placesRepository.findOne({
-      where: { id: Equal(placeId) },
-      relations: {
-        likes: true,
-      },
-      select: {
-        id: true,
-        likes: true,
-        likesCount: true,
-      },
-    });
-    if (!place) throw new NotFoundException({ message: 'Place not found' });
-    const likeExists = await this.likesRepository.exist({
-      where: {
-        user: {
-          id: Equal(userId),
-        },
-        place: {
-          id: Equal(placeId),
-        },
-      },
-    });
-    if (likeExists) {
-      place.likesCount = --place.likesCount;
-      await this.placesRepository.save(place);
-      await this.likesRepository.delete({
-        place: {
-          id: Equal(placeId),
-        },
-        user: {
-          id: Equal(userId),
-        },
-      });
-      await this.placesRepository.save(place);
-      return;
-    } else {
-      place.likesCount = ++place.likesCount;
-      const like = this.createLike();
-      like.place.id = placeId;
-      like.user.id = userId;
-      const savedLike = await this.likesRepository.save(like);
-      place.likes.push(savedLike);
-      await this.placesRepository.save(place);
-      return;
-    }
-  }
-
   async validateSlug(createSlugDto: CreateSlugDto) {
     return await this.placesRepository.exist({
       where: {
@@ -576,7 +506,8 @@ export class PlacesService {
   ) {
     try {
       const exist = await this.checkExist(placeId);
-      if (!exist) throw new BadRequestException({ message: 'Not exits' });
+      if (!exist)
+        throw new BadRequestException({ message: 'Place not exists' });
 
       const placeType = await this.validatePlaceType(updatePlaceDto);
       const placeCategories = await this.validatePlaceCategories(

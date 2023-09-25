@@ -12,10 +12,11 @@ import { User } from '../../users/entities/user.entity';
 import { PlaceType } from '../../place-types/entities/place-type.entity';
 import { Admin } from '../../entities/admin.entity';
 import { Image } from '../../images/entities/image.entity';
-import { Like } from './like.entity';
+import { Like } from '../../likes/entities/like.entity';
 import { Comment } from '../../comments/entities/comment.entity';
 import { PlaceCategory } from '../../place-categories/entities/place-category.entity';
 import { PlaceStatusesEnum } from '../enums/place-statuses.enum';
+import { Review } from '../../reviews/entities/review.entity';
 
 @Entity()
 export class Place {
@@ -35,14 +36,17 @@ export class Place {
   @OneToMany(() => Image, (image) => image.place, { cascade: true })
   images: Image[];
 
+  @OneToMany(() => Review, (review) => review.place)
+  reviews: Review[];
+
   @OneToMany(() => Comment, (comment) => comment.place, { cascade: true })
   comments: Comment[];
 
   @Column({ type: 'int', unique: true })
   address: number;
 
-  @Column({ nullable: true })
-  website: string;
+  @Column({ type: 'varchar', nullable: true })
+  website: string | null;
 
   @ManyToOne(() => PlaceType, (type) => type.places)
   type: PlaceType;

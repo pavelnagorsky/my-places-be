@@ -11,7 +11,7 @@ import {
 
 import { Place } from '../../places/entities/place.entity';
 import { Admin } from '../../entities/admin.entity';
-import { Like } from '../../places/entities/like.entity';
+import { Like } from '../../likes/entities/like.entity';
 import { Comment } from '../../comments/entities/comment.entity';
 import { Role } from '../../roles/entities/role.entity';
 import { Image } from '../../images/entities/image.entity';

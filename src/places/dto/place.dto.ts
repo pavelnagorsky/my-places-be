@@ -7,7 +7,7 @@ import { PlaceCategoryDto } from '../../place-categories/dto/place-category.dto'
 import { PlaceCategory } from '../../place-categories/entities/place-category.entity';
 import { Image } from '../../images/entities/image.entity';
 import { Place } from '../entities/place.entity';
-import { Like } from '../entities/like.entity';
+import { Like } from '../../likes/entities/like.entity';
 import { PlaceStatusesEnum } from '../enums/place-statuses.enum';
 
 export class PlaceDto {
@@ -47,9 +47,6 @@ export class PlaceDto {
   @ApiProperty({ type: Number, description: 'Views count' })
   viewsCount: number;
 
-  @ApiProperty({ type: Boolean, description: 'Is liked by user' })
-  isLiked: boolean;
-
   @ApiProperty({
     type: PlaceCategoryDto,
     description: 'Place categories',
@@ -68,7 +65,8 @@ export class PlaceDto {
 
   @ApiProperty({
     type: String,
-    description: 'Place image',
+    description: 'Place images',
+    isArray: true,
   })
   @Transform(
     ({ value }: { value: Partial<Image>[] }) =>
@@ -84,7 +82,7 @@ export class PlaceDto {
     description: 'Place website url',
     nullable: true,
   })
-  website?: string;
+  website: string | null;
 
   @ApiProperty({
     type: Boolean,

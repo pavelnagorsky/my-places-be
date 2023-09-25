@@ -9,6 +9,7 @@ import { Place } from '../../places/entities/place.entity';
 import { PlaceType } from '../../place-types/entities/place-type.entity';
 import { PlaceCategory } from '../../place-categories/entities/place-category.entity';
 import { User } from '../../users/entities/user.entity';
+import { Review } from '../../reviews/entities/review.entity';
 
 @Entity()
 export class Image {
@@ -26,6 +27,9 @@ export class Image {
 
   @ManyToOne(() => Place, (place) => place.images, { onDelete: 'CASCADE' })
   place: Place;
+
+  @ManyToOne(() => Review, (review) => review.images, { onDelete: 'CASCADE' })
+  review: Review;
 
   @ManyToOne(() => User, (user) => user.images)
   user: User;
