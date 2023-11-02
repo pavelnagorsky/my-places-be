@@ -9,6 +9,7 @@ import { Image } from '../../images/entities/image.entity';
 import { Place } from '../entities/place.entity';
 import { Like } from '../../likes/entities/like.entity';
 import { PlaceStatusesEnum } from '../enums/place-statuses.enum';
+import { CoordinatesDto } from './coordinates.dto';
 
 export class PlaceDto {
   @ApiProperty({ title: 'Place id', type: Number })
@@ -75,6 +76,7 @@ export class PlaceDto {
   images: string[];
 
   @ApiProperty({ type: String, description: 'Place coordinates [lat;lng]' })
+  @Transform(({ value }: { value: string }) => new CoordinatesDto(value))
   coordinates: string;
 
   @ApiProperty({

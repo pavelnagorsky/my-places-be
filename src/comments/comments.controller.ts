@@ -51,7 +51,7 @@ export class CommentsController {
     description: 'The ID of the place',
   })
   @UseInterceptors(ClassSerializerInterceptor)
-  @Get('places/:id/comments')
+  @Get('places/:id')
   async getAllComments(
     @Param('id', ParseIntPipe) id: number,
     @Token(PayloadFromTokenPipe) tokenPayload: TokenPayloadDto | null,
@@ -79,7 +79,7 @@ export class CommentsController {
   })
   @UseInterceptors(ClassSerializerInterceptor)
   @Auth()
-  @Post('places/:id/comments')
+  @Post('places/:id')
   async createComment(
     @Param('id', ParseIntPipe) id: number,
     @TokenPayload() tokenPayload: TokenPayloadDto,
@@ -112,7 +112,7 @@ export class CommentsController {
   })
   @UseInterceptors(ClassSerializerInterceptor)
   @Auth()
-  @Put(':commentId/places')
+  @Put(':commentId')
   async updateComment(
     @Param('commentId', ParseIntPipe) commentId: number,
     @TokenPayload() tokenPayload: TokenPayloadDto,
@@ -124,7 +124,7 @@ export class CommentsController {
     );
     if (!userIsCommentOwner)
       throw new ForbiddenException({ message: 'Access forbidden' });
-    const comment = await this.commentsService.updatePlaceComment(
+    const comment = await this.commentsService.updateComment(
       commentId,
       updateCommentDto,
     );
@@ -143,12 +143,12 @@ export class CommentsController {
   })
   @UseInterceptors(ClassSerializerInterceptor)
   @Auth(RoleNamesEnum.OWNER, RoleNamesEnum.ADMIN)
-  @Put(':commentId/places/administration')
+  @Put(':commentId/administration')
   async administrationUpdateComment(
     @Param('commentId', ParseIntPipe) commentId: number,
     @Body() updateCommentDto: UpdateCommentDto,
   ) {
-    const comment = await this.commentsService.updatePlaceComment(
+    const comment = await this.commentsService.updateComment(
       commentId,
       updateCommentDto,
     );
@@ -171,7 +171,7 @@ export class CommentsController {
     description: 'The ID of the comment',
   })
   @Auth()
-  @Delete(':commentId/places')
+  @Delete(':commentId')
   async deleteComment(
     @Param('commentId', ParseIntPipe) commentId: number,
     @TokenPayload() tokenPayload: TokenPayloadDto,
@@ -199,7 +199,7 @@ export class CommentsController {
     description: 'The ID of the comment',
   })
   @Auth(RoleNamesEnum.OWNER, RoleNamesEnum.ADMIN)
-  @Delete(':commentId/places/administration')
+  @Delete(':commentId/administration')
   async administrationDeleteComment(
     @Param('commentId', ParseIntPipe) commentId: number,
   ) {

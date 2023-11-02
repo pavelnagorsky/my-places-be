@@ -16,5 +16,6 @@ import { ImagesModule } from '../images/images.module';
   ],
   controllers: [PlacesController],
   providers: [PlacesService],
+  exports: [PlacesService],
 })
 export class PlacesModule {}

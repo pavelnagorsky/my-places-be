@@ -19,6 +19,7 @@ import {
   ApiBody,
   ApiOkResponse,
   ApiOperation,
+  ApiParam,
   ApiQuery,
   ApiTags,
   PickType,
@@ -30,6 +31,7 @@ import { TokenPayload } from '../auth/decorators/token-payload.decorator';
 import { UserFromTokenPipe } from '../auth/pipes/user-from-token.pipe';
 import { User } from '../users/entities/user.entity';
 import { ReviewDto } from './dto/review.dto';
+import { SearchResponseDto } from './dto/search-response.dto';
 
 @ApiTags('Reviews')
 @Controller('reviews')
@@ -61,6 +63,52 @@ export class ReviewsController {
     @Body() createReviewDto: CreateReviewDto,
   ) {
     return await this.reviewsService.create(createReviewDto, langId, user);
+  }
+
+  @ApiOperation({ summary: 'Get all reviews by place id' })
+  @ApiOkResponse({
+    description: 'OK',
+    type: SearchResponseDto,
+  })
+  @ApiParam({
+    name: 'placeId',
+    type: Number,
+    description: 'The ID of the place',
+  })
+  @ApiQuery({
+    name: 'lastIndex',
+    type: Number,
+    description: 'Last lazy loading index',
+  })
+  @ApiQuery({
+    name: 'itemsPerPage',
+    type: Number,
+    description: 'Items per page',
+  })
+  @ApiQuery({
+    name: 'lang',
+    type: Number,
+    description: 'The ID of the language',
+  })
+  @UseInterceptors(ClassSerializerInterceptor)
+  @Get(':placeId')
+  async findAllByPlace(
+    @Param('placeId', ParseIntPipe) placeId: number,
+    @Query('lastIndex', ParseIntPipe) lastIndex: number,
+    @Query('itemsPerPage', ParseIntPipe) itemsPerPage: number,
+    @Query('lang', ParseIntPipe) langId: number,
+  ) {
+    const data = await this.reviewsService.findAllByPlaceId(
+      placeId,
+      langId,
+      itemsPerPage,
+      lastIndex,
+    );
+    return new SearchResponseDto(
+      data.reviews.map((r) => new ReviewDto(r)),
+      data.hasMore,
+      data.totalCount,
+    );
   }
 
   @ApiOperation({ summary: 'Get all reviews by language id' })

@@ -17,6 +17,7 @@ import { PlaceCategoriesModule } from './place-categories/place-categories.modul
 import { CommentsModule } from './comments/comments.module';
 import { ReviewsModule } from './reviews/reviews.module';
 import { LikesModule } from './likes/likes.module';
+import { ReportsModule } from './reports/reports.module';
 
 @Module({
   imports: [
@@ -39,6 +40,7 @@ import { LikesModule } from './likes/likes.module';
     CommentsModule,
     ReviewsModule,
     LikesModule,
+    ReportsModule,
   ],
   controllers: [AppController],
 })

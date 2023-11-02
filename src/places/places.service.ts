@@ -242,9 +242,9 @@ export class PlacesService {
         { langId },
       )
       .orderBy({
+        'place.createdAt': 'DESC',
         'place.likesCount': 'DESC',
         'place.viewsCount': 'DESC',
-        'place.createdAt': 'DESC',
       });
   }
 
@@ -289,6 +289,7 @@ export class PlacesService {
     tokenPayload: TokenPayloadDto,
     langId: number,
     search: string,
+    placeId: number | null,
   ) {
     // select places on moderation, that belongs to user
     const userPlaces = await this.generateSelectBaseQuery(langId, search)
@@ -303,12 +304,35 @@ export class PlacesService {
         onModeration: PlaceStatusesEnum.MODERATION,
       })
       .getMany();
+    // select place by id
+    let placeById: Place | null = null;
+    if (placeId) {
+      placeById = await this.placesRepository
+        .createQueryBuilder('place')
+        .select(['place.title', 'place.id'])
+        .where('place.id = :placeId', { placeId })
+        .leftJoinAndMapOne(
+          'place.title',
+          'translation',
+          'title_t',
+          'place.title = title_t.textId AND title_t.language = :langId',
+          { langId },
+        )
+        .getOne();
+    }
 
+    const filteredUserPlaces = userPlaces.filter((p) => p.id !== placeId);
+    if (placeById) {
+      filteredUserPlaces.unshift(placeById);
+    }
     const filteredSearchPlaces = placesSearch.filter(
-      (pSearch) => !userPlaces.map((pUser) => pUser.id).includes(pSearch.id),
+      (pSearch) =>
+        !filteredUserPlaces.map((pUser) => pUser.id).includes(pSearch.id),
     );
 
-    return userPlaces.concat(filteredSearchPlaces);
+    const totalPlaces = filteredUserPlaces.concat(filteredSearchPlaces);
+
+    return totalPlaces;
   }
 
   private readonly geolocationSQLQuery = `
@@ -400,7 +424,7 @@ export class PlacesService {
       .execute();
   }
 
-  private async checkExist(placeId: number): Promise<boolean> {
+  async checkExist(placeId: number): Promise<boolean> {
     return this.placesRepository.exist({
       where: {
         id: Equal(placeId),

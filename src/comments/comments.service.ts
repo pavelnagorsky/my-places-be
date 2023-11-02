@@ -40,6 +40,9 @@ export class CommentsService {
           id: Equal(placeId),
         },
       },
+      order: {
+        createdAt: 'desc',
+      },
       select: {
         user: {
           id: true,
@@ -90,10 +93,7 @@ export class CommentsService {
     return this.findOnePlaceComment(saved.id, true);
   }
 
-  async updatePlaceComment(
-    commentId: number,
-    updateCommentDto: UpdateCommentDto,
-  ) {
+  async updateComment(commentId: number, updateCommentDto: UpdateCommentDto) {
     const comment = await this.commentsRepository.findOne({
       where: { id: Equal(commentId) },
     });

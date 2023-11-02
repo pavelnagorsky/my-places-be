@@ -143,18 +143,27 @@ export class PlacesController {
     required: false,
     description: 'Search query by place title',
   })
+  @ApiQuery({
+    name: 'placeId',
+    type: String,
+    required: false,
+    description: 'Search query by place id',
+  })
   @UseInterceptors(ClassSerializerInterceptor)
   @Auth()
   @Get('select')
   async getPlacesSelect(
-    @Query('lang', ParseIntPipe) langId: number,
-    @Query('search') search: string,
     @TokenPayload() tokenPayload: TokenPayloadDto,
+    @Query('lang', ParseIntPipe) langId: number,
+    @Query('search') search?: string,
+    @Query('placeId') placeId?: string,
   ) {
+    const parsedPlaceId = typeof placeId === 'string' ? +placeId : null;
     const places = await this.placesService.getPlacesSelect(
       tokenPayload,
       langId,
       search?.trim ? search.trim() : '',
+      parsedPlaceId,
     );
     return places.map((p) => new SelectPlaceDto(p));
   }

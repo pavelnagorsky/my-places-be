@@ -17,6 +17,7 @@ import { Comment } from '../../comments/entities/comment.entity';
 import { PlaceCategory } from '../../place-categories/entities/place-category.entity';
 import { PlaceStatusesEnum } from '../enums/place-statuses.enum';
 import { Review } from '../../reviews/entities/review.entity';
+import { Report } from '../../reports/entities/report.entity';
 
 @Entity()
 export class Place {
@@ -41,6 +42,9 @@ export class Place {
 
   @OneToMany(() => Comment, (comment) => comment.place, { cascade: true })
   comments: Comment[];
+
+  @OneToMany(() => Report, (report) => report.place)
+  reports: Report[];
 
   @Column({ type: 'int', unique: true })
   address: number;

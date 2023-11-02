@@ -60,13 +60,14 @@ export class ReviewsService {
     };
   }
 
-  private selectPlacesQuery(
+  private selectReviewsQuery(
     qb: SelectQueryBuilder<Review>,
     langId: number,
   ): SelectQueryBuilder<Review> {
     return qb
       .leftJoinAndSelect('review.images', 'image')
       .addOrderBy('image.position')
+      .orderBy('review.createdAt', 'DESC')
       .leftJoinAndMapOne(
         'review.description',
         'translation',
@@ -80,6 +81,12 @@ export class ReviewsService {
         'title_t',
         'review.title = title_t.textId AND title_t.language = :langId',
         { langId },
+      )
+      .leftJoinAndMapOne(
+        'review.user',
+        'user',
+        'user',
+        'review.authorId = user.id',
       );
   }
 
@@ -110,7 +117,32 @@ export class ReviewsService {
 
   async findAll(langId: number) {
     const qb = this.reviewsRepository.createQueryBuilder('review');
-    return this.selectPlacesQuery(qb, langId).getMany();
+    return this.selectReviewsQuery(qb, langId).getMany();
+  }
+
+  async findAllByPlaceId(
+    placeId: number,
+    langId: number,
+    itemsPerPage: number,
+    lastIndex: number,
+  ) {
+    const qb = this.reviewsRepository
+      .createQueryBuilder('review')
+      .where('review.placeId = :placeId', { placeId });
+    const totalCount = await this.reviewsRepository
+      .createQueryBuilder('review')
+      .where('review.placeId = :placeId', { placeId })
+      .getCount();
+    const reviews = await this.selectReviewsQuery(qb, langId)
+      .skip(lastIndex)
+      .take(itemsPerPage)
+      .getMany();
+    const hasMore = totalCount > reviews.length + lastIndex;
+    return {
+      hasMore,
+      reviews,
+      totalCount,
+    };
   }
 
   findOne(id: number) {
