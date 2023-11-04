@@ -6,6 +6,14 @@ export class SearchRequestDto {
   @IsNumber({}, { each: true })
   typesIds: number[];
 
+  @ApiProperty({
+    description: 'place categories ids',
+    isArray: true,
+    type: Number,
+  })
+  @IsNumber({}, { each: true })
+  categoriesIds: number[];
+
   @ApiProperty({ description: 'place title' })
   @IsString()
   title: string;

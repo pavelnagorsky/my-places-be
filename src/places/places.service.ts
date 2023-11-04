@@ -384,9 +384,25 @@ export class PlacesService {
       let resultQuery = qb;
       // if there is place type filter with > 0 items
       if (searchDto.typesIds && searchDto.typesIds.length > 0) {
-        resultQuery = resultQuery.where('type.id IN (:...typeIds)', {
+        resultQuery = resultQuery.andWhere('type.id IN (:...typeIds)', {
           typeIds: searchDto.typesIds,
         });
+      }
+      // if there is place categories filter - check if at least one of them matches filter
+      if (searchDto.categoriesIds && searchDto.categoriesIds.length > 0) {
+        resultQuery = resultQuery.andWhere(
+          (qb) => `(${qb
+            .createQueryBuilder()
+            .select('COUNT(*)')
+            .from('place_categories_place_category', 'relationCategories')
+            .where('relationCategories.placeId = place.id')
+            .andWhere('relationCategories.placeCategoryId IN (:...categoryIds)')
+            .getSql()})
+            > 0`,
+          {
+            categoryIds: searchDto.categoriesIds,
+          },
+        );
       }
       // if there is search circle
       if (searchDto.searchCoordinates) {
@@ -397,6 +413,7 @@ export class PlacesService {
       }
       totalResults = await resultQuery.getCount();
       totalPages = this.countTotalPages(totalResults, searchDto.itemsPerPage);
+      // console.log(resultQuery.getSql());
       const places = await resultQuery.getMany();
       // console.log(
       //   searchDto.searchCoordinates,
