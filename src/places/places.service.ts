@@ -260,10 +260,7 @@ export class PlacesService {
         message: 'Results per page must be greater than 0',
       });
     const defaultCount = 1;
-    return (
-      (totalResults - (totalResults % resultsPerPage)) / resultsPerPage ||
-      defaultCount
-    );
+    return Math.ceil(totalResults / resultsPerPage) || defaultCount;
   }
 
   private generateSelectBaseQuery(langId: number, search: string) {

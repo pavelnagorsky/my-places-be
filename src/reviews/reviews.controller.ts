@@ -10,6 +10,7 @@ import {
   ParseIntPipe,
   UseInterceptors,
   ClassSerializerInterceptor,
+  NotFoundException,
 } from '@nestjs/common';
 import { ReviewsService } from './reviews.service';
 import { CreateReviewDto } from './dto/create-review.dto';
@@ -91,7 +92,7 @@ export class ReviewsController {
     description: 'The ID of the language',
   })
   @UseInterceptors(ClassSerializerInterceptor)
-  @Get(':placeId')
+  @Get('place/:placeId')
   async findAllByPlace(
     @Param('placeId', ParseIntPipe) placeId: number,
     @Query('lastIndex', ParseIntPipe) lastIndex: number,
@@ -129,9 +130,26 @@ export class ReviewsController {
     return reviews.map((r) => new ReviewDto(r));
   }
 
+  @ApiOperation({ summary: 'Get review by id and language id' })
+  @ApiOkResponse({
+    description: 'OK',
+    type: ReviewDto,
+  })
+  @ApiQuery({
+    name: 'lang',
+    type: Number,
+    description: 'The ID of the language',
+  })
+  @UseInterceptors(ClassSerializerInterceptor)
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.reviewsService.findOne(+id);
+  async findOne(
+    @Param('id', ParseIntPipe) id: number,
+    @Query('lang', ParseIntPipe) langId: number,
+  ) {
+    const review = await this.reviewsService.findOne(id, langId);
+    if (!review)
+      throw new NotFoundException({ message: 'Review was not found' });
+    return new ReviewDto(review);
   }
 
   @Patch(':id')

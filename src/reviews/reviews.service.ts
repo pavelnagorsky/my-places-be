@@ -145,8 +145,13 @@ export class ReviewsService {
     };
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} review`;
+  async findOne(id: number, langId: number) {
+    const qb = this.reviewsRepository.createQueryBuilder('review');
+    return this.selectReviewsQuery(qb, langId)
+      .where('review.id = :id', {
+        id: id,
+      })
+      .getOne();
   }
 
   update(id: number, updateReviewDto: UpdateReviewDto) {
