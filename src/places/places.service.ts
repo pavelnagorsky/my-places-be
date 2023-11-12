@@ -139,6 +139,7 @@ export class PlacesService {
     place.coordinates = createPlaceDto.coordinates;
     place.categories = placeCategories;
     place.images = placeImages;
+    place.advertisement = createPlaceDto.isCommercial;
     if (createPlaceDto.website) place.website = createPlaceDto.website;
     place.author = author;
 
@@ -540,7 +541,6 @@ export class PlacesService {
     placeId: number,
     langId: number,
     updatePlaceDto: UpdatePlaceDto,
-    admin?: Admin,
   ) {
     try {
       const exist = await this.checkExist(placeId);
@@ -573,10 +573,8 @@ export class PlacesService {
         coordinates: updatePlaceDto.coordinates,
         categories: placeCategories,
         website: updatePlaceDto.website,
-        status: admin
-          ? PlaceStatusesEnum.APPROVED
-          : PlaceStatusesEnum.MODERATION,
-        admin: admin,
+        status: PlaceStatusesEnum.MODERATION,
+        advertisement: updatePlaceDto.isCommercial,
       });
 
       return { id: placeId };

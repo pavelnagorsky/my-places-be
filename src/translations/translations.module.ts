@@ -7,7 +7,7 @@ import { TranslationsController } from './translations.controller';
 import { LanguagesModule } from '../languages/languages.module';
 
 @Module({
-  controllers: [TranslationsController],
+  //controllers: [TranslationsController],
   imports: [TypeOrmModule.forFeature([Translation, Language]), LanguagesModule],
   providers: [TranslationsService],
   exports: [TranslationsService],

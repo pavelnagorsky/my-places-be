@@ -34,9 +34,23 @@ export class Image {
   @ManyToOne(() => User, (user) => user.images)
   user: User;
 
-  @OneToOne(() => PlaceType, (placeType) => placeType.image)
+  @OneToOne(() => PlaceType, (placeType) => placeType.image, {
+    onDelete: 'CASCADE',
+  })
   placeType: PlaceType;
 
-  @OneToOne(() => PlaceCategory, (placeCategory) => placeCategory.image)
+  @OneToOne(() => PlaceType, (placeType) => placeType.image2, {
+    onDelete: 'CASCADE',
+  })
+  placeType2: PlaceType;
+
+  @OneToOne(() => PlaceCategory, (placeCategory) => placeCategory.image, {
+    onDelete: 'CASCADE',
+  })
   placeCategory: PlaceCategory;
+
+  @OneToOne(() => PlaceCategory, (placeCategory) => placeCategory.image2, {
+    onDelete: 'CASCADE',
+  })
+  placeCategory2: PlaceCategory;
 }

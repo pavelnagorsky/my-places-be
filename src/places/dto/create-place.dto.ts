@@ -30,6 +30,13 @@ export class CreatePlaceDto {
   })
   imagesIds: number[];
 
+  @ApiProperty({
+    type: Boolean,
+    default: false,
+    description: 'Is commercial place',
+  })
+  isCommercial: boolean;
+
   @ApiProperty({ type: String, description: 'Place coordinates [lat;lng]' })
   coordinates: string;
 

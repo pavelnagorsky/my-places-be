@@ -6,6 +6,7 @@ import {
   PrimaryColumn,
   OneToOne,
   JoinColumn,
+  Index,
 } from 'typeorm';
 import { Place } from '../../places/entities/place.entity';
 import { Image } from '../../images/entities/image.entity';
@@ -15,15 +16,20 @@ export class PlaceType {
   @PrimaryGeneratedColumn()
   id: number;
 
+  @Index({ unique: true })
   @Column({ type: 'int', unique: true })
   title: number;
 
   @Column({ default: false })
   commercial: boolean;
 
-  @OneToOne(() => Image, (image) => image.id)
+  @OneToOne(() => Image, (image) => image.id, { cascade: true })
   @JoinColumn()
-  image: Image;
+  image: Image | null;
+
+  @OneToOne(() => Image, (image) => image.id, { cascade: true })
+  @JoinColumn()
+  image2: Image | null;
 
   @OneToMany(() => Place, (place) => place.type)
   places: Place[];

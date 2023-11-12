@@ -1,17 +1,22 @@
 import { ApiProperty } from '@nestjs/swagger';
 import {
+  IsArray,
   IsBoolean,
   IsNumber,
-  IsString,
-  MaxLength,
   ValidateIf,
+  ValidateNested,
 } from 'class-validator';
+import { PlaceTypeTranslationDto } from './place-type-translation.dto';
 
 export class CreatePlaceTypeDto {
-  @ApiProperty({ title: 'Place type title', type: String })
-  @IsString()
-  @MaxLength(100)
-  title: string;
+  @ApiProperty({
+    title: 'Place category title',
+    type: PlaceTypeTranslationDto,
+    isArray: true,
+  })
+  @IsArray()
+  @ValidateNested({ each: true })
+  titleTranslations: PlaceTypeTranslationDto[];
 
   @ApiProperty({
     title: 'Place type is commercial',
@@ -25,4 +30,9 @@ export class CreatePlaceTypeDto {
   @IsNumber()
   @ValidateIf((object, value) => Boolean(value))
   imageId?: number;
+
+  @ApiProperty({ title: 'Place type image 2', type: Number, required: false })
+  @IsNumber()
+  @ValidateIf((object, value) => Boolean(value))
+  imageId2?: number;
 }

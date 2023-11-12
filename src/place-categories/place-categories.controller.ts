@@ -1,18 +1,21 @@
 import {
-  Controller,
-  Get,
-  Post,
   Body,
-  Param,
-  Query,
-  ParseIntPipe,
-  UseInterceptors,
   ClassSerializerInterceptor,
+  Controller,
+  Delete,
+  Get,
   NotFoundException,
+  Param,
+  ParseIntPipe,
+  Post,
+  Put,
+  Query,
+  UseInterceptors,
 } from '@nestjs/common';
 import { PlaceCategoriesService } from './place-categories.service';
 import { CreatePlaceCategoryDto } from './dto/create-place-category.dto';
 import {
+  ApiBadRequestResponse,
   ApiBody,
   ApiNotFoundResponse,
   ApiOkResponse,
@@ -22,6 +25,11 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { PlaceCategoryDto } from './dto/place-category.dto';
+import { Auth } from '../auth/decorators/auth.decorator';
+import { RoleNamesEnum } from '../roles/enums/role-names.enum';
+import { PlaceCategoryAdminDto } from './dto/place-category-admin.dto';
+import { UpdatePlaceCategoryDto } from './dto/update-place-category.dto';
+import { ValidationExceptionDto } from '../shared/validation/validation-exception.dto';
 
 @ApiTags('Place categories')
 @Controller('placeCategories')
@@ -30,28 +38,56 @@ export class PlaceCategoriesController {
     private readonly placeCategoriesService: PlaceCategoriesService,
   ) {}
 
-  @ApiOperation({ summary: 'Create Place category' })
+  @ApiOperation({ summary: 'ADMIN: Create Place category' })
   @ApiOkResponse({
     description: 'OK',
-    type: PlaceCategoryDto,
   })
-  @ApiQuery({
-    name: 'lang',
-    type: Number,
-    description: 'The ID of the language',
+  @ApiBadRequestResponse({
+    description: 'Validation failed',
+    type: ValidationExceptionDto,
   })
   @ApiBody({
     type: CreatePlaceCategoryDto,
   })
-  @Post()
-  async create(
-    @Query('lang', ParseIntPipe) langId: number,
-    @Body() createPlaceCategoryDto: CreatePlaceCategoryDto,
-  ) {
-    return await this.placeCategoriesService.create(
-      langId,
+  //@Auth(RoleNamesEnum.ADMIN)
+  @Post('administration')
+  async create(@Body() createPlaceCategoryDto: CreatePlaceCategoryDto) {
+    const category = await this.placeCategoriesService.create(
       createPlaceCategoryDto,
     );
+    return { id: category.id };
+  }
+
+  @ApiOperation({ summary: 'ADMIN: Update Place category' })
+  @ApiOkResponse({
+    description: 'OK',
+  })
+  @ApiBadRequestResponse({
+    description: 'Validation failed',
+    type: ValidationExceptionDto,
+  })
+  @ApiNotFoundResponse({
+    type: NotFoundException,
+  })
+  @ApiParam({
+    name: 'id',
+    type: Number,
+    description: 'The ID of Place Category',
+  })
+  @ApiBody({
+    type: UpdatePlaceCategoryDto,
+  })
+  //@Auth(RoleNamesEnum.ADMIN)
+  @Put('administration/:id')
+  async update(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() updatePlaceCategoryDto: UpdatePlaceCategoryDto,
+  ) {
+    const category = await this.placeCategoriesService.update(
+      id,
+      updatePlaceCategoryDto,
+    );
+    return { id: category.id };
   }
 
   @ApiOperation({ summary: 'Get all place categories by language id' })
@@ -72,6 +108,28 @@ export class PlaceCategoriesController {
   ): Promise<PlaceCategoryDto[]> {
     const placeCategories = await this.placeCategoriesService.findAll(langId);
     return placeCategories.map((pc) => new PlaceCategoryDto(pc));
+  }
+
+  @ApiOperation({ summary: 'ADMIN: Get place category by id' })
+  @ApiOkResponse({
+    description: 'OK',
+    type: PlaceCategoryAdminDto,
+  })
+  @ApiNotFoundResponse({
+    type: NotFoundException,
+  })
+  @ApiParam({
+    name: 'id',
+    type: Number,
+    description: 'The ID of Place Category',
+  })
+  //@Auth(RoleNamesEnum.ADMIN)
+  @UseInterceptors(ClassSerializerInterceptor)
+  @Get('administration/:id')
+  async findByIdAdmin(@Param('id', ParseIntPipe) id: number) {
+    const placeCategory =
+      await this.placeCategoriesService.findOneAdministration(id);
+    return new PlaceCategoryAdminDto(placeCategory);
   }
 
   @ApiOperation({ summary: 'Get place category by id and language id' })
@@ -102,16 +160,21 @@ export class PlaceCategoriesController {
     return new PlaceCategoryDto(placeCategory);
   }
 
-  // @Patch(':id')
-  // update(
-  //   @Param('id') id: string,
-  //   @Body() updatePlaceCategoryDto: UpdatePlaceCategoryDto,
-  // ) {
-  //   return this.placeCategoriesService.update(+id, updatePlaceCategoryDto);
-  // }
-  //
-  // @Delete(':id')
-  // remove(@Param('id') id: string) {
-  //   return this.placeCategoriesService.remove(+id);
-  // }
+  @ApiOperation({ summary: 'ADMIN: Delete place category by id' })
+  @ApiOkResponse({
+    description: 'OK',
+  })
+  @ApiNotFoundResponse({
+    type: NotFoundException,
+  })
+  @ApiParam({
+    name: 'id',
+    type: Number,
+    description: 'The ID of Place Category',
+  })
+  //@Auth(RoleNamesEnum.ADMIN)
+  @Delete('administration/:id')
+  async remove(@Param('id', ParseIntPipe) id: number) {
+    return await this.placeCategoriesService.remove(id);
+  }
 }

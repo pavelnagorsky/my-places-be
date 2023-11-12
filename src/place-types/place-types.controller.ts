@@ -2,11 +2,13 @@ import {
   Body,
   ClassSerializerInterceptor,
   Controller,
+  Delete,
   Get,
   NotFoundException,
   Param,
   ParseIntPipe,
   Post,
+  Put,
   Query,
   UseInterceptors,
 } from '@nestjs/common';
@@ -24,35 +26,59 @@ import {
 } from '@nestjs/swagger';
 import { PlaceTypeDto } from './dto/place-type.dto';
 import { ValidationExceptionDto } from '../shared/validation/validation-exception.dto';
+import { UpdatePlaceTypeDto } from './dto/update-place-type.dto';
+import { PlaceTypeAdminDto } from './dto/place-type-admin.dto';
 
 @ApiTags('Place types')
 @Controller('placeTypes')
 export class PlaceTypesController {
   constructor(private readonly placeTypesService: PlaceTypesService) {}
 
-  @ApiOperation({ summary: 'Create Place type' })
+  @ApiOperation({ summary: 'ADMIN: Create Place type' })
   @ApiOkResponse({
     description: 'OK',
-    type: PlaceTypeDto,
   })
   @ApiBadRequestResponse({
     description: 'Validation failed',
     type: ValidationExceptionDto,
   })
-  @ApiQuery({
-    name: 'lang',
-    type: Number,
-    description: 'The ID of the language',
-  })
   @ApiBody({
     type: CreatePlaceTypeDto,
   })
-  @Post()
-  async create(
-    @Query('lang', ParseIntPipe) langId: number,
-    @Body() createPlaceTypeDto: CreatePlaceTypeDto,
+  //@Auth(RoleNamesEnum.ADMIN)
+  @Post('administration')
+  async create(@Body() createPlaceTypeDto: CreatePlaceTypeDto) {
+    const placeType = await this.placeTypesService.create(createPlaceTypeDto);
+    return { id: placeType.id };
+  }
+
+  @ApiOperation({ summary: 'ADMIN: Update Place type' })
+  @ApiOkResponse({
+    description: 'OK',
+  })
+  @ApiBadRequestResponse({
+    description: 'Validation failed',
+    type: ValidationExceptionDto,
+  })
+  @ApiNotFoundResponse({
+    type: NotFoundException,
+  })
+  @ApiParam({
+    name: 'id',
+    type: Number,
+    description: 'The ID of Place type',
+  })
+  @ApiBody({
+    type: UpdatePlaceTypeDto,
+  })
+  //@Auth(RoleNamesEnum.ADMIN)
+  @Put('administration/:id')
+  async update(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() updatePlaceTypeDto: UpdatePlaceTypeDto,
   ) {
-    return await this.placeTypesService.create(langId, createPlaceTypeDto);
+    const type = await this.placeTypesService.update(id, updatePlaceTypeDto);
+    return { id: type.id };
   }
 
   @ApiOperation({ summary: 'Get all place types by language id' })
@@ -103,17 +129,42 @@ export class PlaceTypesController {
     return new PlaceTypeDto(placeType);
   }
 
-  // @Patch(':id')
-  // update(
-  //   @Param('id', ParseIntPipe) id: number,
-  //   @Query('lang', ParseIntPipe) langId: number,
-  //   @Body() updatePlaceTypeDto: UpdatePlaceTypeDto,
-  // ) {
-  //   return this.placeTypesService.update(id, langId, updatePlaceTypeDto);
-  // }
-  //
-  // @Delete(':id')
-  // remove(@Param('id', ParseIntPipe) id: number) {
-  //   return this.placeTypesService.remove(id);
-  // }
+  @ApiOperation({ summary: 'ADMIN: Get place type by id' })
+  @ApiOkResponse({
+    description: 'OK',
+    type: PlaceTypeAdminDto,
+  })
+  @ApiNotFoundResponse({
+    type: NotFoundException,
+  })
+  @ApiParam({
+    name: 'id',
+    type: Number,
+    description: 'The ID of Place type',
+  })
+  //@Auth(RoleNamesEnum.ADMIN)
+  @UseInterceptors(ClassSerializerInterceptor)
+  @Get('administration/:id')
+  async findByIdAdmin(@Param('id', ParseIntPipe) id: number) {
+    const placeType = await this.placeTypesService.findOneAdministration(id);
+    return new PlaceTypeAdminDto(placeType);
+  }
+
+  @ApiOperation({ summary: 'ADMIN: Delete place type by id' })
+  @ApiOkResponse({
+    description: 'OK',
+  })
+  @ApiNotFoundResponse({
+    type: NotFoundException,
+  })
+  @ApiParam({
+    name: 'id',
+    type: Number,
+    description: 'The ID of Place type',
+  })
+  //@Auth(RoleNamesEnum.ADMIN)
+  @Delete('administration/:id')
+  async remove(@Param('id', ParseIntPipe) id: number) {
+    return await this.placeTypesService.remove(id);
+  }
 }

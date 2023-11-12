@@ -15,6 +15,7 @@ import { Like } from '../../likes/entities/like.entity';
 import { Comment } from '../../comments/entities/comment.entity';
 import { Role } from '../../roles/entities/role.entity';
 import { Image } from '../../images/entities/image.entity';
+import { Review } from '../../reviews/entities/review.entity';
 
 @Entity()
 export class User {
@@ -41,6 +42,15 @@ export class User {
 
   @OneToMany(() => Place, (place) => place.author)
   places: Place[];
+
+  @OneToMany(() => Place, (place) => place.moderator)
+  placesModeration: Place[];
+
+  @OneToMany(() => Review, (review) => review.author)
+  reviews: Review[];
+
+  @OneToMany(() => Review, (review) => review.moderator)
+  reviewsModeration: Review[];
 
   @OneToOne(() => Admin, (admin) => admin.user, { cascade: true })
   @JoinColumn()

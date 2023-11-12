@@ -32,8 +32,6 @@ import { TokenPayload } from '../auth/decorators/token-payload.decorator';
 import { Auth } from '../auth/decorators/auth.decorator';
 import { PlaceDto } from './dto/place.dto';
 import { TokenPayloadDto } from '../auth/dto/token-payload.dto';
-import { Token } from '../auth/decorators/token.decorator';
-import { PayloadFromTokenPipe } from '../auth/pipes/payload-from-token.pipe';
 import { Place } from './entities/place.entity';
 import { UpdatePlaceDto } from './dto/update-place.dto';
 import { PlaceSlugDto } from './dto/place-slug.dto';

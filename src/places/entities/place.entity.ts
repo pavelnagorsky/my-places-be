@@ -28,9 +28,11 @@ export class Place {
   @Column({ unique: true })
   slug: string;
 
+  @Index({ unique: true })
   @Column({ type: 'int', unique: true })
   title: number;
 
+  @Index({ unique: true })
   @Column({ type: 'int', unique: true })
   description: number;
 
@@ -46,6 +48,7 @@ export class Place {
   @OneToMany(() => Report, (report) => report.place)
   reports: Report[];
 
+  @Index({ unique: true })
   @Column({ type: 'int', unique: true })
   address: number;
 
@@ -71,8 +74,8 @@ export class Place {
   @ManyToOne(() => User, (user) => user.places)
   author: User;
 
-  @ManyToOne(() => Admin, (admin) => admin.places)
-  admin: Admin;
+  @ManyToOne(() => User, (user) => user.placesModeration)
+  moderator: User;
 
   @Column({ default: 0 })
   likesCount: number;

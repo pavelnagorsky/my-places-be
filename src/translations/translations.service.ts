@@ -131,7 +131,8 @@ export class TranslationsService {
       textId: updateTranslationDto.textId,
       original: updateTranslationDto.original,
     });
-    if (!result.affected) throw new BadRequestException();
+    if (!result.affected)
+      throw new BadRequestException({ message: 'translation was not found' });
     return { id: id };
   }
 }

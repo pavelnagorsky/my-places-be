@@ -1,15 +1,6 @@
-import {
-  Entity,
-  Column,
-  OneToOne,
-  OneToMany,
-  PrimaryGeneratedColumn,
-  ManyToMany,
-} from 'typeorm';
+import { Entity, Column, OneToOne, PrimaryGeneratedColumn } from 'typeorm';
 
 import { User } from '../users/entities/user.entity';
-import { Place } from '../places/entities/place.entity';
-import { Role } from '../roles/entities/role.entity';
 
 @Entity()
 export class Admin {
@@ -24,7 +15,4 @@ export class Admin {
 
   @Column({ type: 'varchar', length: 20 })
   phone: string;
-
-  @OneToMany(() => Place, (place) => place.admin)
-  places: Place[];
 }
