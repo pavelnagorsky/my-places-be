@@ -12,7 +12,7 @@ export class Translation {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Index({ unique: false })
+  @Index()
   @Column({ type: 'int' })
   textId: number;
 

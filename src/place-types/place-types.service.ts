@@ -73,22 +73,21 @@ export class PlaceTypesService {
     if (languages.length !== dto.titleTranslations.length)
       throw new BadRequestException({ message: 'Not all languages set' });
 
-    const translations: Promise<{ id: number }>[] = [];
+    const translations: Promise<void>[] = [];
     for (let i = 0; i < dto.titleTranslations.length; i++) {
-      const newTranslationPromise = this.translationsService.update(
-        type.title,
-        {
+      const newTranslationPromise =
+        this.translationsService.updateByTextIdAndLangId(type.title, {
           langId: dto.titleTranslations[i].langId,
           textId: type.title,
           text: dto.titleTranslations[i].text,
           original: true,
-        },
-      );
+        });
       translations.push(newTranslationPromise);
     }
 
     await Promise.all(translations);
     const placeType = await this.placeTypesRepository.create({
+      id: id,
       title: type.title,
       commercial: dto.commercial,
     });
@@ -114,7 +113,7 @@ export class PlaceTypesService {
       .createQueryBuilder('pt')
       .leftJoinAndSelect('pt.image', 'image')
       .leftJoinAndSelect('pt.image2', 'image2')
-      .innerJoinAndMapOne(
+      .leftJoinAndMapOne(
         'pt.title',
         'translation',
         't',
@@ -150,12 +149,19 @@ export class PlaceTypesService {
       .createQueryBuilder('pt')
       .leftJoinAndSelect('pt.image', 'image')
       .leftJoinAndSelect('pt.image2', 'image2')
-      .innerJoinAndMapMany(
+      .leftJoinAndMapMany(
         'pt.titleTranslations',
         'translation',
         't',
         'pt.title = t.textId',
       )
+      .leftJoinAndMapOne(
+        't.language',
+        't.language',
+        'language',
+        't.language = language.id',
+      )
+      .orderBy('language.id')
       .where('pt.id = :id', { id })
       .getOne();
     if (!placeType)

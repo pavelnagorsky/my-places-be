@@ -28,12 +28,12 @@ export class Place {
   @Column({ unique: true })
   slug: string;
 
-  @Index({ unique: true })
-  @Column({ type: 'int', unique: true })
+  @Index()
+  @Column({ type: 'int' })
   title: number;
 
-  @Index({ unique: true })
-  @Column({ type: 'int', unique: true })
+  @Index()
+  @Column({ type: 'int' })
   description: number;
 
   @OneToMany(() => Image, (image) => image.place, { cascade: true })
@@ -48,8 +48,8 @@ export class Place {
   @OneToMany(() => Report, (report) => report.place)
   reports: Report[];
 
-  @Index({ unique: true })
-  @Column({ type: 'int', unique: true })
+  @Index()
+  @Column({ type: 'int' })
   address: number;
 
   @Column({ type: 'varchar', nullable: true })

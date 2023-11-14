@@ -25,6 +25,12 @@ export class PlaceTypeDto {
   )
   image: string;
 
+  @ApiProperty({ title: 'Image 2 url', type: String, nullable: true })
+  @Transform(
+    ({ value }: { value: Partial<Image> | null }) => value?.url || null,
+  )
+  image2: string;
+
   constructor(partial: Partial<PlaceType>) {
     Object.assign(this, partial);
   }

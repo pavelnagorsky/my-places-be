@@ -16,12 +16,12 @@ export class Review {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Index({ unique: true })
-  @Column({ type: 'int', unique: true })
+  @Index()
+  @Column({ type: 'int' })
   title: number;
 
-  @Index({ unique: true })
-  @Column({ type: 'int', unique: true })
+  @Index()
+  @Column({ type: 'int' })
   description: number;
 
   @ManyToOne(() => Place, (place) => place.reviews)

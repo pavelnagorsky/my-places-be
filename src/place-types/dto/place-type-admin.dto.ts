@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Exclude } from 'class-transformer';
+import { Exclude, Transform } from 'class-transformer';
 import { TranslationDto } from '../../translations/dto/translation.dto';
 import { ImageDto } from '../../images/dto/image.dto';
 import { PlaceType } from '../entities/place-type.entity';
@@ -12,6 +12,9 @@ export class PlaceTypeAdminDto {
     title: 'Place type title',
     type: TranslationDto,
     isArray: true,
+  })
+  @Transform(({ value }) => {
+    return value.map((t: any) => new TranslationDto(t));
   })
   titleTranslations: TranslationDto[];
 

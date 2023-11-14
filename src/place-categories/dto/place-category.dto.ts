@@ -9,7 +9,10 @@ export class PlaceCategoryDto {
   id: number;
 
   @ApiProperty({ title: 'Place category title', type: String })
-  @Transform(({ value }: { value: Partial<TranslationDto> }) => value.text)
+  @Transform(
+    ({ value }: { value: Partial<TranslationDto> | null }) =>
+      value?.text || null,
+  )
   title: string;
 
   @ApiProperty({ title: 'Image url', type: String, nullable: true })

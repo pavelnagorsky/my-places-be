@@ -135,4 +135,29 @@ export class TranslationsService {
       throw new BadRequestException({ message: 'translation was not found' });
     return { id: id };
   }
+
+  // update translation
+  async updateByTextIdAndLangId(
+    textId: number,
+    updateTranslationDto: UpdateTranslationDto,
+  ) {
+    const translation = await this.translationsRepository.findOne({
+      select: { id: true },
+      where: {
+        textId: textId,
+        language: {
+          id: updateTranslationDto.langId,
+        },
+      },
+    });
+    if (!translation)
+      throw new BadRequestException({ message: 'translation was not found' });
+    const result = await this.translationsRepository.update(translation.id, {
+      text: updateTranslationDto.text,
+      original: updateTranslationDto.original,
+    });
+    if (!result.affected)
+      throw new BadRequestException({ message: 'translation was not found' });
+    return;
+  }
 }

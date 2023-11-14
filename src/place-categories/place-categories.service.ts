@@ -70,22 +70,21 @@ export class PlaceCategoriesService {
     if (languages.length !== dto.titleTranslations.length)
       throw new BadRequestException({ message: 'Not all languages set' });
 
-    const translations: Promise<{ id: number }>[] = [];
+    const translations: Promise<void>[] = [];
     for (let i = 0; i < dto.titleTranslations.length; i++) {
-      const newTranslationPromise = this.translationsService.update(
-        category.title,
-        {
+      const newTranslationPromise =
+        this.translationsService.updateByTextIdAndLangId(category.title, {
           langId: dto.titleTranslations[i].langId,
           textId: category.title,
           text: dto.titleTranslations[i].text,
           original: true,
-        },
-      );
+        });
       translations.push(newTranslationPromise);
     }
 
     await Promise.all(translations);
-    const placeCategory = await this.placeCategoriesRepository.create({
+    const placeCategory = this.placeCategoriesRepository.create({
+      id: id,
       title: category.title,
     });
     if (dto.imageId) {
@@ -109,7 +108,7 @@ export class PlaceCategoriesService {
       .createQueryBuilder('pc')
       .leftJoinAndSelect('pc.image', 'image')
       .leftJoinAndSelect('pc.image2', 'image2')
-      .innerJoinAndMapOne(
+      .leftJoinAndMapOne(
         'pc.title',
         'translation',
         't',
@@ -145,12 +144,19 @@ export class PlaceCategoriesService {
       .createQueryBuilder('pc')
       .leftJoinAndSelect('pc.image', 'image')
       .leftJoinAndSelect('pc.image2', 'image2')
-      .innerJoinAndMapMany(
+      .leftJoinAndMapMany(
         'pc.titleTranslations',
         'translation',
         't',
         'pc.title = t.textId',
       )
+      .leftJoinAndMapOne(
+        't.language',
+        't.language',
+        'language',
+        't.language = language.id',
+      )
+      .orderBy('language.id')
       .where('pc.id = :id', { id })
       .getOne();
     if (!placeCategory)

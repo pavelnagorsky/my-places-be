@@ -1,7 +1,6 @@
 import {
   Entity,
   PrimaryGeneratedColumn,
-  PrimaryColumn,
   OneToOne,
   JoinColumn,
   ManyToMany,
@@ -13,11 +12,11 @@ import { Image } from '../../images/entities/image.entity';
 
 @Entity()
 export class PlaceCategory {
-  @PrimaryGeneratedColumn()
+  @PrimaryGeneratedColumn({ type: 'int' })
   id: number;
 
-  @Index({ unique: true })
-  @Column({ type: 'int', unique: true })
+  @Index()
+  @Column({ type: 'int' })
   title: number;
 
   @OneToOne(() => Image, (image) => image.id, { cascade: true })
