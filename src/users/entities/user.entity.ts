@@ -16,6 +16,7 @@ import { Comment } from '../../comments/entities/comment.entity';
 import { Role } from '../../roles/entities/role.entity';
 import { Image } from '../../images/entities/image.entity';
 import { Review } from '../../reviews/entities/review.entity';
+import { Report } from '../../reports/entities/report.entity';
 
 @Entity()
 export class User {
@@ -68,4 +69,7 @@ export class User {
 
   @OneToMany(() => Comment, (comment) => comment.user)
   comments: Comment[];
+
+  @OneToMany(() => Report, (report) => report.moderator)
+  reportsModeration: Report;
 }
