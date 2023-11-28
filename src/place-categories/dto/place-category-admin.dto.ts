@@ -3,6 +3,7 @@ import { Exclude, Expose, Transform } from 'class-transformer';
 import { TranslationDto } from '../../translations/dto/translation.dto';
 import { PlaceCategory } from '../entities/place-category.entity';
 import { ImageDto } from '../../images/dto/image.dto';
+import { TranslationBaseEntity } from '../../translations/entities/translation-base.entity';
 
 export class PlaceCategoryAdminDto {
   @ApiProperty({ title: 'Place category id', type: Number })
@@ -13,13 +14,13 @@ export class PlaceCategoryAdminDto {
     type: TranslationDto,
     isArray: true,
   })
-  @Transform(({ value }) => {
-    return value.map((c: any) => new TranslationDto(c));
-  })
-  titleTranslations: TranslationDto[];
+  @Expose()
+  get titleTranslations(): TranslationDto[] {
+    return this.titles.map((t) => new TranslationDto(t));
+  }
 
   @Exclude()
-  title: number;
+  titles: TranslationBaseEntity[];
 
   @ApiProperty({ title: 'Image url', type: ImageDto, nullable: true })
   image: ImageDto | null;

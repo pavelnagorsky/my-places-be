@@ -1,4 +1,4 @@
-import { Translation } from '../entities/translation.entity';
+import { TranslationBaseEntity } from '../entities/translation-base.entity';
 import { ApiProperty } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
 
@@ -26,7 +26,7 @@ export class TranslationDto {
   })
   language: number;
 
-  constructor(partial: Partial<Translation>) {
+  constructor(partial: Partial<TranslationBaseEntity>) {
     Object.assign(this, partial);
   }
 }

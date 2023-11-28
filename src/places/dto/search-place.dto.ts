@@ -6,7 +6,7 @@ import { PlaceType } from '../../place-types/entities/place-type.entity';
 import { PlaceCategoryDto } from '../../place-categories/dto/place-category.dto';
 import { PlaceCategory } from '../../place-categories/entities/place-category.entity';
 import { Image } from '../../images/entities/image.entity';
-import { Translation } from '../../translations/entities/translation.entity';
+import { TranslationBaseEntity } from '../../translations/entities/translation-base.entity';
 import { CoordinatesDto } from './coordinates.dto';
 import { PlaceStatusesEnum } from '../enums/place-statuses.enum';
 
@@ -19,13 +19,15 @@ export class SearchPlaceDto {
 
   @ApiProperty({ type: String, description: 'Place title' })
   @Transform(
-    ({ value }: { value: Partial<Translation> }) => value?.text ?? null,
+    ({ value }: { value: Partial<TranslationBaseEntity> }) =>
+      value?.text ?? null,
   )
   title: string;
 
   @ApiProperty({ type: String, description: 'Place description' })
   @Transform(
-    ({ value }: { value: Partial<Translation> }) => value?.text ?? null,
+    ({ value }: { value: Partial<TranslationBaseEntity> }) =>
+      value?.text ?? null,
   )
   description: string;
 
@@ -37,7 +39,8 @@ export class SearchPlaceDto {
 
   @ApiProperty({ type: String, description: 'Place address' })
   @Transform(
-    ({ value }: { value: Partial<Translation> }) => value?.text ?? null,
+    ({ value }: { value: Partial<TranslationBaseEntity> }) =>
+      value?.text ?? null,
   )
   address: string;
 

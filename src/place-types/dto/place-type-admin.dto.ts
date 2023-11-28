@@ -1,8 +1,9 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Exclude, Transform } from 'class-transformer';
+import { Exclude, Expose, Transform } from 'class-transformer';
 import { TranslationDto } from '../../translations/dto/translation.dto';
 import { ImageDto } from '../../images/dto/image.dto';
 import { PlaceType } from '../entities/place-type.entity';
+import { TranslationBaseEntity } from '../../translations/entities/translation-base.entity';
 
 export class PlaceTypeAdminDto {
   @ApiProperty({ title: 'Place type id', type: Number })
@@ -13,13 +14,13 @@ export class PlaceTypeAdminDto {
     type: TranslationDto,
     isArray: true,
   })
-  @Transform(({ value }) => {
-    return value.map((t: any) => new TranslationDto(t));
-  })
-  titleTranslations: TranslationDto[];
+  @Expose()
+  get titleTranslations(): TranslationDto[] {
+    return this.titles.map((t) => new TranslationDto(t));
+  }
 
   @Exclude()
-  title: number;
+  titles: TranslationBaseEntity[];
 
   @ApiProperty({
     title: 'Place type is commercial',

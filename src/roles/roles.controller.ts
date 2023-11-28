@@ -33,7 +33,7 @@ export class RolesController {
   })
   @ApiBadRequestResponse({ description: 'Role already exists' })
   @ApiBody({ type: CreateRoleDto })
-  @Auth(RoleNamesEnum.OWNER)
+  @Auth(RoleNamesEnum.ADMIN)
   @Post()
   create(@Body() createRoleDto: CreateRoleDto) {
     return this.rolesService.create(createRoleDto);

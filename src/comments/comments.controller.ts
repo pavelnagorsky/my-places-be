@@ -142,7 +142,7 @@ export class CommentsController {
     description: 'The ID of the comment',
   })
   @UseInterceptors(ClassSerializerInterceptor)
-  @Auth(RoleNamesEnum.OWNER, RoleNamesEnum.ADMIN)
+  @Auth(RoleNamesEnum.ADMIN, RoleNamesEnum.MODERATOR)
   @Put(':commentId/administration')
   async administrationUpdateComment(
     @Param('commentId', ParseIntPipe) commentId: number,
@@ -198,7 +198,7 @@ export class CommentsController {
     type: Number,
     description: 'The ID of the comment',
   })
-  @Auth(RoleNamesEnum.OWNER, RoleNamesEnum.ADMIN)
+  @Auth(RoleNamesEnum.ADMIN, RoleNamesEnum.MODERATOR)
   @Delete(':commentId/administration')
   async administrationDeleteComment(
     @Param('commentId', ParseIntPipe) commentId: number,

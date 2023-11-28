@@ -46,32 +46,32 @@ import { CreateSlugDto } from './dto/create-slug.dto';
 export class PlacesController {
   constructor(private readonly placesService: PlacesService) {}
 
-  @ApiOperation({ summary: 'Create Place' })
-  @ApiOkResponse({
-    description: 'OK',
-    type: PickType(Place, ['id']),
-  })
-  @ApiBadRequestResponse({
-    description: 'Validation failed',
-    type: ValidationExceptionDto,
-  })
-  @ApiQuery({
-    name: 'lang',
-    type: Number,
-    description: 'The ID of the language',
-  })
-  @ApiBody({
-    type: CreatePlaceDto,
-  })
-  @Auth()
-  @Post()
-  async create(
-    @Query('lang', ParseIntPipe) langId: number,
-    @TokenPayload(UserFromTokenPipe) user: User,
-    @Body() createPlaceDto: CreatePlaceDto,
-  ) {
-    return await this.placesService.create(langId, user, createPlaceDto);
-  }
+  // @ApiOperation({ summary: 'Create Place' })
+  // @ApiOkResponse({
+  //   description: 'OK',
+  //   type: PickType(Place, ['id']),
+  // })
+  // @ApiBadRequestResponse({
+  //   description: 'Validation failed',
+  //   type: ValidationExceptionDto,
+  // })
+  // @ApiQuery({
+  //   name: 'lang',
+  //   type: Number,
+  //   description: 'The ID of the language',
+  // })
+  // @ApiBody({
+  //   type: CreatePlaceDto,
+  // })
+  // @Auth()
+  // @Post()
+  // async create(
+  //   @Query('lang', ParseIntPipe) langId: number,
+  //   @TokenPayload(UserFromTokenPipe) user: User,
+  //   @Body() createPlaceDto: CreatePlaceDto,
+  // ) {
+  //   return await this.placesService.create(langId, user, createPlaceDto);
+  // }
 
   @ApiOperation({ summary: 'Get all places by language id' })
   @ApiOkResponse({
@@ -226,44 +226,44 @@ export class PlacesController {
     return new PlaceDto(place);
   }
 
-  @ApiOperation({ summary: 'Update Place' })
-  @ApiOkResponse({
-    description: 'OK',
-    type: PickType(Place, ['id']),
-  })
-  @ApiBadRequestResponse({
-    description: 'Validation failed',
-    type: ValidationExceptionDto,
-  })
-  @ApiParam({
-    name: 'id',
-    type: Number,
-    description: 'The ID of the place',
-  })
-  @ApiQuery({
-    name: 'lang',
-    type: Number,
-    description: 'The ID of the language',
-  })
-  @ApiBody({
-    type: UpdatePlaceDto,
-  })
-  @Auth()
-  @Put(':id')
-  async update(
-    @Param('id', ParseIntPipe) id: number,
-    @Query('lang', ParseIntPipe) langId: number,
-    @TokenPayload() tokenPayload: TokenPayloadDto,
-    @Body() updatePlaceDto: UpdatePlaceDto,
-  ) {
-    const userIsPlaceAuthor = await this.placesService.checkUserRelation(
-      tokenPayload.id,
-      id,
-    );
-    if (!userIsPlaceAuthor)
-      throw new ForbiddenException({
-        message: 'Forbidden, user is not author',
-      });
-    return await this.placesService.updatePlace(id, langId, updatePlaceDto);
-  }
+  // @ApiOperation({ summary: 'Update Place' })
+  // @ApiOkResponse({
+  //   description: 'OK',
+  //   type: PickType(Place, ['id']),
+  // })
+  // @ApiBadRequestResponse({
+  //   description: 'Validation failed',
+  //   type: ValidationExceptionDto,
+  // })
+  // @ApiParam({
+  //   name: 'id',
+  //   type: Number,
+  //   description: 'The ID of the place',
+  // })
+  // @ApiQuery({
+  //   name: 'lang',
+  //   type: Number,
+  //   description: 'The ID of the language',
+  // })
+  // @ApiBody({
+  //   type: UpdatePlaceDto,
+  // })
+  // @Auth()
+  // @Put(':id')
+  // async update(
+  //   @Param('id', ParseIntPipe) id: number,
+  //   @Query('lang', ParseIntPipe) langId: number,
+  //   @TokenPayload() tokenPayload: TokenPayloadDto,
+  //   @Body() updatePlaceDto: UpdatePlaceDto,
+  // ) {
+  //   const userIsPlaceAuthor = await this.placesService.checkUserRelation(
+  //     tokenPayload.id,
+  //     id,
+  //   );
+  //   if (!userIsPlaceAuthor)
+  //     throw new ForbiddenException({
+  //       message: 'Forbidden, user is not author',
+  //     });
+  //   return await this.placesService.updatePlace(id, langId, updatePlaceDto);
+  // }
 }

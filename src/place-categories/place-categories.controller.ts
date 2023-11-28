@@ -132,34 +132,6 @@ export class PlaceCategoriesController {
     return new PlaceCategoryAdminDto(placeCategory);
   }
 
-  @ApiOperation({ summary: 'Get place category by id and language id' })
-  @ApiOkResponse({
-    description: 'OK',
-    type: PlaceCategoryDto,
-  })
-  @ApiNotFoundResponse({
-    type: NotFoundException,
-  })
-  @ApiParam({
-    name: 'id',
-    type: Number,
-    description: 'The ID of Place Category',
-  })
-  @ApiQuery({
-    name: 'lang',
-    type: Number,
-    description: 'The ID of the language',
-  })
-  @UseInterceptors(ClassSerializerInterceptor)
-  @Get(':id')
-  async findOne(
-    @Param('id', ParseIntPipe) id: number,
-    @Query('lang', ParseIntPipe) langId: number,
-  ) {
-    const placeCategory = await this.placeCategoriesService.findOne(id, langId);
-    return new PlaceCategoryDto(placeCategory);
-  }
-
   @ApiOperation({ summary: 'ADMIN: Delete place category by id' })
   @ApiOkResponse({
     description: 'OK',

@@ -7,11 +7,9 @@ import { CreatePlaceTypeDto } from './dto/create-place-type.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { PlaceType } from './entities/place-type.entity';
-import { TranslationsService } from '../translations/translations.service';
 import { Image } from '../images/entities/image.entity';
 import { LanguagesService } from '../languages/languages.service';
-import { Translation } from '../translations/entities/translation.entity';
-import { UpdatePlaceCategoryDto } from '../place-categories/dto/update-place-category.dto';
+import { PlaceTypeTitleTranslation } from './entities/place-type-title-translation.entity';
 import { UpdatePlaceTypeDto } from './dto/update-place-type.dto';
 
 @Injectable()
@@ -19,31 +17,29 @@ export class PlaceTypesService {
   constructor(
     @InjectRepository(PlaceType)
     private placeTypesRepository: Repository<PlaceType>,
-    private translationsService: TranslationsService,
+    @InjectRepository(PlaceTypeTitleTranslation)
+    private placeTypesTranslationsRepository: Repository<PlaceTypeTitleTranslation>,
     private languagesService: LanguagesService,
   ) {}
 
   // This action adds a new placeType
   async create(dto: CreatePlaceTypeDto) {
     const languages = await this.languagesService.findAll();
-    if (languages.length !== dto.titleTranslations.length)
+    if (languages.length > dto.titleTranslations.length)
       throw new BadRequestException({ message: 'Not all languages set' });
 
-    const translations: Promise<Translation>[] = [];
-    const newTextId = await this.translationsService.getMaxTextId();
-    for (let i = 0; i < dto.titleTranslations.length; i++) {
-      const newTranslationPromise = this.translationsService.createTranslation(
-        dto.titleTranslations[i].langId,
-        dto.titleTranslations[i].text,
-        true,
-        newTextId,
-      );
-      translations.push(newTranslationPromise);
-    }
+    const translations = dto.titleTranslations.map((dtoTranslation) => {
+      return this.placeTypesTranslationsRepository.create({
+        text: dtoTranslation.text,
+        language: {
+          id: dtoTranslation.langId,
+        },
+        original: true,
+      });
+    });
 
-    await Promise.all(translations);
-    const placeType = await this.placeTypesRepository.create({
-      title: newTextId,
+    const placeType = this.placeTypesRepository.create({
+      titles: translations,
       commercial: dto.commercial,
     });
     if (dto.imageId) {
@@ -65,30 +61,38 @@ export class PlaceTypesService {
   async update(id: number, dto: UpdatePlaceTypeDto) {
     const type = await this.placeTypesRepository.findOne({
       where: { id: id },
-      select: { title: true },
+      relations: {
+        titles: {
+          language: true,
+        },
+      },
+      select: {
+        id: true,
+        titles: true,
+      },
     });
     if (!type)
       throw new NotFoundException(`Place type with id ${id} was not found`);
-    const languages = await this.languagesService.findAll();
-    if (languages.length !== dto.titleTranslations.length)
+
+    if (type.titles.length > dto.titleTranslations.length)
       throw new BadRequestException({ message: 'Not all languages set' });
 
-    const translations: Promise<void>[] = [];
-    for (let i = 0; i < dto.titleTranslations.length; i++) {
-      const newTranslationPromise =
-        this.translationsService.updateByTextIdAndLangId(type.title, {
-          langId: dto.titleTranslations[i].langId,
-          textId: type.title,
-          text: dto.titleTranslations[i].text,
-          original: true,
-        });
-      translations.push(newTranslationPromise);
-    }
+    const translations = dto.titleTranslations.map((dtoTranslation, i) => {
+      return this.placeTypesTranslationsRepository.create({
+        id: type.titles.find(
+          (translation) => translation.language.id === dtoTranslation.langId,
+        )?.id,
+        text: dtoTranslation.text,
+        language: {
+          id: dtoTranslation.langId,
+        },
+        original: true,
+      });
+    });
 
-    await Promise.all(translations);
     const placeType = await this.placeTypesRepository.create({
       id: id,
-      title: type.title,
+      titles: translations,
       commercial: dto.commercial,
     });
     if (dto.imageId) {
@@ -109,61 +113,42 @@ export class PlaceTypesService {
 
   // This action finds all placeTypes by language id
   async findAll(langId: number) {
-    return await this.placeTypesRepository
-      .createQueryBuilder('pt')
-      .leftJoinAndSelect('pt.image', 'image')
-      .leftJoinAndSelect('pt.image2', 'image2')
-      .leftJoinAndMapOne(
-        'pt.title',
-        'translation',
-        't',
-        'pt.title = t.textId AND t.language = :langId',
-        { langId },
-      )
-      .getMany();
-  }
-
-  async findOne(id: number, langId: number) {
-    const placeType = await this.placeTypesRepository
-      .createQueryBuilder('pt')
-      .leftJoinAndSelect('pt.image', 'image')
-      .leftJoinAndSelect('pt.image2', 'image2')
-      .innerJoinAndMapOne(
-        'pt.title',
-        'translation',
-        't',
-        'pt.title = t.textId AND t.language = :langId',
-        { langId },
-      )
-      .where('pt.id = :id', { id })
-      .getOne();
-    if (!placeType)
-      throw new NotFoundException(
-        `Place type with id ${id} by language id ${langId} was not found`,
-      );
-    return placeType;
+    return await this.placeTypesRepository.find({
+      relations: {
+        image: true,
+        image2: true,
+        titles: true,
+      },
+      where: {
+        titles: {
+          language: {
+            id: langId,
+          },
+        },
+      },
+    });
   }
 
   async findOneAdministration(id: number) {
-    const placeType = await this.placeTypesRepository
-      .createQueryBuilder('pt')
-      .leftJoinAndSelect('pt.image', 'image')
-      .leftJoinAndSelect('pt.image2', 'image2')
-      .leftJoinAndMapMany(
-        'pt.titleTranslations',
-        'translation',
-        't',
-        'pt.title = t.textId',
-      )
-      .leftJoinAndMapOne(
-        't.language',
-        't.language',
-        'language',
-        't.language = language.id',
-      )
-      .orderBy('language.id')
-      .where('pt.id = :id', { id })
-      .getOne();
+    const placeType = await this.placeTypesRepository.findOne({
+      relations: {
+        image: true,
+        image2: true,
+        titles: {
+          language: true,
+        },
+      },
+      where: {
+        id: id,
+      },
+      order: {
+        titles: {
+          language: {
+            id: 'asc',
+          },
+        },
+      },
+    });
     if (!placeType)
       throw new NotFoundException({
         message: `Place type with id ${id} was not found`,

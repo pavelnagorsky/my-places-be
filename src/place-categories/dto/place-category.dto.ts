@@ -1,19 +1,21 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Transform } from 'class-transformer';
-import { TranslationDto } from '../../translations/dto/translation.dto';
+import { Exclude, Expose, Transform } from 'class-transformer';
 import { Image } from '../../images/entities/image.entity';
 import { PlaceCategory } from '../entities/place-category.entity';
+import { TranslationBaseEntity } from '../../translations/entities/translation-base.entity';
 
 export class PlaceCategoryDto {
   @ApiProperty({ title: 'Place category id', type: Number })
   id: number;
 
+  @Exclude()
+  titles: TranslationBaseEntity[];
+
   @ApiProperty({ title: 'Place category title', type: String })
-  @Transform(
-    ({ value }: { value: Partial<TranslationDto> | null }) =>
-      value?.text || null,
-  )
-  title: string;
+  @Expose()
+  get title(): string {
+    return this.titles[0]?.text || '';
+  }
 
   @ApiProperty({ title: 'Image url', type: String, nullable: true })
   @Transform(

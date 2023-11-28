@@ -3,19 +3,21 @@ import { Exclude, Expose, Transform } from 'class-transformer';
 import { PlaceStatusesEnum } from '../../places/enums/place-statuses.enum';
 import { Image } from '../../images/entities/image.entity';
 import { Review } from '../entities/review.entity';
-import { Translation } from '../../translations/entities/translation.entity';
+import { TranslationBaseEntity } from '../../translations/entities/translation-base.entity';
 import { User } from '../../users/entities/user.entity';
 
 export class ReviewDto {
   @ApiProperty({ type: String, description: 'Review title' })
   @Transform(
-    ({ value }: { value: Partial<Translation> }) => value?.text ?? null,
+    ({ value }: { value: Partial<TranslationBaseEntity> }) =>
+      value?.text ?? null,
   )
   title: string;
 
   @ApiProperty({ type: String, description: 'Review description' })
   @Transform(
-    ({ value }: { value: Partial<Translation> }) => value?.text ?? null,
+    ({ value }: { value: Partial<TranslationBaseEntity> }) =>
+      value?.text ?? null,
   )
   description: string;
 

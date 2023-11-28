@@ -20,8 +20,8 @@ export class DeleteImageGuard implements CanActivate {
       const roleNames = tokenPayload.roles.map((r) => r.name);
       // if admin or owner return true
       if (
-        roleNames.includes(RoleNamesEnum.OWNER) ||
-        roleNames.includes(RoleNamesEnum.ADMIN)
+        roleNames.includes(RoleNamesEnum.ADMIN) ||
+        roleNames.includes(RoleNamesEnum.MODERATOR)
       )
         return true;
       // check if user is creator of image

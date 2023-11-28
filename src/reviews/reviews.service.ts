@@ -20,45 +20,45 @@ export class ReviewsService {
     private translationsService: TranslationsService,
   ) {}
 
-  private async createTranslations(
-    langId: number,
-    dto: CreateReviewDto | UpdateReviewDto,
-    translateAll = true,
-  ) {
-    const titleTranslation = await this.translationsService.createTranslation(
-      langId,
-      dto.title,
-      true,
-    );
-
-    const descriptionTranslation =
-      await this.translationsService.createTranslation(
-        langId,
-        dto.description,
-        true,
-      );
-
-    if (!titleTranslation || !descriptionTranslation)
-      throw new BadRequestException({ message: 'Invalid text data' });
-
-    if (translateAll) {
-      await this.translationsService.translateAll(
-        titleTranslation.text,
-        titleTranslation.textId,
-        langId,
-      );
-      await this.translationsService.translateAll(
-        descriptionTranslation.text,
-        descriptionTranslation.textId,
-        langId,
-      );
-    }
-
-    return {
-      titleTranslation,
-      descriptionTranslation,
-    };
-  }
+  // private async createTranslations(
+  //   langId: number,
+  //   dto: CreateReviewDto | UpdateReviewDto,
+  //   translateAll = true,
+  // ) {
+  //   const titleTranslation = await this.translationsService.createTranslation(
+  //     langId,
+  //     dto.title,
+  //     true,
+  //   );
+  //
+  //   const descriptionTranslation =
+  //     await this.translationsService.createTranslation(
+  //       langId,
+  //       dto.description,
+  //       true,
+  //     );
+  //
+  //   if (!titleTranslation || !descriptionTranslation)
+  //     throw new BadRequestException({ message: 'Invalid text data' });
+  //
+  //   if (translateAll) {
+  //     await this.translationsService.translateAll(
+  //       titleTranslation.text,
+  //       titleTranslation.textId,
+  //       langId,
+  //     );
+  //     await this.translationsService.translateAll(
+  //       descriptionTranslation.text,
+  //       descriptionTranslation.textId,
+  //       langId,
+  //     );
+  //   }
+  //
+  //   return {
+  //     titleTranslation,
+  //     descriptionTranslation,
+  //   };
+  // }
 
   private selectReviewsQuery(
     qb: SelectQueryBuilder<Review>,
@@ -90,30 +90,30 @@ export class ReviewsService {
       );
   }
 
-  // create review
-  async create(createReviewDto: CreateReviewDto, langId: number, user: User) {
-    const place = await this.placesRepository.findOne({
-      where: {
-        id: createReviewDto.placeId,
-      },
-      select: ['id'],
-    });
-
-    if (!place) throw new BadRequestException({ message: 'Place not exists' });
-
-    const reviewImages = await this.imagesService.updatePositions(
-      createReviewDto.imagesIds,
-    );
-    const translations = await this.createTranslations(langId, createReviewDto);
-    const review = this.reviewsRepository.create();
-    review.title = translations.titleTranslation.textId;
-    review.description = translations.descriptionTranslation.textId;
-    review.images = reviewImages;
-    review.author = user;
-    review.place = place;
-    const { id } = await this.reviewsRepository.save(review);
-    return { id: id };
-  }
+  // // create review
+  // async create(createReviewDto: CreateReviewDto, langId: number, user: User) {
+  //   const place = await this.placesRepository.findOne({
+  //     where: {
+  //       id: createReviewDto.placeId,
+  //     },
+  //     select: ['id'],
+  //   });
+  //
+  //   if (!place) throw new BadRequestException({ message: 'Place not exists' });
+  //
+  //   const reviewImages = await this.imagesService.updatePositions(
+  //     createReviewDto.imagesIds,
+  //   );
+  //   const translations = await this.createTranslations(langId, createReviewDto);
+  //   const review = this.reviewsRepository.create();
+  //   review.title = translations.titleTranslation.textId;
+  //   review.description = translations.descriptionTranslation.textId;
+  //   review.images = reviewImages;
+  //   review.author = user;
+  //   review.place = place;
+  //   const { id } = await this.reviewsRepository.save(review);
+  //   return { id: id };
+  // }
 
   async findAll(langId: number) {
     const qb = this.reviewsRepository.createQueryBuilder('review');

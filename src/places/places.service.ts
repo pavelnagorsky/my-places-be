@@ -36,56 +36,56 @@ export class PlacesService {
     private translationsService: TranslationsService,
   ) {}
 
-  private async createTranslations(
-    langId: number,
-    dto: CreatePlaceDto | UpdatePlaceDto,
-    translateAll = true,
-  ) {
-    const titleTranslation = await this.translationsService.createTranslation(
-      langId,
-      dto.title,
-      true,
-    );
-
-    const descriptionTranslation =
-      await this.translationsService.createTranslation(
-        langId,
-        dto.description,
-        true,
-      );
-
-    const addressTranslation = await this.translationsService.createTranslation(
-      langId,
-      dto.address,
-      true,
-    );
-    if (!titleTranslation || !descriptionTranslation || !addressTranslation)
-      throw new BadRequestException({ message: 'Invalid text data' });
-
-    if (translateAll) {
-      await this.translationsService.translateAll(
-        titleTranslation.text,
-        titleTranslation.textId,
-        langId,
-      );
-      await this.translationsService.translateAll(
-        descriptionTranslation.text,
-        descriptionTranslation.textId,
-        langId,
-      );
-      await this.translationsService.translateAll(
-        addressTranslation.text,
-        addressTranslation.textId,
-        langId,
-      );
-    }
-
-    return {
-      titleTranslation,
-      descriptionTranslation,
-      addressTranslation,
-    };
-  }
+  // private async createTranslations(
+  //   langId: number,
+  //   dto: CreatePlaceDto | UpdatePlaceDto,
+  //   translateAll = true,
+  // ) {
+  //   const titleTranslation = await this.translationsService.createTranslation(
+  //     langId,
+  //     dto.title,
+  //     true,
+  //   );
+  //
+  //   const descriptionTranslation =
+  //     await this.translationsService.createTranslation(
+  //       langId,
+  //       dto.description,
+  //       true,
+  //     );
+  //
+  //   const addressTranslation = await this.translationsService.createTranslation(
+  //     langId,
+  //     dto.address,
+  //     true,
+  //   );
+  //   if (!titleTranslation || !descriptionTranslation || !addressTranslation)
+  //     throw new BadRequestException({ message: 'Invalid text data' });
+  //
+  //   if (translateAll) {
+  //     await this.translationsService.translateAll(
+  //       titleTranslation.text,
+  //       titleTranslation.textId,
+  //       langId,
+  //     );
+  //     await this.translationsService.translateAll(
+  //       descriptionTranslation.text,
+  //       descriptionTranslation.textId,
+  //       langId,
+  //     );
+  //     await this.translationsService.translateAll(
+  //       addressTranslation.text,
+  //       addressTranslation.textId,
+  //       langId,
+  //     );
+  //   }
+  //
+  //   return {
+  //     titleTranslation,
+  //     descriptionTranslation,
+  //     addressTranslation,
+  //   };
+  // }
 
   private async validatePlaceType(dto: CreatePlaceDto | UpdatePlaceDto) {
     const placeType = await this.placeTypesRepository.findOne({
@@ -115,37 +115,37 @@ export class PlacesService {
     });
   }
 
-  async create(langId: number, author: User, createPlaceDto: CreatePlaceDto) {
-    const slugExists = await this.validateSlugExists(createPlaceDto.slug);
-    if (slugExists)
-      throw new BadRequestException({
-        message: `Slug ${createPlaceDto.slug} already exists!`,
-      });
-    const placeType = await this.validatePlaceType(createPlaceDto);
-    const placeCategories = await this.validatePlaceCategories(createPlaceDto);
-
-    const placeImages = await this.imagesService.updatePositions(
-      createPlaceDto.imagesIds,
-    );
-
-    const translations = await this.createTranslations(langId, createPlaceDto);
-
-    const place = this.placesRepository.create();
-    place.slug = createPlaceDto.slug;
-    place.title = translations.titleTranslation.textId;
-    place.description = translations.descriptionTranslation.textId;
-    place.address = translations.addressTranslation.textId;
-    place.type = placeType;
-    place.coordinates = createPlaceDto.coordinates;
-    place.categories = placeCategories;
-    place.images = placeImages;
-    place.advertisement = createPlaceDto.isCommercial;
-    if (createPlaceDto.website) place.website = createPlaceDto.website;
-    place.author = author;
-
-    const { id } = await this.placesRepository.save(place);
-    return { id: id };
-  }
+  // async create(langId: number, author: User, createPlaceDto: CreatePlaceDto) {
+  //   const slugExists = await this.validateSlugExists(createPlaceDto.slug);
+  //   if (slugExists)
+  //     throw new BadRequestException({
+  //       message: `Slug ${createPlaceDto.slug} already exists!`,
+  //     });
+  //   const placeType = await this.validatePlaceType(createPlaceDto);
+  //   const placeCategories = await this.validatePlaceCategories(createPlaceDto);
+  //
+  //   const placeImages = await this.imagesService.updatePositions(
+  //     createPlaceDto.imagesIds,
+  //   );
+  //
+  //   const translations = await this.createTranslations(langId, createPlaceDto);
+  //
+  //   const place = this.placesRepository.create();
+  //   place.slug = createPlaceDto.slug;
+  //   place.title = translations.titleTranslation.textId;
+  //   place.description = translations.descriptionTranslation.textId;
+  //   place.address = translations.addressTranslation.textId;
+  //   place.type = placeType;
+  //   place.coordinates = createPlaceDto.coordinates;
+  //   place.categories = placeCategories;
+  //   place.images = placeImages;
+  //   place.advertisement = createPlaceDto.isCommercial;
+  //   if (createPlaceDto.website) place.website = createPlaceDto.website;
+  //   place.author = author;
+  //
+  //   const { id } = await this.placesRepository.save(place);
+  //   return { id: id };
+  // }
 
   // private getLatLng(coordinatesString: string): CoordinatesDto {
   //   return new CoordinatesDto(coordinatesString);
@@ -537,52 +537,52 @@ export class PlacesService {
     });
   }
 
-  async updatePlace(
-    placeId: number,
-    langId: number,
-    updatePlaceDto: UpdatePlaceDto,
-  ) {
-    try {
-      const exist = await this.checkExist(placeId);
-      if (!exist)
-        throw new BadRequestException({ message: 'Place not exists' });
-
-      const placeType = await this.validatePlaceType(updatePlaceDto);
-      const placeCategories = await this.validatePlaceCategories(
-        updatePlaceDto,
-      );
-
-      const placeImages = await this.imagesService.updatePositions(
-        updatePlaceDto.imagesIds,
-      );
-
-      const translations = await this.createTranslations(
-        langId,
-        updatePlaceDto,
-        updatePlaceDto.shouldTranslate,
-      );
-
-      await this.placesRepository.save({
-        id: placeId,
-        slug: updatePlaceDto.slug,
-        images: placeImages,
-        title: translations.titleTranslation.textId,
-        description: translations.descriptionTranslation.textId,
-        address: translations.addressTranslation.textId,
-        type: placeType,
-        coordinates: updatePlaceDto.coordinates,
-        categories: placeCategories,
-        website: updatePlaceDto.website,
-        status: PlaceStatusesEnum.MODERATION,
-        advertisement: updatePlaceDto.isCommercial,
-      });
-
-      return { id: placeId };
-    } catch (e) {
-      if (e instanceof BadRequestException) {
-        throw e;
-      }
-      throw new BadRequestException({ message: 'Incorrect details' });
-    }
-  }
+  // async updatePlace(
+  //   placeId: number,
+  //   langId: number,
+  //   updatePlaceDto: UpdatePlaceDto,
+  // ) {
+  //   try {
+  //     const exist = await this.checkExist(placeId);
+  //     if (!exist)
+  //       throw new BadRequestException({ message: 'Place not exists' });
+  //
+  //     const placeType = await this.validatePlaceType(updatePlaceDto);
+  //     const placeCategories = await this.validatePlaceCategories(
+  //       updatePlaceDto,
+  //     );
+  //
+  //     const placeImages = await this.imagesService.updatePositions(
+  //       updatePlaceDto.imagesIds,
+  //     );
+  //
+  //     const translations = await this.createTranslations(
+  //       langId,
+  //       updatePlaceDto,
+  //       updatePlaceDto.shouldTranslate,
+  //     );
+  //
+  //     await this.placesRepository.save({
+  //       id: placeId,
+  //       slug: updatePlaceDto.slug,
+  //       images: placeImages,
+  //       title: translations.titleTranslation.textId,
+  //       description: translations.descriptionTranslation.textId,
+  //       address: translations.addressTranslation.textId,
+  //       type: placeType,
+  //       coordinates: updatePlaceDto.coordinates,
+  //       categories: placeCategories,
+  //       website: updatePlaceDto.website,
+  //       status: PlaceStatusesEnum.MODERATION,
+  //       advertisement: updatePlaceDto.isCommercial,
+  //     });
+  //
+  //     return { id: placeId };
+  //   } catch (e) {
+  //     if (e instanceof BadRequestException) {
+  //       throw e;
+  //     }
+  //     throw new BadRequestException({ message: 'Incorrect details' });
+  //   }
+  // }
 }

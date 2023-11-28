@@ -101,34 +101,6 @@ export class PlaceTypesController {
     return types.map((t) => new PlaceTypeDto(t));
   }
 
-  @ApiOperation({ summary: 'Get place type by id and language id' })
-  @ApiOkResponse({
-    description: 'OK',
-    type: PlaceTypeDto,
-  })
-  @ApiNotFoundResponse({
-    type: NotFoundException,
-  })
-  @ApiParam({
-    name: 'id',
-    type: Number,
-    description: 'The ID of Place Type',
-  })
-  @ApiQuery({
-    name: 'lang',
-    type: Number,
-    description: 'The ID of the language',
-  })
-  @UseInterceptors(ClassSerializerInterceptor)
-  @Get(':id')
-  async findOne(
-    @Param('id', ParseIntPipe) id: number,
-    @Query('lang', ParseIntPipe) langId: number,
-  ) {
-    const placeType = await this.placeTypesService.findOne(id, langId);
-    return new PlaceTypeDto(placeType);
-  }
-
   @ApiOperation({ summary: 'ADMIN: Get place type by id' })
   @ApiOkResponse({
     description: 'OK',

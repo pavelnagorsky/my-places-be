@@ -7,10 +7,11 @@ import {
   ManyToMany,
   JoinTable,
   Index,
+  CreateDateColumn,
+  UpdateDateColumn,
 } from 'typeorm';
 import { User } from '../../users/entities/user.entity';
 import { PlaceType } from '../../place-types/entities/place-type.entity';
-import { Admin } from '../../entities/admin.entity';
 import { Image } from '../../images/entities/image.entity';
 import { Like } from '../../likes/entities/like.entity';
 import { Comment } from '../../comments/entities/comment.entity';
@@ -89,6 +90,14 @@ export class Place {
   @Column({ default: PlaceStatusesEnum.MODERATION })
   status: PlaceStatusesEnum;
 
-  @Column({ default: () => 'CURRENT_TIMESTAMP' })
+  @CreateDateColumn({
+    default: () => 'CURRENT_TIMESTAMP',
+  })
   createdAt: Date;
+
+  @UpdateDateColumn({
+    default: () => 'CURRENT_TIMESTAMP',
+    onUpdate: 'CURRENT_TIMESTAMP',
+  })
+  updatedAt: Date;
 }

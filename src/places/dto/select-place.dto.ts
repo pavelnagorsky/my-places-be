@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
-import { Translation } from '../../translations/entities/translation.entity';
+import { TranslationBaseEntity } from '../../translations/entities/translation-base.entity';
 import { Place } from '../entities/place.entity';
 
 export class SelectPlaceDto {
@@ -9,7 +9,8 @@ export class SelectPlaceDto {
 
   @ApiProperty({ type: String, description: 'Place title' })
   @Transform(
-    ({ value }: { value: Partial<Translation> }) => value?.text ?? null,
+    ({ value }: { value: Partial<TranslationBaseEntity> }) =>
+      value?.text ?? null,
   )
   title: string;
 

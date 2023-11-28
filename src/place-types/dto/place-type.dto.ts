@@ -1,16 +1,21 @@
-import { Transform } from 'class-transformer';
+import { Exclude, Expose, Transform } from 'class-transformer';
 import { PlaceType } from '../entities/place-type.entity';
 import { ApiProperty } from '@nestjs/swagger';
 import { Image } from '../../images/entities/image.entity';
-import { Translation } from '../../translations/entities/translation.entity';
+import { TranslationBaseEntity } from '../../translations/entities/translation-base.entity';
 
 export class PlaceTypeDto {
   @ApiProperty({ title: 'Place type id', type: Number })
   id: number;
 
+  @Exclude()
+  titles: TranslationBaseEntity[];
+
   @ApiProperty({ title: 'Place type title', type: String })
-  @Transform(({ value }: { value: Partial<Translation> }) => value?.text)
-  title: string;
+  @Expose()
+  get title(): string {
+    return this.titles[0]?.text || '';
+  }
 
   @ApiProperty({
     title: 'Place type is commercial',

@@ -39,32 +39,32 @@ import { SearchResponseDto } from './dto/search-response.dto';
 export class ReviewsController {
   constructor(private readonly reviewsService: ReviewsService) {}
 
-  @ApiOperation({ summary: 'Create Review' })
-  @ApiOkResponse({
-    description: 'OK',
-    type: PickType(Review, ['id']),
-  })
-  @ApiBadRequestResponse({
-    description: 'Validation failed',
-    type: ValidationExceptionDto,
-  })
-  @ApiQuery({
-    name: 'lang',
-    type: Number,
-    description: 'The ID of the language',
-  })
-  @ApiBody({
-    type: CreateReviewDto,
-  })
-  @Auth()
-  @Post()
-  async create(
-    @Query('lang', ParseIntPipe) langId: number,
-    @TokenPayload(UserFromTokenPipe) user: User,
-    @Body() createReviewDto: CreateReviewDto,
-  ) {
-    return await this.reviewsService.create(createReviewDto, langId, user);
-  }
+  // @ApiOperation({ summary: 'Create Review' })
+  // @ApiOkResponse({
+  //   description: 'OK',
+  //   type: PickType(Review, ['id']),
+  // })
+  // @ApiBadRequestResponse({
+  //   description: 'Validation failed',
+  //   type: ValidationExceptionDto,
+  // })
+  // @ApiQuery({
+  //   name: 'lang',
+  //   type: Number,
+  //   description: 'The ID of the language',
+  // })
+  // @ApiBody({
+  //   type: CreateReviewDto,
+  // })
+  // @Auth()
+  // @Post()
+  // async create(
+  //   @Query('lang', ParseIntPipe) langId: number,
+  //   @TokenPayload(UserFromTokenPipe) user: User,
+  //   @Body() createReviewDto: CreateReviewDto,
+  // ) {
+  //   return await this.reviewsService.create(createReviewDto, langId, user);
+  // }
 
   @ApiOperation({ summary: 'Get all reviews by place id' })
   @ApiOkResponse({

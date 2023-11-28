@@ -4,13 +4,12 @@ import { PlaceCategoriesController } from './place-categories.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { PlaceCategory } from './entities/place-category.entity';
 import { LanguagesModule } from '../languages/languages.module';
-import { TranslationsModule } from '../translations/translations.module';
+import { PlaceCategoryTitleTranslation } from './entities/place-category-title-translation.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([PlaceCategory]),
+    TypeOrmModule.forFeature([PlaceCategory, PlaceCategoryTitleTranslation]),
     LanguagesModule,
-    TranslationsModule,
   ],
   controllers: [PlaceCategoriesController],
   providers: [PlaceCategoriesService],

@@ -1,10 +1,12 @@
 import {
   Column,
+  CreateDateColumn,
   Entity,
   Index,
   ManyToOne,
   OneToMany,
   PrimaryGeneratedColumn,
+  UpdateDateColumn,
 } from 'typeorm';
 import { Image } from '../../images/entities/image.entity';
 import { User } from '../../users/entities/user.entity';
@@ -39,6 +41,14 @@ export class Review {
   @ManyToOne(() => User, (user) => user.reviewsModeration)
   moderator: User;
 
-  @Column({ default: () => 'CURRENT_TIMESTAMP' })
+  @CreateDateColumn({
+    default: () => 'CURRENT_TIMESTAMP',
+  })
   createdAt: Date;
+
+  @UpdateDateColumn({
+    default: () => 'CURRENT_TIMESTAMP',
+    onUpdate: 'CURRENT_TIMESTAMP',
+  })
+  updatedAt: Date;
 }
