@@ -26,6 +26,9 @@ export class UserDto {
   @ApiProperty({ title: 'Created at', type: Date })
   createdAt: Date;
 
+  @ApiProperty({ title: 'Updated at', type: Date })
+  updatedAt: Date;
+
   @Exclude()
   admin: Admin;
 

@@ -8,7 +8,7 @@ export abstract class TranslationBaseEntity {
   // @ManyToOne(() => Language, (language) => language.id)
   // language: Language;
 
-  @Column({ type: 'varchar', length: 3000 })
+  @Column({ type: 'varchar', length: 300, nullable: true })
   text: string;
 
   @Column({ default: false })

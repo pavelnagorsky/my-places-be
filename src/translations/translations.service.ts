@@ -3,7 +3,6 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { TranslationBaseEntity } from './entities/translation-base.entity';
 import { Repository } from 'typeorm';
 import { Language } from '../languages/entities/language.entity';
-import { UpdateTranslationDto } from './dto/update-translation.dto';
 import { v2 } from '@google-cloud/translate';
 import { ConfigService } from '@nestjs/config';
 import { IGoogleCloudConfig } from '../config/configuration';
@@ -16,8 +15,6 @@ export class TranslationsService {
   constructor(
     @InjectRepository(TranslationBaseEntity)
     private translationsRepository: Repository<TranslationBaseEntity>,
-    @InjectRepository(Language)
-    private languagesRepository: Repository<Language>,
     private configService: ConfigService,
     private languagesService: LanguagesService,
   ) {
@@ -29,6 +26,10 @@ export class TranslationsService {
   }
 
   private translateClient: v2.Translate;
+
+  async getAllLanguages(): Promise<Language[]> {
+    return await this.languagesService.findAll();
+  }
 
   // // get last max textId
   // async getMaxTextId(): Promise<number> {
@@ -66,13 +67,13 @@ export class TranslationsService {
   // translate by google
   private async translate(
     text: string,
-    targetLanguage: string,
-    sourceLanguage?: string,
+    targetLanguageCode: string,
+    sourceLanguageCode?: string,
   ): Promise<string> {
     try {
       const [translation] = await this.translateClient.translate(text, {
-        from: sourceLanguage,
-        to: targetLanguage,
+        from: sourceLanguageCode,
+        to: targetLanguageCode,
       });
 
       return translation;
@@ -80,6 +81,20 @@ export class TranslationsService {
       this.logger.error('Translation failed', e.message);
       return text;
     }
+  }
+
+  async createGoogleTranslation(
+    text: string,
+    targetLanguageCode: string,
+    sourceLanguageId?: number,
+  ): Promise<string> {
+    let originalLanguage: Language | null = null;
+    if (!!sourceLanguageId) {
+      originalLanguage = await this.languagesService.findOneById(
+        sourceLanguageId,
+      );
+    }
+    return this.translate(text, targetLanguageCode, originalLanguage?.code);
   }
 
   // async translateAll(text: string, textId: number, originalLangId: number) {

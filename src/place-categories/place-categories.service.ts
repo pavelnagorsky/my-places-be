@@ -7,13 +7,10 @@ import { CreatePlaceCategoryDto } from './dto/create-place-category.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { PlaceCategory } from './entities/place-category.entity';
-import { LanguagesService } from '../languages/languages.service';
-import { TranslationsService } from '../translations/translations.service';
-import { TranslationBaseEntity } from '../translations/entities/translation-base.entity';
 import { Image } from '../images/entities/image.entity';
 import { UpdatePlaceCategoryDto } from './dto/update-place-category.dto';
-import { PlaceTypeTitleTranslation } from '../place-types/entities/place-type-title-translation.entity';
 import { PlaceCategoryTitleTranslation } from './entities/place-category-title-translation.entity';
+import { TranslationsService } from '../translations/translations.service';
 
 @Injectable()
 export class PlaceCategoriesService {
@@ -22,11 +19,11 @@ export class PlaceCategoriesService {
     private placeCategoriesRepository: Repository<PlaceCategory>,
     @InjectRepository(PlaceCategoryTitleTranslation)
     private placeCategoriesTranslationsRepository: Repository<PlaceCategoryTitleTranslation>,
-    private languagesService: LanguagesService,
+    private translationsService: TranslationsService,
   ) {}
 
   async create(dto: CreatePlaceCategoryDto) {
-    const languages = await this.languagesService.findAll();
+    const languages = await this.translationsService.getAllLanguages();
     if (languages.length > dto.titleTranslations.length)
       throw new BadRequestException({ message: 'Not all languages set' });
 

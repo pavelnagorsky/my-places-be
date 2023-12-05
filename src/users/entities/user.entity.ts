@@ -7,6 +7,8 @@ import {
   JoinColumn,
   JoinTable,
   ManyToMany,
+  CreateDateColumn,
+  UpdateDateColumn,
 } from 'typeorm';
 
 import { Place } from '../../places/entities/place.entity';
@@ -37,9 +39,6 @@ export class User {
 
   @Column({ type: 'varchar' })
   password: string;
-
-  @Column({ default: () => 'CURRENT_TIMESTAMP' })
-  createdAt: Date;
 
   @OneToMany(() => Place, (place) => place.author)
   places: Place[];
@@ -72,4 +71,15 @@ export class User {
 
   @OneToMany(() => Report, (report) => report.moderator)
   reportsModeration: Report;
+
+  @CreateDateColumn({
+    default: () => 'CURRENT_TIMESTAMP',
+  })
+  createdAt: Date;
+
+  @UpdateDateColumn({
+    default: () => 'CURRENT_TIMESTAMP',
+    onUpdate: 'CURRENT_TIMESTAMP',
+  })
+  updatedAt: Date;
 }

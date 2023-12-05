@@ -33,38 +33,39 @@ import { UserFromTokenPipe } from '../auth/pipes/user-from-token.pipe';
 import { User } from '../users/entities/user.entity';
 import { ReviewDto } from './dto/review.dto';
 import { SearchResponseDto } from './dto/search-response.dto';
+import { Place } from '../places/entities/place.entity';
 
 @ApiTags('Reviews')
 @Controller('reviews')
 export class ReviewsController {
   constructor(private readonly reviewsService: ReviewsService) {}
 
-  // @ApiOperation({ summary: 'Create Review' })
-  // @ApiOkResponse({
-  //   description: 'OK',
-  //   type: PickType(Review, ['id']),
-  // })
-  // @ApiBadRequestResponse({
-  //   description: 'Validation failed',
-  //   type: ValidationExceptionDto,
-  // })
-  // @ApiQuery({
-  //   name: 'lang',
-  //   type: Number,
-  //   description: 'The ID of the language',
-  // })
-  // @ApiBody({
-  //   type: CreateReviewDto,
-  // })
-  // @Auth()
-  // @Post()
-  // async create(
-  //   @Query('lang', ParseIntPipe) langId: number,
-  //   @TokenPayload(UserFromTokenPipe) user: User,
-  //   @Body() createReviewDto: CreateReviewDto,
-  // ) {
-  //   return await this.reviewsService.create(createReviewDto, langId, user);
-  // }
+  @ApiOperation({ summary: 'Create Review' })
+  @ApiOkResponse({
+    description: 'OK',
+    type: PickType(Review, ['id']),
+  })
+  @ApiBadRequestResponse({
+    description: 'Validation failed',
+    type: ValidationExceptionDto,
+  })
+  @ApiQuery({
+    name: 'lang',
+    type: Number,
+    description: 'The ID of the language',
+  })
+  @ApiBody({
+    type: CreateReviewDto,
+  })
+  @Auth()
+  @Post()
+  async create(
+    @Query('lang', ParseIntPipe) langId: number,
+    @TokenPayload(UserFromTokenPipe) user: User,
+    @Body() createReviewDto: CreateReviewDto,
+  ) {
+    return await this.reviewsService.create(createReviewDto, langId, user);
+  }
 
   @ApiOperation({ summary: 'Get all reviews by place id' })
   @ApiOkResponse({
@@ -112,24 +113,6 @@ export class ReviewsController {
     );
   }
 
-  @ApiOperation({ summary: 'Get all reviews by language id' })
-  @ApiOkResponse({
-    description: 'OK',
-    type: ReviewDto,
-    isArray: true,
-  })
-  @ApiQuery({
-    name: 'lang',
-    type: Number,
-    description: 'The ID of the language',
-  })
-  @UseInterceptors(ClassSerializerInterceptor)
-  @Get()
-  async findAll(@Query('lang', ParseIntPipe) langId: number) {
-    const reviews = await this.reviewsService.findAll(langId);
-    return reviews.map((r) => new ReviewDto(r));
-  }
-
   @ApiOperation({ summary: 'Get review by id and language id' })
   @ApiOkResponse({
     description: 'OK',
@@ -157,8 +140,20 @@ export class ReviewsController {
     return this.reviewsService.update(+id, updateReviewDto);
   }
 
+  @ApiOperation({ summary: 'Delete Review' })
+  @ApiOkResponse({
+    description: 'OK',
+    type: PickType(Place, ['id']),
+  })
+  @ApiParam({
+    name: 'id',
+    type: Number,
+    description: 'The ID of the review',
+  })
+  @Auth()
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.reviewsService.remove(+id);
+  async deletePlace(@Param('id', ParseIntPipe) id: number) {
+    const data = await this.reviewsService.removeReview(id);
+    return data;
   }
 }

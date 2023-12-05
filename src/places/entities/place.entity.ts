@@ -19,6 +19,9 @@ import { PlaceCategory } from '../../place-categories/entities/place-category.en
 import { PlaceStatusesEnum } from '../enums/place-statuses.enum';
 import { Review } from '../../reviews/entities/review.entity';
 import { Report } from '../../reports/entities/report.entity';
+import { PlaceTitleTranslation } from './place-title-translation.entity';
+import { PlaceDescriptionTranslation } from './place-description-translation.entity';
+import { PlaceAddressTranslation } from './place-address-translation.entity';
 
 @Entity()
 export class Place {
@@ -29,18 +32,22 @@ export class Place {
   @Column({ unique: true })
   slug: string;
 
-  @Index()
-  @Column({ type: 'int' })
-  title: number;
+  @OneToMany(() => PlaceTitleTranslation, (translation) => translation.place, {
+    cascade: true,
+  })
+  titles: PlaceTitleTranslation[];
 
-  @Index()
-  @Column({ type: 'int' })
-  description: number;
+  @OneToMany(
+    () => PlaceDescriptionTranslation,
+    (translation) => translation.place,
+    { cascade: true },
+  )
+  descriptions: PlaceDescriptionTranslation[];
 
   @OneToMany(() => Image, (image) => image.place, { cascade: true })
   images: Image[];
 
-  @OneToMany(() => Review, (review) => review.place)
+  @OneToMany(() => Review, (review) => review.place, { cascade: true })
   reviews: Review[];
 
   @OneToMany(() => Comment, (comment) => comment.place, { cascade: true })
@@ -49,9 +56,12 @@ export class Place {
   @OneToMany(() => Report, (report) => report.place)
   reports: Report[];
 
-  @Index()
-  @Column({ type: 'int' })
-  address: number;
+  @OneToMany(
+    () => PlaceAddressTranslation,
+    (translation) => translation.place,
+    { cascade: true },
+  )
+  addresses: PlaceAddressTranslation[];
 
   @Column({ type: 'varchar', nullable: true })
   website: string | null;

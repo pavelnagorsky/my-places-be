@@ -3,6 +3,7 @@ import {
   Body,
   ClassSerializerInterceptor,
   Controller,
+  Delete,
   ForbiddenException,
   Get,
   Param,
@@ -17,6 +18,7 @@ import {
   ApiBadRequestResponse,
   ApiBearerAuth,
   ApiBody,
+  ApiNotFoundResponse,
   ApiOkResponse,
   ApiOperation,
   ApiParam,
@@ -40,55 +42,39 @@ import { SearchRequestDto } from './dto/search-request.dto';
 import { ValidationExceptionDto } from '../shared/validation/validation-exception.dto';
 import { SelectPlaceDto } from './dto/select-place.dto';
 import { CreateSlugDto } from './dto/create-slug.dto';
+import { MyPlaceDto } from './dto/my-place.dto';
+import { MyPlacesResponseDto } from './dto/my-places-response.dto';
 
 @ApiTags('Places')
 @Controller('/places')
 export class PlacesController {
   constructor(private readonly placesService: PlacesService) {}
 
-  // @ApiOperation({ summary: 'Create Place' })
-  // @ApiOkResponse({
-  //   description: 'OK',
-  //   type: PickType(Place, ['id']),
-  // })
-  // @ApiBadRequestResponse({
-  //   description: 'Validation failed',
-  //   type: ValidationExceptionDto,
-  // })
-  // @ApiQuery({
-  //   name: 'lang',
-  //   type: Number,
-  //   description: 'The ID of the language',
-  // })
-  // @ApiBody({
-  //   type: CreatePlaceDto,
-  // })
-  // @Auth()
-  // @Post()
-  // async create(
-  //   @Query('lang', ParseIntPipe) langId: number,
-  //   @TokenPayload(UserFromTokenPipe) user: User,
-  //   @Body() createPlaceDto: CreatePlaceDto,
-  // ) {
-  //   return await this.placesService.create(langId, user, createPlaceDto);
-  // }
-
-  @ApiOperation({ summary: 'Get all places by language id' })
+  @ApiOperation({ summary: 'Create Place' })
   @ApiOkResponse({
     description: 'OK',
-    type: SearchPlaceDto,
-    isArray: true,
+    type: PickType(Place, ['id']),
+  })
+  @ApiBadRequestResponse({
+    description: 'Validation failed',
+    type: ValidationExceptionDto,
   })
   @ApiQuery({
     name: 'lang',
     type: Number,
     description: 'The ID of the language',
   })
-  @UseInterceptors(ClassSerializerInterceptor)
-  @Get()
-  async getAll(@Query('lang', ParseIntPipe) langId: number) {
-    const places = await this.placesService.findAll(langId);
-    return places.map((p) => new SearchPlaceDto(p));
+  @ApiBody({
+    type: CreatePlaceDto,
+  })
+  @Auth()
+  @Post()
+  async create(
+    @Query('lang', ParseIntPipe) langId: number,
+    @TokenPayload(UserFromTokenPipe) user: User,
+    @Body() createPlaceDto: CreatePlaceDto,
+  ) {
+    return await this.placesService.create(langId, user, createPlaceDto);
   }
 
   @ApiOperation({ summary: 'Get all places slugs' })
@@ -117,9 +103,10 @@ export class PlacesController {
   @Post('slugs/validate')
   async checkSlugValidity(@Body() createSlugDto: CreateSlugDto) {
     const slugExists = await this.placesService.validateSlug(createSlugDto);
+    const existsMessage = 'SLUG_EXISTS';
     if (slugExists)
       throw new BadRequestException({
-        message: 'slug already exists',
+        message: existsMessage,
       });
     return;
   }
@@ -201,10 +188,12 @@ export class PlacesController {
   }
 
   @ApiOperation({ summary: 'Get place by slug and language id' })
-  @ApiBearerAuth('access-token')
   @ApiOkResponse({
     description: 'OK',
     type: PlaceDto,
+  })
+  @ApiNotFoundResponse({
+    description: 'Not found',
   })
   @ApiParam({
     name: 'slug',
@@ -217,7 +206,7 @@ export class PlacesController {
     description: 'The ID of the language',
   })
   @UseInterceptors(ClassSerializerInterceptor)
-  @Get(':slug')
+  @Get('slug/:slug')
   async getById(
     @Param('slug') slug: string,
     @Query('lang', ParseIntPipe) langId: number,
@@ -226,44 +215,105 @@ export class PlacesController {
     return new PlaceDto(place);
   }
 
-  // @ApiOperation({ summary: 'Update Place' })
-  // @ApiOkResponse({
-  //   description: 'OK',
-  //   type: PickType(Place, ['id']),
-  // })
-  // @ApiBadRequestResponse({
-  //   description: 'Validation failed',
-  //   type: ValidationExceptionDto,
-  // })
-  // @ApiParam({
-  //   name: 'id',
-  //   type: Number,
-  //   description: 'The ID of the place',
-  // })
-  // @ApiQuery({
-  //   name: 'lang',
-  //   type: Number,
-  //   description: 'The ID of the language',
-  // })
-  // @ApiBody({
-  //   type: UpdatePlaceDto,
-  // })
-  // @Auth()
-  // @Put(':id')
-  // async update(
-  //   @Param('id', ParseIntPipe) id: number,
-  //   @Query('lang', ParseIntPipe) langId: number,
-  //   @TokenPayload() tokenPayload: TokenPayloadDto,
-  //   @Body() updatePlaceDto: UpdatePlaceDto,
-  // ) {
-  //   const userIsPlaceAuthor = await this.placesService.checkUserRelation(
-  //     tokenPayload.id,
-  //     id,
-  //   );
-  //   if (!userIsPlaceAuthor)
-  //     throw new ForbiddenException({
-  //       message: 'Forbidden, user is not author',
-  //     });
-  //   return await this.placesService.updatePlace(id, langId, updatePlaceDto);
-  // }
+  @ApiOperation({ summary: 'Update Place' })
+  @ApiOkResponse({
+    description: 'OK',
+    type: PickType(Place, ['id']),
+  })
+  @ApiBadRequestResponse({
+    description: 'Validation failed',
+    type: ValidationExceptionDto,
+  })
+  @ApiParam({
+    name: 'id',
+    type: Number,
+    description: 'The ID of the place',
+  })
+  @ApiQuery({
+    name: 'lang',
+    type: Number,
+    description: 'The ID of the language',
+  })
+  @ApiBody({
+    type: UpdatePlaceDto,
+  })
+  @Auth()
+  @Put(':id')
+  async update(
+    @Param('id', ParseIntPipe) id: number,
+    @Query('lang', ParseIntPipe) langId: number,
+    @TokenPayload() tokenPayload: TokenPayloadDto,
+    @Body() updatePlaceDto: UpdatePlaceDto,
+  ) {
+    const userIsPlaceAuthor = await this.placesService.checkUserRelation(
+      tokenPayload.id,
+      id,
+    );
+    if (!userIsPlaceAuthor)
+      throw new ForbiddenException({
+        message: 'Forbidden, user is not author',
+      });
+    return await this.placesService.updatePlace(id, langId, updatePlaceDto);
+  }
+
+  @ApiOperation({ summary: 'Delete Place' })
+  @ApiOkResponse({
+    description: 'OK',
+    type: PickType(Place, ['id']),
+  })
+  @ApiParam({
+    name: 'id',
+    type: Number,
+    description: 'The ID of the place',
+  })
+  @Auth()
+  @Delete(':id')
+  async deletePlace(@Param('id', ParseIntPipe) id: number) {
+    const data = await this.placesService.removePlace(id);
+    return data;
+  }
+
+  @ApiOperation({ summary: 'Get my places' })
+  @ApiOkResponse({
+    description: 'OK',
+    type: MyPlacesResponseDto,
+  })
+  @ApiQuery({
+    name: 'lastIndex',
+    type: Number,
+    description: 'Last lazy loading index',
+  })
+  @ApiQuery({
+    name: 'itemsPerPage',
+    type: Number,
+    description: 'Items per page',
+  })
+  @ApiQuery({
+    name: 'lang',
+    type: Number,
+    description: 'The ID of the language',
+  })
+  @UseInterceptors(ClassSerializerInterceptor)
+  @Auth()
+  @Get('my-places')
+  async getMyPlaces(
+    @Query('lang', ParseIntPipe) langId: number,
+    @Query('lastIndex', ParseIntPipe) lastIndex: number,
+    @Query('itemsPerPage', ParseIntPipe) itemsPerPage: number,
+    @TokenPayload()
+    tokenPayload: TokenPayloadDto,
+  ) {
+    const [places, total] = await this.placesService.findMyPlaces(
+      langId,
+      itemsPerPage,
+      lastIndex,
+      tokenPayload,
+    );
+    const updatedLastIndex = lastIndex + places.length;
+    return new MyPlacesResponseDto(
+      places,
+      updatedLastIndex,
+      total > updatedLastIndex,
+    );
+  }
 }

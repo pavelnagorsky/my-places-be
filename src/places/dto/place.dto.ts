@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Exclude, Transform } from 'class-transformer';
+import { Exclude, Expose, Transform } from 'class-transformer';
 import { TranslationBaseEntity } from '../../translations/entities/translation-base.entity';
 import { PlaceTypeDto } from '../../place-types/dto/place-type.dto';
 import { PlaceType } from '../../place-types/entities/place-type.entity';
@@ -19,25 +19,31 @@ export class PlaceDto {
   slug: string;
 
   @ApiProperty({ type: String, description: 'Place title' })
-  @Transform(
-    ({ value }: { value: Partial<TranslationBaseEntity> }) =>
-      value?.text ?? null,
-  )
-  title: string;
+  @Expose()
+  get title(): string {
+    return this.titles[0]?.text || '';
+  }
+
+  @Exclude()
+  titles: TranslationBaseEntity[];
 
   @ApiProperty({ type: String, description: 'Place description' })
-  @Transform(
-    ({ value }: { value: Partial<TranslationBaseEntity> }) =>
-      value?.text ?? null,
-  )
-  description: string;
+  @Expose()
+  get description(): string {
+    return this.descriptions[0]?.text || '';
+  }
+
+  @Exclude()
+  descriptions: TranslationBaseEntity[];
 
   @ApiProperty({ type: String, description: 'Place address' })
-  @Transform(
-    ({ value }: { value: Partial<TranslationBaseEntity> }) =>
-      value?.text ?? null,
-  )
-  address: string;
+  @Expose()
+  get address(): string {
+    return this.addresses[0]?.text || '';
+  }
+
+  @Exclude()
+  addresses: TranslationBaseEntity[];
 
   @ApiProperty({ type: PlaceTypeDto, description: 'Place type' })
   @Transform(
@@ -110,6 +116,12 @@ export class PlaceDto {
     description: 'created at',
   })
   createdAt: Date;
+
+  @ApiProperty({
+    type: Date,
+    description: 'updated at',
+  })
+  updatedAt: Date;
 
   constructor(partial: Partial<Place>) {
     Object.assign(this, partial);

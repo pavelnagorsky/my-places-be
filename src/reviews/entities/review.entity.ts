@@ -2,7 +2,6 @@ import {
   Column,
   CreateDateColumn,
   Entity,
-  Index,
   ManyToOne,
   OneToMany,
   PrimaryGeneratedColumn,
@@ -12,21 +11,31 @@ import { Image } from '../../images/entities/image.entity';
 import { User } from '../../users/entities/user.entity';
 import { Place } from '../../places/entities/place.entity';
 import { PlaceStatusesEnum } from '../../places/enums/place-statuses.enum';
+import { ReviewTitleTranslation } from './review-title-translation.entity';
+import { ReviewDescriptionTranslation } from './review-description-translation.entity';
 
 @Entity()
 export class Review {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Index()
-  @Column({ type: 'int' })
-  title: number;
+  @OneToMany(
+    () => ReviewTitleTranslation,
+    (translation) => translation.review,
+    { cascade: true },
+  )
+  titles: ReviewTitleTranslation[];
 
-  @Index()
-  @Column({ type: 'int' })
-  description: number;
+  @OneToMany(
+    () => ReviewDescriptionTranslation,
+    (translation) => translation.review,
+    { cascade: true },
+  )
+  descriptions: ReviewDescriptionTranslation[];
 
-  @ManyToOne(() => Place, (place) => place.reviews)
+  @ManyToOne(() => Place, (place) => place.reviews, {
+    onDelete: 'SET NULL',
+  })
   place: Place;
 
   @Column({ default: PlaceStatusesEnum.MODERATION })

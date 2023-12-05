@@ -8,9 +8,9 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { PlaceType } from './entities/place-type.entity';
 import { Image } from '../images/entities/image.entity';
-import { LanguagesService } from '../languages/languages.service';
 import { PlaceTypeTitleTranslation } from './entities/place-type-title-translation.entity';
 import { UpdatePlaceTypeDto } from './dto/update-place-type.dto';
+import { TranslationsService } from '../translations/translations.service';
 
 @Injectable()
 export class PlaceTypesService {
@@ -19,12 +19,12 @@ export class PlaceTypesService {
     private placeTypesRepository: Repository<PlaceType>,
     @InjectRepository(PlaceTypeTitleTranslation)
     private placeTypesTranslationsRepository: Repository<PlaceTypeTitleTranslation>,
-    private languagesService: LanguagesService,
+    private translationsService: TranslationsService,
   ) {}
 
   // This action adds a new placeType
   async create(dto: CreatePlaceTypeDto) {
-    const languages = await this.languagesService.findAll();
+    const languages = await this.translationsService.getAllLanguages();
     if (languages.length > dto.titleTranslations.length)
       throw new BadRequestException({ message: 'Not all languages set' });
 

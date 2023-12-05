@@ -27,16 +27,12 @@ export class LanguagesService {
   }
 
   // This action returns a #id language
-  async findOne(id: number) {
-    try {
-      return await this.languagesRepository.findOneOrFail({
-        where: {
-          id: id,
-        },
-      });
-    } catch (e) {
-      throw new NotFoundException('No language was found');
-    }
+  async findOneById(id: number) {
+    return await this.languagesRepository.findOne({
+      where: {
+        id: id,
+      },
+    });
   }
 
   // This action updates a #id language

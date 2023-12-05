@@ -67,25 +67,6 @@ export class LanguagesController {
     type: Number,
     description: 'The ID of the language',
   })
-  @ApiOperation({ summary: 'Get language by id' })
-  @Get(':id')
-  async findOne(@Param('id', ParseIntPipe) id: number) {
-    return await this.languagesService.findOne(id);
-  }
-
-  @ApiOkResponse({
-    description: 'OK',
-    type: LanguageDto,
-  })
-  @ApiNotFoundResponse({
-    type: NotFoundException,
-    description: 'No language was found',
-  })
-  @ApiParam({
-    name: 'id',
-    type: Number,
-    description: 'The ID of the language',
-  })
   @ApiOperation({ summary: 'Update language by id' })
   @Patch(':id')
   async update(

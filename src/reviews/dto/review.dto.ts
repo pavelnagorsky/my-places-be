@@ -8,18 +8,22 @@ import { User } from '../../users/entities/user.entity';
 
 export class ReviewDto {
   @ApiProperty({ type: String, description: 'Review title' })
-  @Transform(
-    ({ value }: { value: Partial<TranslationBaseEntity> }) =>
-      value?.text ?? null,
-  )
-  title: string;
+  @Expose()
+  get title(): string {
+    return this.titles[0]?.text || '';
+  }
+
+  @Exclude()
+  titles: TranslationBaseEntity[];
 
   @ApiProperty({ type: String, description: 'Review description' })
-  @Transform(
-    ({ value }: { value: Partial<TranslationBaseEntity> }) =>
-      value?.text ?? null,
-  )
-  description: string;
+  @Expose()
+  get description(): string {
+    return this.descriptions[0]?.text || '';
+  }
+
+  @Exclude()
+  descriptions: TranslationBaseEntity[];
 
   @Exclude()
   status: PlaceStatusesEnum;
@@ -27,11 +31,11 @@ export class ReviewDto {
   @ApiProperty({ title: 'Author username', type: String })
   @Expose()
   get authorUsername(): string {
-    return `${this.user?.firstName} ${this.user?.lastName}`;
+    return `${this.author?.firstName} ${this.author?.lastName}`;
   }
 
   @Exclude()
-  user: Partial<User>;
+  author: Partial<User>;
 
   @ApiProperty({
     type: String,
@@ -49,6 +53,12 @@ export class ReviewDto {
     description: 'Created at',
   })
   createdAt: Date;
+
+  @ApiProperty({
+    type: Date,
+    description: 'Updated at',
+  })
+  updatedAt: Date;
 
   constructor(partial: Partial<Review>) {
     Object.assign(this, partial);

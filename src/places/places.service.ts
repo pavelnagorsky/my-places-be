@@ -6,7 +6,15 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Place } from './entities/place.entity';
-import { Equal, In, Not, Repository, SelectQueryBuilder } from 'typeorm';
+import {
+  Equal,
+  FindManyOptions,
+  In,
+  Like as LikeOperator,
+  Not,
+  Repository,
+  SelectQueryBuilder,
+} from 'typeorm';
 import { CreatePlaceDto } from './dto/create-place.dto';
 import { TranslationsService } from '../translations/translations.service';
 import { PlaceType } from '../place-types/entities/place-type.entity';
@@ -14,13 +22,15 @@ import { PlaceCategory } from '../place-categories/entities/place-category.entit
 import { ImagesService } from '../images/images.service';
 import { User } from '../users/entities/user.entity';
 import { TokenPayloadDto } from '../auth/dto/token-payload.dto';
-import { Like } from '../likes/entities/like.entity';
 import { UpdatePlaceDto } from './dto/update-place.dto';
-import { Admin } from '../entities/admin.entity';
 import { SearchRequestDto } from './dto/search-request.dto';
 import { ISearchServiceResponse } from './interfaces';
 import { PlaceStatusesEnum } from './enums/place-statuses.enum';
 import { CreateSlugDto } from './dto/create-slug.dto';
+import { PlaceTitleTranslation } from './entities/place-title-translation.entity';
+import { PlaceDescriptionTranslation } from './entities/place-description-translation.entity';
+import { PlaceAddressTranslation } from './entities/place-address-translation.entity';
+import { ITranslation } from '../translations/interfaces/translation.interface';
 
 @Injectable()
 export class PlacesService {
@@ -32,60 +42,174 @@ export class PlacesService {
     private placeTypesRepository: Repository<PlaceType>,
     @InjectRepository(PlaceCategory)
     private placeCategoriesRepository: Repository<PlaceCategory>,
+    @InjectRepository(PlaceTitleTranslation)
+    private titleTranslationsRepository: Repository<PlaceTitleTranslation>,
+    @InjectRepository(PlaceDescriptionTranslation)
+    private descriptionTranslationsRepository: Repository<PlaceDescriptionTranslation>,
+    @InjectRepository(PlaceAddressTranslation)
+    private addressTranslationsRepository: Repository<PlaceAddressTranslation>,
     private imagesService: ImagesService,
     private translationsService: TranslationsService,
   ) {}
 
-  // private async createTranslations(
-  //   langId: number,
-  //   dto: CreatePlaceDto | UpdatePlaceDto,
-  //   translateAll = true,
-  // ) {
-  //   const titleTranslation = await this.translationsService.createTranslation(
-  //     langId,
-  //     dto.title,
-  //     true,
-  //   );
-  //
-  //   const descriptionTranslation =
-  //     await this.translationsService.createTranslation(
-  //       langId,
-  //       dto.description,
-  //       true,
-  //     );
-  //
-  //   const addressTranslation = await this.translationsService.createTranslation(
-  //     langId,
-  //     dto.address,
-  //     true,
-  //   );
-  //   if (!titleTranslation || !descriptionTranslation || !addressTranslation)
-  //     throw new BadRequestException({ message: 'Invalid text data' });
-  //
-  //   if (translateAll) {
-  //     await this.translationsService.translateAll(
-  //       titleTranslation.text,
-  //       titleTranslation.textId,
-  //       langId,
-  //     );
-  //     await this.translationsService.translateAll(
-  //       descriptionTranslation.text,
-  //       descriptionTranslation.textId,
-  //       langId,
-  //     );
-  //     await this.translationsService.translateAll(
-  //       addressTranslation.text,
-  //       addressTranslation.textId,
-  //       langId,
-  //     );
-  //   }
-  //
-  //   return {
-  //     titleTranslation,
-  //     descriptionTranslation,
-  //     addressTranslation,
-  //   };
-  // }
+  // create translations for place
+  private async createTranslations(sourceLangId: number, dto: CreatePlaceDto) {
+    const allLanguages = await this.translationsService.getAllLanguages();
+
+    const titleTranslations: PlaceTitleTranslation[] = [];
+    const descriptionTranslations: PlaceDescriptionTranslation[] = [];
+    const addressTranslations: PlaceAddressTranslation[] = [];
+
+    await Promise.all(
+      allLanguages.map(async (lang) => {
+        // translate titles
+        const newTitleTranslation = this.titleTranslationsRepository.create({
+          language: {
+            id: lang.id,
+          },
+          text:
+            lang.id === sourceLangId
+              ? dto.title
+              : await this.translationsService.createGoogleTranslation(
+                  dto.title,
+                  lang.code,
+                  sourceLangId,
+                ),
+          original: lang.id === sourceLangId,
+        });
+        titleTranslations.push(newTitleTranslation);
+
+        // translate descriptions
+        const newDescriptionTranslation =
+          this.descriptionTranslationsRepository.create({
+            language: {
+              id: lang.id,
+            },
+            text:
+              lang.id === sourceLangId
+                ? dto.description
+                : await this.translationsService.createGoogleTranslation(
+                    dto.description,
+                    lang.code,
+                    sourceLangId,
+                  ),
+            original: lang.id === sourceLangId,
+          });
+        descriptionTranslations.push(newDescriptionTranslation);
+
+        // translate addresses
+        const newAddressTranslation =
+          this.descriptionTranslationsRepository.create({
+            language: {
+              id: lang.id,
+            },
+            text:
+              lang.id === sourceLangId
+                ? dto.address
+                : await this.translationsService.createGoogleTranslation(
+                    dto.address,
+                    lang.code,
+                    sourceLangId,
+                  ),
+            original: lang.id === sourceLangId,
+          });
+        addressTranslations.push(newAddressTranslation);
+        return;
+      }),
+    );
+
+    return {
+      titleTranslations,
+      descriptionTranslations,
+      addressTranslations,
+    };
+  }
+
+  // update place translations
+  private async updateTranslations(
+    sourceLangId: number,
+    place: Place,
+    dto: UpdatePlaceDto,
+    translateAll: boolean,
+  ) {
+    const titleTranslations: PlaceTitleTranslation[] = [];
+    const descriptionTranslations: PlaceDescriptionTranslation[] = [];
+    const addressTranslations: PlaceAddressTranslation[] = [];
+
+    // helper function to merge update translations
+    const mergeUpdateTranslations = async (
+      arrayToSave: ITranslation[],
+      translation: ITranslation,
+      repository: Repository<ITranslation>,
+    ) => {
+      const newTranslation = repository.create({
+        id: translation.id,
+        language: {
+          id: translation.language.id,
+        },
+        // update if this language was selected in request
+        // translate if translateAll option was selected
+        // else do not change
+        text:
+          translation.language.id === sourceLangId
+            ? dto.title
+            : translateAll
+            ? await this.translationsService.createGoogleTranslation(
+                dto.title,
+                translation.language.code,
+                sourceLangId,
+              )
+            : translation.text,
+        original: translation.language.id === sourceLangId,
+      });
+      arrayToSave.push(newTranslation);
+      return;
+    };
+
+    const updateTitleTranslations = place.titles.map(async (translation) => {
+      // translate titles
+      await mergeUpdateTranslations(
+        titleTranslations,
+        translation,
+        this.titleTranslationsRepository,
+      );
+      return;
+    });
+    const updateDescriptionTranslations = place.descriptions.map(
+      async (translation) => {
+        // translate titles
+        await mergeUpdateTranslations(
+          descriptionTranslations,
+          translation,
+          this.descriptionTranslationsRepository,
+        );
+        return;
+      },
+    );
+    const updateAddressTranslations = place.addresses.map(
+      async (translation) => {
+        // translate titles
+        await mergeUpdateTranslations(
+          addressTranslations,
+          translation,
+          this.addressTranslationsRepository,
+        );
+        return;
+      },
+    );
+
+    await Promise.all([
+      Promise.all(updateTitleTranslations),
+      Promise.all(updateDescriptionTranslations),
+      Promise.all(updateAddressTranslations),
+    ]);
+
+    return {
+      titleTranslations,
+      descriptionTranslations,
+      addressTranslations,
+    };
+  }
 
   private async validatePlaceType(dto: CreatePlaceDto | UpdatePlaceDto) {
     const placeType = await this.placeTypesRepository.findOne({
@@ -115,37 +239,37 @@ export class PlacesService {
     });
   }
 
-  // async create(langId: number, author: User, createPlaceDto: CreatePlaceDto) {
-  //   const slugExists = await this.validateSlugExists(createPlaceDto.slug);
-  //   if (slugExists)
-  //     throw new BadRequestException({
-  //       message: `Slug ${createPlaceDto.slug} already exists!`,
-  //     });
-  //   const placeType = await this.validatePlaceType(createPlaceDto);
-  //   const placeCategories = await this.validatePlaceCategories(createPlaceDto);
-  //
-  //   const placeImages = await this.imagesService.updatePositions(
-  //     createPlaceDto.imagesIds,
-  //   );
-  //
-  //   const translations = await this.createTranslations(langId, createPlaceDto);
-  //
-  //   const place = this.placesRepository.create();
-  //   place.slug = createPlaceDto.slug;
-  //   place.title = translations.titleTranslation.textId;
-  //   place.description = translations.descriptionTranslation.textId;
-  //   place.address = translations.addressTranslation.textId;
-  //   place.type = placeType;
-  //   place.coordinates = createPlaceDto.coordinates;
-  //   place.categories = placeCategories;
-  //   place.images = placeImages;
-  //   place.advertisement = createPlaceDto.isCommercial;
-  //   if (createPlaceDto.website) place.website = createPlaceDto.website;
-  //   place.author = author;
-  //
-  //   const { id } = await this.placesRepository.save(place);
-  //   return { id: id };
-  // }
+  async create(langId: number, author: User, createPlaceDto: CreatePlaceDto) {
+    const slugExists = await this.validateSlugExists(createPlaceDto.slug);
+    if (slugExists)
+      throw new BadRequestException({
+        message: `Slug ${createPlaceDto.slug} already exists!`,
+      });
+    const placeType = await this.validatePlaceType(createPlaceDto);
+    const placeCategories = await this.validatePlaceCategories(createPlaceDto);
+
+    const placeImages = await this.imagesService.updatePositions(
+      createPlaceDto.imagesIds,
+    );
+
+    const translations = await this.createTranslations(langId, createPlaceDto);
+
+    const place = this.placesRepository.create();
+    place.slug = createPlaceDto.slug;
+    place.titles = translations.titleTranslations;
+    place.descriptions = translations.descriptionTranslations;
+    place.addresses = translations.addressTranslations;
+    place.type = placeType;
+    place.coordinates = createPlaceDto.coordinates;
+    place.categories = placeCategories;
+    place.images = placeImages;
+    place.advertisement = createPlaceDto.isCommercial;
+    if (createPlaceDto.website) place.website = createPlaceDto.website;
+    place.author = author;
+
+    const { id } = await this.placesRepository.save(place);
+    return { id: id };
+  }
 
   // private getLatLng(coordinatesString: string): CoordinatesDto {
   //   return new CoordinatesDto(coordinatesString);
@@ -181,13 +305,25 @@ export class PlacesService {
   //   return distance <= radius;
   // }
 
-  private selectPlacesQuery(
+  private selectPlacesForSearchQuery(
     qb: SelectQueryBuilder<Place>,
     langId: number,
   ): SelectQueryBuilder<Place> {
     return qb
       .leftJoinAndSelect('place.categories', 'categories')
+      .leftJoinAndSelect(
+        'categories.titles',
+        'categoriesTitles',
+        'categoriesTitles.language = :langId',
+        { langId },
+      )
       .leftJoinAndSelect('place.type', 'type')
+      .leftJoinAndSelect(
+        'type.titles',
+        'typeTitles',
+        'typeTitles.language = :langId',
+        { langId },
+      )
       .leftJoinAndMapOne(
         'place.images',
         'image',
@@ -207,39 +343,22 @@ export class PlacesService {
         'categories_image',
         'categories.image = categories_image.id',
       )
-      .leftJoinAndMapOne(
-        'type.title',
-        'translation',
-        'type_t',
-        'type.title = type_t.textId AND type_t.language = :langId',
+      .leftJoinAndSelect(
+        'place.descriptions',
+        'placeDescriptions',
+        'placeDescriptions.language = :langId',
         { langId },
       )
-      .leftJoinAndMapOne(
-        'place.description',
-        'translation',
-        'description_t',
-        'place.description = description_t.textId AND description_t.language = :langId',
+      .leftJoinAndSelect(
+        'place.titles',
+        'placeTitles',
+        'placeTitles.language = :langId',
         { langId },
       )
-      .leftJoinAndMapOne(
-        'categories.title',
-        'translation',
-        'categories_t',
-        'categories.title = categories_t.textId AND categories_t.language = :langId',
-        { langId },
-      )
-      .leftJoinAndMapOne(
-        'place.title',
-        'translation',
-        'title_t',
-        'place.title = title_t.textId AND title_t.language = :langId',
-        { langId },
-      )
-      .leftJoinAndMapOne(
-        'place.address',
-        'translation',
-        'address_t',
-        'place.address = address_t.textId AND address_t.language = :langId',
+      .leftJoinAndSelect(
+        'place.addresses',
+        'placeAddresses',
+        'placeAddresses.language = :langId',
         { langId },
       )
       .orderBy({
@@ -247,11 +366,6 @@ export class PlacesService {
         'place.likesCount': 'DESC',
         'place.viewsCount': 'DESC',
       });
-  }
-
-  async findAll(langId: number) {
-    const qb = this.placesRepository.createQueryBuilder('place');
-    return this.selectPlacesQuery(qb, langId).getMany();
   }
 
   private countTotalPages(totalResults: number, resultsPerPage: number) {
@@ -264,23 +378,31 @@ export class PlacesService {
     return Math.ceil(totalResults / resultsPerPage) || defaultCount;
   }
 
-  private generateSelectBaseQuery(langId: number, search: string) {
-    let query = this.placesRepository
-      .createQueryBuilder('place')
-      .select(['place.title', 'place.id'])
-      .take(6)
-      .leftJoinAndMapOne(
-        'place.title',
-        'translation',
-        'title_t',
-        'place.title = title_t.textId AND title_t.language = :langId',
-        { langId },
-      );
-    if (search?.length > 0)
-      query = query.where('title_t.text LIKE :search', {
-        search: `${search}%`,
-      });
-    return query;
+  private getPlacesSelectFindOptions(
+    langId: number,
+    search: string,
+  ): FindManyOptions<Place> {
+    const shouldApplySearch = search?.length > 0;
+    return {
+      take: 6,
+      relations: {
+        titles: true,
+      },
+      select: {
+        id: true,
+        titles: {
+          text: true,
+        },
+      },
+      where: {
+        titles: {
+          text: shouldApplySearch ? LikeOperator(`${search}%`) : undefined,
+          language: {
+            id: langId,
+          },
+        },
+      },
+    };
   }
 
   async getPlacesSelect(
@@ -289,34 +411,36 @@ export class PlacesService {
     search: string,
     placeId: number | null,
   ) {
+    // default sql request options
+    const defaultFindOptions = this.getPlacesSelectFindOptions(langId, search);
     // select places on moderation, that belongs to user
-    const userPlaces = await this.generateSelectBaseQuery(langId, search)
-      .andWhere('place.author = :userId', { userId: tokenPayload.id })
-      .andWhere('place.status = :onModeration', {
-        onModeration: PlaceStatusesEnum.MODERATION,
-      })
-      .getMany();
+    const userPlaces = await this.placesRepository.find({
+      ...defaultFindOptions,
+      where: {
+        ...defaultFindOptions.where,
+        author: {
+          id: tokenPayload.id,
+        },
+        status: PlaceStatusesEnum.MODERATION,
+      },
+    });
     // select public places
-    const placesSearch = await this.generateSelectBaseQuery(langId, search)
-      .andWhere('place.status = :onModeration', {
-        onModeration: PlaceStatusesEnum.MODERATION,
-      })
-      .getMany();
+    const placesSearch = await this.placesRepository.find({
+      ...defaultFindOptions,
+      where: {
+        ...defaultFindOptions.where,
+        status: PlaceStatusesEnum.MODERATION,
+      },
+    });
     // select place by id
     let placeById: Place | null = null;
     if (placeId) {
-      placeById = await this.placesRepository
-        .createQueryBuilder('place')
-        .select(['place.title', 'place.id'])
-        .where('place.id = :placeId', { placeId })
-        .leftJoinAndMapOne(
-          'place.title',
-          'translation',
-          'title_t',
-          'place.title = title_t.textId AND title_t.language = :langId',
-          { langId },
-        )
-        .getOne();
+      placeById = await this.placesRepository.findOne({
+        ...defaultFindOptions,
+        where: {
+          id: placeId,
+        },
+      });
     }
 
     const filteredUserPlaces = userPlaces.filter((p) => p.id !== placeId);
@@ -363,10 +487,10 @@ export class PlacesService {
         .createQueryBuilder('place')
         .skip(skip)
         .take(limit);
-      const qb = this.selectPlacesQuery(initialQb, langId);
+      const qb = this.selectPlacesForSearchQuery(initialQb, langId);
       // if search is by place titles
       if (isSearchByTitle) {
-        const resultQueryTitle = qb.where('title_t.text LIKE :title', {
+        const resultQueryTitle = qb.where('placeTitles.text LIKE :title', {
           title: `%${searchDto.title}%`,
         });
         totalResults = await resultQueryTitle.getCount();
@@ -448,63 +572,61 @@ export class PlacesService {
   }
 
   async findOneBySlug(slug: string, langId: number) {
-    const place = await this.placesRepository
-      .createQueryBuilder('place')
-      .where('place.slug = :slug', { slug })
-      .leftJoinAndSelect('place.categories', 'categories')
-      .leftJoinAndSelect('place.type', 'type')
-      .leftJoinAndSelect('place.images', 'image')
-      .addOrderBy('image.position')
-      .leftJoinAndSelect('place.likes', 'like')
-      .leftJoinAndSelect('like.user', 'likeUser')
-      .leftJoinAndMapOne(
-        'type.image',
-        'image',
-        'type_image',
-        'type.image = type_image.id',
-      )
-      .leftJoinAndMapOne(
-        'categories.image',
-        'image',
-        'categories_image',
-        'categories.image = categories_image.id',
-      )
-      .leftJoinAndMapOne(
-        'type.title',
-        'translation',
-        'type_t',
-        'type.title = type_t.textId AND type_t.language = :langId',
-        { langId },
-      )
-      .leftJoinAndMapOne(
-        'categories.title',
-        'translation',
-        'categories_t',
-        'categories.title = categories_t.textId AND categories_t.language = :langId',
-        { langId },
-      )
-      .leftJoinAndMapOne(
-        'place.title',
-        'translation',
-        'title_t',
-        'place.title = title_t.textId AND title_t.language = :langId',
-        { langId },
-      )
-      .leftJoinAndMapOne(
-        'place.description',
-        'translation',
-        'description_t',
-        'place.description = description_t.textId AND description_t.language = :langId',
-        { langId },
-      )
-      .leftJoinAndMapOne(
-        'place.address',
-        'translation',
-        'address_t',
-        'place.address = address_t.textId AND address_t.language = :langId',
-        { langId },
-      )
-      .getOne();
+    const place = await this.placesRepository.findOne({
+      relations: {
+        titles: true,
+        descriptions: true,
+        addresses: true,
+        type: {
+          titles: true,
+          image: true,
+          image2: true,
+        },
+        categories: {
+          titles: true,
+          image: true,
+          image2: true,
+        },
+        images: true,
+      },
+      where: {
+        slug: Equal(slug),
+        titles: {
+          language: {
+            id: langId,
+          },
+        },
+        descriptions: {
+          language: {
+            id: langId,
+          },
+        },
+        addresses: {
+          language: {
+            id: langId,
+          },
+        },
+        type: {
+          titles: {
+            language: {
+              id: langId,
+            },
+          },
+        },
+        categories: {
+          titles: {
+            language: {
+              id: langId,
+            },
+          },
+        },
+      },
+      order: {
+        images: {
+          position: 'ASC',
+        },
+      },
+    });
     if (!place) throw new NotFoundException({ message: 'Place not found' });
     this.addView(place.id);
     return place;
@@ -537,52 +659,130 @@ export class PlacesService {
     });
   }
 
-  // async updatePlace(
-  //   placeId: number,
-  //   langId: number,
-  //   updatePlaceDto: UpdatePlaceDto,
-  // ) {
-  //   try {
-  //     const exist = await this.checkExist(placeId);
-  //     if (!exist)
-  //       throw new BadRequestException({ message: 'Place not exists' });
-  //
-  //     const placeType = await this.validatePlaceType(updatePlaceDto);
-  //     const placeCategories = await this.validatePlaceCategories(
-  //       updatePlaceDto,
-  //     );
-  //
-  //     const placeImages = await this.imagesService.updatePositions(
-  //       updatePlaceDto.imagesIds,
-  //     );
-  //
-  //     const translations = await this.createTranslations(
-  //       langId,
-  //       updatePlaceDto,
-  //       updatePlaceDto.shouldTranslate,
-  //     );
-  //
-  //     await this.placesRepository.save({
-  //       id: placeId,
-  //       slug: updatePlaceDto.slug,
-  //       images: placeImages,
-  //       title: translations.titleTranslation.textId,
-  //       description: translations.descriptionTranslation.textId,
-  //       address: translations.addressTranslation.textId,
-  //       type: placeType,
-  //       coordinates: updatePlaceDto.coordinates,
-  //       categories: placeCategories,
-  //       website: updatePlaceDto.website,
-  //       status: PlaceStatusesEnum.MODERATION,
-  //       advertisement: updatePlaceDto.isCommercial,
-  //     });
-  //
-  //     return { id: placeId };
-  //   } catch (e) {
-  //     if (e instanceof BadRequestException) {
-  //       throw e;
-  //     }
-  //     throw new BadRequestException({ message: 'Incorrect details' });
-  //   }
-  // }
+  async updatePlace(
+    placeId: number,
+    langId: number,
+    updatePlaceDto: UpdatePlaceDto,
+  ) {
+    try {
+      const oldPlace = await this.placesRepository.findOne({
+        relations: {
+          titles: {
+            language: true,
+          },
+          descriptions: {
+            language: true,
+          },
+          addresses: {
+            language: true,
+          },
+        },
+        where: { id: placeId },
+      });
+      if (!oldPlace)
+        throw new BadRequestException({ message: 'Place not exists' });
+
+      const placeType = await this.validatePlaceType(updatePlaceDto);
+      const placeCategories = await this.validatePlaceCategories(
+        updatePlaceDto,
+      );
+
+      const placeImages = await this.imagesService.updatePositions(
+        updatePlaceDto.imagesIds,
+      );
+
+      const translations = await this.updateTranslations(
+        langId,
+        oldPlace,
+        updatePlaceDto,
+        updatePlaceDto.shouldTranslate,
+      );
+
+      const updatedPlace = this.placesRepository.create({
+        id: placeId,
+        slug: updatePlaceDto.slug,
+        images: placeImages,
+        titles: translations.titleTranslations,
+        descriptions: translations.descriptionTranslations,
+        addresses: translations.addressTranslations,
+        type: placeType,
+        coordinates: updatePlaceDto.coordinates,
+        categories: placeCategories,
+        website: updatePlaceDto.website,
+        status: PlaceStatusesEnum.MODERATION,
+        advertisement: updatePlaceDto.isCommercial,
+      });
+
+      await this.placesRepository.save(updatedPlace);
+
+      return { id: placeId };
+    } catch (e) {
+      if (e instanceof BadRequestException) {
+        throw e;
+      }
+      throw new BadRequestException({ message: 'Incorrect details' });
+    }
+  }
+
+  async removePlace(id: number) {
+    const deleted = await this.placesRepository.remove(
+      this.placesRepository.create({ id }),
+    );
+    return { id };
+  }
+
+  async findMyPlaces(
+    langId: number,
+    itemsPerPage: number,
+    lastIndex: number,
+    tokenPayload: TokenPayloadDto,
+  ) {
+    const res = await this.placesRepository.findAndCount({
+      relations: {
+        titles: true,
+        type: {
+          titles: true,
+        },
+      },
+      skip: lastIndex,
+      take: itemsPerPage,
+      order: {
+        updatedAt: 'DESC',
+      },
+      select: {
+        id: true,
+        titles: true,
+        viewsCount: true,
+        status: true,
+        slug: true,
+        advertisement: true,
+        comments: true,
+        createdAt: true,
+        updatedAt: true,
+        likesCount: true,
+      },
+      loadRelationIds: {
+        relations: ['comments'],
+      },
+      where: {
+        author: {
+          id: tokenPayload.id,
+        },
+        type: {
+          titles: {
+            language: {
+              id: langId,
+            },
+          },
+        },
+        titles: {
+          language: {
+            id: langId,
+          },
+        },
+      },
+    });
+
+    return res;
+  }
 }
