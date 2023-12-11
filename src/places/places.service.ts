@@ -7,10 +7,14 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Place } from './entities/place.entity';
 import {
+  Between,
   Equal,
   FindManyOptions,
+  ILike,
   In,
+  LessThanOrEqual,
   Like as LikeOperator,
+  MoreThanOrEqual,
   Not,
   Repository,
   SelectQueryBuilder,
@@ -27,10 +31,9 @@ import { SearchRequestDto } from './dto/search-request.dto';
 import { ISearchServiceResponse } from './interfaces';
 import { PlaceStatusesEnum } from './enums/place-statuses.enum';
 import { CreateSlugDto } from './dto/create-slug.dto';
-import { PlaceTitleTranslation } from './entities/place-title-translation.entity';
-import { PlaceDescriptionTranslation } from './entities/place-description-translation.entity';
-import { PlaceAddressTranslation } from './entities/place-address-translation.entity';
-import { ITranslation } from '../translations/interfaces/translation.interface';
+import { PlaceTranslation } from './entities/place-translation.entity';
+import { MyPlacesOrderByEnum } from './enums/my-places-order-by.enum';
+import { MyPlacesRequestDto } from './dto/my-places-request.dto';
 
 @Injectable()
 export class PlacesService {
@@ -42,12 +45,8 @@ export class PlacesService {
     private placeTypesRepository: Repository<PlaceType>,
     @InjectRepository(PlaceCategory)
     private placeCategoriesRepository: Repository<PlaceCategory>,
-    @InjectRepository(PlaceTitleTranslation)
-    private titleTranslationsRepository: Repository<PlaceTitleTranslation>,
-    @InjectRepository(PlaceDescriptionTranslation)
-    private descriptionTranslationsRepository: Repository<PlaceDescriptionTranslation>,
-    @InjectRepository(PlaceAddressTranslation)
-    private addressTranslationsRepository: Repository<PlaceAddressTranslation>,
+    @InjectRepository(PlaceTranslation)
+    private placeTranslationsRepository: Repository<PlaceTranslation>,
     private imagesService: ImagesService,
     private translationsService: TranslationsService,
   ) {}
@@ -56,18 +55,16 @@ export class PlacesService {
   private async createTranslations(sourceLangId: number, dto: CreatePlaceDto) {
     const allLanguages = await this.translationsService.getAllLanguages();
 
-    const titleTranslations: PlaceTitleTranslation[] = [];
-    const descriptionTranslations: PlaceDescriptionTranslation[] = [];
-    const addressTranslations: PlaceAddressTranslation[] = [];
+    const translations: PlaceTranslation[] = [];
 
     await Promise.all(
       allLanguages.map(async (lang) => {
         // translate titles
-        const newTitleTranslation = this.titleTranslationsRepository.create({
+        const newTranslation = this.placeTranslationsRepository.create({
           language: {
             id: lang.id,
           },
-          text:
+          title:
             lang.id === sourceLangId
               ? dto.title
               : await this.translationsService.createGoogleTranslation(
@@ -75,54 +72,30 @@ export class PlacesService {
                   lang.code,
                   sourceLangId,
                 ),
+          description:
+            lang.id === sourceLangId
+              ? dto.description
+              : await this.translationsService.createGoogleTranslation(
+                  dto.description,
+                  lang.code,
+                  sourceLangId,
+                ),
+          address:
+            lang.id === sourceLangId
+              ? dto.address
+              : await this.translationsService.createGoogleTranslation(
+                  dto.address,
+                  lang.code,
+                  sourceLangId,
+                ),
           original: lang.id === sourceLangId,
         });
-        titleTranslations.push(newTitleTranslation);
-
-        // translate descriptions
-        const newDescriptionTranslation =
-          this.descriptionTranslationsRepository.create({
-            language: {
-              id: lang.id,
-            },
-            text:
-              lang.id === sourceLangId
-                ? dto.description
-                : await this.translationsService.createGoogleTranslation(
-                    dto.description,
-                    lang.code,
-                    sourceLangId,
-                  ),
-            original: lang.id === sourceLangId,
-          });
-        descriptionTranslations.push(newDescriptionTranslation);
-
-        // translate addresses
-        const newAddressTranslation =
-          this.descriptionTranslationsRepository.create({
-            language: {
-              id: lang.id,
-            },
-            text:
-              lang.id === sourceLangId
-                ? dto.address
-                : await this.translationsService.createGoogleTranslation(
-                    dto.address,
-                    lang.code,
-                    sourceLangId,
-                  ),
-            original: lang.id === sourceLangId,
-          });
-        addressTranslations.push(newAddressTranslation);
+        translations.push(newTranslation);
         return;
       }),
     );
 
-    return {
-      titleTranslations,
-      descriptionTranslations,
-      addressTranslations,
-    };
+    return translations;
   }
 
   // update place translations
@@ -132,17 +105,14 @@ export class PlacesService {
     dto: UpdatePlaceDto,
     translateAll: boolean,
   ) {
-    const titleTranslations: PlaceTitleTranslation[] = [];
-    const descriptionTranslations: PlaceDescriptionTranslation[] = [];
-    const addressTranslations: PlaceAddressTranslation[] = [];
+    const translations: PlaceTranslation[] = [];
 
     // helper function to merge update translations
     const mergeUpdateTranslations = async (
-      arrayToSave: ITranslation[],
-      translation: ITranslation,
-      repository: Repository<ITranslation>,
+      arrayToSave: PlaceTranslation[],
+      translation: PlaceTranslation,
     ) => {
-      const newTranslation = repository.create({
+      const newTranslation = this.placeTranslationsRepository.create({
         id: translation.id,
         language: {
           id: translation.language.id,
@@ -150,7 +120,7 @@ export class PlacesService {
         // update if this language was selected in request
         // translate if translateAll option was selected
         // else do not change
-        text:
+        title:
           translation.language.id === sourceLangId
             ? dto.title
             : translateAll
@@ -159,56 +129,42 @@ export class PlacesService {
                 translation.language.code,
                 sourceLangId,
               )
-            : translation.text,
+            : translation.title,
+        description:
+          translation.language.id === sourceLangId
+            ? dto.description
+            : translateAll
+            ? await this.translationsService.createGoogleTranslation(
+                dto.description,
+                translation.language.code,
+                sourceLangId,
+              )
+            : translation.description,
+        address:
+          translation.language.id === sourceLangId
+            ? dto.address
+            : translateAll
+            ? await this.translationsService.createGoogleTranslation(
+                dto.address,
+                translation.language.code,
+                sourceLangId,
+              )
+            : translation.address,
         original: translation.language.id === sourceLangId,
       });
       arrayToSave.push(newTranslation);
       return;
     };
 
-    const updateTitleTranslations = place.titles.map(async (translation) => {
-      // translate titles
-      await mergeUpdateTranslations(
-        titleTranslations,
-        translation,
-        this.titleTranslationsRepository,
-      );
+    const updateTranslations = place.translations.map(async (translation) => {
+      // translate place data
+      await mergeUpdateTranslations(translations, translation);
       return;
     });
-    const updateDescriptionTranslations = place.descriptions.map(
-      async (translation) => {
-        // translate titles
-        await mergeUpdateTranslations(
-          descriptionTranslations,
-          translation,
-          this.descriptionTranslationsRepository,
-        );
-        return;
-      },
-    );
-    const updateAddressTranslations = place.addresses.map(
-      async (translation) => {
-        // translate titles
-        await mergeUpdateTranslations(
-          addressTranslations,
-          translation,
-          this.addressTranslationsRepository,
-        );
-        return;
-      },
-    );
 
-    await Promise.all([
-      Promise.all(updateTitleTranslations),
-      Promise.all(updateDescriptionTranslations),
-      Promise.all(updateAddressTranslations),
-    ]);
+    await Promise.all(updateTranslations);
 
-    return {
-      titleTranslations,
-      descriptionTranslations,
-      addressTranslations,
-    };
+    return translations;
   }
 
   private async validatePlaceType(dto: CreatePlaceDto | UpdatePlaceDto) {
@@ -256,9 +212,7 @@ export class PlacesService {
 
     const place = this.placesRepository.create();
     place.slug = createPlaceDto.slug;
-    place.titles = translations.titleTranslations;
-    place.descriptions = translations.descriptionTranslations;
-    place.addresses = translations.addressTranslations;
+    place.translations = translations;
     place.type = placeType;
     place.coordinates = createPlaceDto.coordinates;
     place.categories = placeCategories;
@@ -344,21 +298,9 @@ export class PlacesService {
         'categories.image = categories_image.id',
       )
       .leftJoinAndSelect(
-        'place.descriptions',
-        'placeDescriptions',
-        'placeDescriptions.language = :langId',
-        { langId },
-      )
-      .leftJoinAndSelect(
-        'place.titles',
-        'placeTitles',
-        'placeTitles.language = :langId',
-        { langId },
-      )
-      .leftJoinAndSelect(
-        'place.addresses',
-        'placeAddresses',
-        'placeAddresses.language = :langId',
+        'place.translations',
+        'placeTranslations',
+        'placeTranslations.language = :langId',
         { langId },
       )
       .orderBy({
@@ -386,17 +328,17 @@ export class PlacesService {
     return {
       take: 6,
       relations: {
-        titles: true,
+        translations: true,
       },
       select: {
         id: true,
-        titles: {
-          text: true,
+        translations: {
+          title: true,
         },
       },
       where: {
-        titles: {
-          text: shouldApplySearch ? LikeOperator(`${search}%`) : undefined,
+        translations: {
+          title: shouldApplySearch ? LikeOperator(`${search}%`) : undefined,
           language: {
             id: langId,
           },
@@ -574,9 +516,7 @@ export class PlacesService {
   async findOneBySlug(slug: string, langId: number) {
     const place = await this.placesRepository.findOne({
       relations: {
-        titles: true,
-        descriptions: true,
-        addresses: true,
+        translations: true,
         type: {
           titles: true,
           image: true,
@@ -591,17 +531,7 @@ export class PlacesService {
       },
       where: {
         slug: Equal(slug),
-        titles: {
-          language: {
-            id: langId,
-          },
-        },
-        descriptions: {
-          language: {
-            id: langId,
-          },
-        },
-        addresses: {
+        translations: {
           language: {
             id: langId,
           },
@@ -613,13 +543,13 @@ export class PlacesService {
             },
           },
         },
-        categories: {
-          titles: {
-            language: {
-              id: langId,
-            },
-          },
-        },
+        // categories: {
+        //   titles: {
+        //     language: {
+        //       id: langId,
+        //     },
+        //   },
+        // },
       },
       order: {
         images: {
@@ -667,17 +597,13 @@ export class PlacesService {
     try {
       const oldPlace = await this.placesRepository.findOne({
         relations: {
-          titles: {
-            language: true,
-          },
-          descriptions: {
-            language: true,
-          },
-          addresses: {
+          translations: {
             language: true,
           },
         },
-        where: { id: placeId },
+        where: {
+          id: placeId,
+        },
       });
       if (!oldPlace)
         throw new BadRequestException({ message: 'Place not exists' });
@@ -702,9 +628,7 @@ export class PlacesService {
         id: placeId,
         slug: updatePlaceDto.slug,
         images: placeImages,
-        titles: translations.titleTranslations,
-        descriptions: translations.descriptionTranslations,
-        addresses: translations.addressTranslations,
+        translations: translations,
         type: placeType,
         coordinates: updatePlaceDto.coordinates,
         categories: placeCategories,
@@ -733,25 +657,61 @@ export class PlacesService {
 
   async findMyPlaces(
     langId: number,
-    itemsPerPage: number,
-    lastIndex: number,
+    dto: MyPlacesRequestDto,
     tokenPayload: TokenPayloadDto,
   ) {
+    const orderDirection = dto.orderAsc ? 'ASC' : 'DESC';
+
+    const getDateWhereOption = () => {
+      if (!!dto.dateFrom && !!dto.dateTo)
+        return Between(new Date(dto.dateFrom), new Date(dto.dateTo));
+      if (!!dto.dateFrom) return MoreThanOrEqual(new Date(dto.dateFrom));
+      if (!!dto.dateTo) return LessThanOrEqual(new Date(dto.dateTo));
+      return undefined;
+    };
+
     const res = await this.placesRepository.findAndCount({
       relations: {
-        titles: true,
+        translations: true,
         type: {
           titles: true,
         },
       },
-      skip: lastIndex,
-      take: itemsPerPage,
+      skip: dto.lastIndex,
+      take: dto.itemsPerPage,
       order: {
-        updatedAt: 'DESC',
+        createdAt:
+          dto.orderBy === MyPlacesOrderByEnum.CREATED_AT || !dto.orderBy
+            ? orderDirection
+            : undefined,
+        translations: {
+          title:
+            dto.orderBy === MyPlacesOrderByEnum.TITLE
+              ? orderDirection
+              : undefined,
+        },
+        type: {
+          titles: {
+            text:
+              dto.orderBy === MyPlacesOrderByEnum.TYPE
+                ? orderDirection
+                : undefined,
+          },
+        },
+        status:
+          dto.orderBy === MyPlacesOrderByEnum.STATUS
+            ? orderDirection
+            : undefined,
+        advertisement:
+          dto.orderBy === MyPlacesOrderByEnum.COMMERCIAL
+            ? orderDirection
+            : undefined,
       },
       select: {
         id: true,
-        titles: true,
+        translations: {
+          title: true,
+        },
         viewsCount: true,
         status: true,
         slug: true,
@@ -762,7 +722,7 @@ export class PlacesService {
         likesCount: true,
       },
       loadRelationIds: {
-        relations: ['comments'],
+        relations: ['comments', 'reviews'],
       },
       where: {
         author: {
@@ -775,7 +735,16 @@ export class PlacesService {
             },
           },
         },
-        titles: {
+        createdAt: getDateWhereOption(),
+        status:
+          !!dto.statuses && dto.statuses?.length >= 0
+            ? In(dto.statuses)
+            : undefined,
+        translations: {
+          title:
+            !!dto.search && dto.search.length > 0
+              ? ILike(`${dto.search}%`)
+              : undefined,
           language: {
             id: langId,
           },

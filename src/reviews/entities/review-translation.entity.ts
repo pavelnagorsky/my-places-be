@@ -1,18 +1,24 @@
-import { TranslationBaseEntity } from '../../translations/entities/translation-base.entity';
 import { ITranslation } from '../../translations/interfaces/translation.interface';
-import { Entity, ManyToOne } from 'typeorm';
+import { Column, Entity, ManyToOne } from 'typeorm';
 import { Language } from '../../languages/entities/language.entity';
 import { Review } from './review.entity';
+import { TranslationBaseEntity } from '../../translations/entities/translation-base.entity';
 
 @Entity()
-export class ReviewTitleTranslation
+export class ReviewTranslation
   extends TranslationBaseEntity
   implements ITranslation
 {
+  @Column({ type: 'varchar', length: 300, nullable: true })
+  title: string;
+
+  @Column({ type: 'text', nullable: true })
+  description: string;
+
   @ManyToOne(() => Language, (language) => language.id)
   language: Language;
 
-  @ManyToOne(() => Review, (review) => review.titles, {
+  @ManyToOne(() => Review, (review) => review.translations, {
     onDelete: 'CASCADE',
   })
   review: Review;

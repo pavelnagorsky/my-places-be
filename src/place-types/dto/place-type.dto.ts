@@ -2,14 +2,14 @@ import { Exclude, Expose, Transform } from 'class-transformer';
 import { PlaceType } from '../entities/place-type.entity';
 import { ApiProperty } from '@nestjs/swagger';
 import { Image } from '../../images/entities/image.entity';
-import { TranslationBaseEntity } from '../../translations/entities/translation-base.entity';
+import { PlaceTypeTranslation } from '../entities/place-type-translation.entity';
 
 export class PlaceTypeDto {
   @ApiProperty({ title: 'Place type id', type: Number })
   id: number;
 
   @Exclude()
-  titles: TranslationBaseEntity[];
+  titles: PlaceTypeTranslation[];
 
   @ApiProperty({ title: 'Place type title', type: String })
   @Expose()

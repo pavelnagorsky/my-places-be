@@ -6,9 +6,9 @@ import { PlaceType } from '../../place-types/entities/place-type.entity';
 import { PlaceCategoryDto } from '../../place-categories/dto/place-category.dto';
 import { PlaceCategory } from '../../place-categories/entities/place-category.entity';
 import { Image } from '../../images/entities/image.entity';
-import { TranslationBaseEntity } from '../../translations/entities/translation-base.entity';
 import { CoordinatesDto } from './coordinates.dto';
 import { PlaceStatusesEnum } from '../enums/place-statuses.enum';
+import { PlaceTranslation } from '../entities/place-translation.entity';
 
 export class SearchPlaceDto {
   @ApiProperty({ title: 'Place id', type: Number })
@@ -20,20 +20,17 @@ export class SearchPlaceDto {
   @ApiProperty({ type: String, description: 'Place title' })
   @Expose()
   get title(): string {
-    return this.titles[0]?.text || '';
+    return this.translations[0]?.title || '';
   }
 
   @Exclude()
-  titles: TranslationBaseEntity[];
+  translations: PlaceTranslation[];
 
   @ApiProperty({ type: String, description: 'Place description' })
   @Expose()
   get description(): string {
-    return this.descriptions[0]?.text || '';
+    return this.translations[0]?.description || '';
   }
-
-  @Exclude()
-  descriptions: TranslationBaseEntity[];
 
   @ApiProperty({ type: Number, description: 'Likes count' })
   likesCount: number;
@@ -44,11 +41,8 @@ export class SearchPlaceDto {
   @ApiProperty({ type: String, description: 'Place address' })
   @Expose()
   get address(): string {
-    return this.addresses[0]?.text || '';
+    return this.translations[0]?.address || '';
   }
-
-  @Exclude()
-  addresses: TranslationBaseEntity[];
 
   @ApiProperty({ type: PlaceTypeDto, description: 'Place type' })
   @Transform(

@@ -10,7 +10,7 @@ import {
 } from 'typeorm';
 import { Place } from '../../places/entities/place.entity';
 import { Image } from '../../images/entities/image.entity';
-import { PlaceTypeTitleTranslation } from './place-type-title-translation.entity';
+import { PlaceTypeTranslation } from './place-type-translation.entity';
 
 @Entity()
 export class PlaceType {
@@ -18,11 +18,11 @@ export class PlaceType {
   id: number;
 
   @OneToMany(
-    () => PlaceTypeTitleTranslation,
+    () => PlaceTypeTranslation,
     (translation) => translation.placeType,
     { cascade: true },
   )
-  titles: PlaceTypeTitleTranslation[];
+  titles: PlaceTypeTranslation[];
 
   @Column({ default: false })
   commercial: boolean;

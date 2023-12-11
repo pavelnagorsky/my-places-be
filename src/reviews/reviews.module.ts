@@ -6,17 +6,11 @@ import { ImagesModule } from '../images/images.module';
 import { TranslationsModule } from '../translations/translations.module';
 import { Review } from './entities/review.entity';
 import { Place } from '../places/entities/place.entity';
-import { ReviewTitleTranslation } from './entities/review-title-translation.entity';
-import { ReviewDescriptionTranslation } from './entities/review-description-translation.entity';
+import { ReviewTranslation } from './entities/review-translation.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([
-      Review,
-      Place,
-      ReviewTitleTranslation,
-      ReviewDescriptionTranslation,
-    ]),
+    TypeOrmModule.forFeature([Review, Place, ReviewTranslation]),
     ImagesModule,
     TranslationsModule,
   ],

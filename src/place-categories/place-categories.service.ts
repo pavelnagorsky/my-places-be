@@ -9,7 +9,7 @@ import { Repository } from 'typeorm';
 import { PlaceCategory } from './entities/place-category.entity';
 import { Image } from '../images/entities/image.entity';
 import { UpdatePlaceCategoryDto } from './dto/update-place-category.dto';
-import { PlaceCategoryTitleTranslation } from './entities/place-category-title-translation.entity';
+import { PlaceCategoryTranslation } from './entities/place-category-translation.entity';
 import { TranslationsService } from '../translations/translations.service';
 
 @Injectable()
@@ -17,8 +17,8 @@ export class PlaceCategoriesService {
   constructor(
     @InjectRepository(PlaceCategory)
     private placeCategoriesRepository: Repository<PlaceCategory>,
-    @InjectRepository(PlaceCategoryTitleTranslation)
-    private placeCategoriesTranslationsRepository: Repository<PlaceCategoryTitleTranslation>,
+    @InjectRepository(PlaceCategoryTranslation)
+    private placeCategoriesTranslationsRepository: Repository<PlaceCategoryTranslation>,
     private translationsService: TranslationsService,
   ) {}
 

@@ -6,16 +6,10 @@ import { ImagesService } from '../images/images.service';
 import { TranslationsService } from '../translations/translations.service';
 import { Review } from './entities/review.entity';
 import { User } from '../users/entities/user.entity';
-import { FindManyOptions, Repository, SelectQueryBuilder } from 'typeorm';
+import { FindManyOptions, Repository } from 'typeorm';
 import { Place } from '../places/entities/place.entity';
-import { ReviewTitleTranslation } from './entities/review-title-translation.entity';
-import { ReviewDescriptionTranslation } from './entities/review-description-translation.entity';
-import { CreatePlaceDto } from '../places/dto/create-place.dto';
-import { PlaceTitleTranslation } from '../places/entities/place-title-translation.entity';
-import { PlaceDescriptionTranslation } from '../places/entities/place-description-translation.entity';
-import { PlaceAddressTranslation } from '../places/entities/place-address-translation.entity';
-import { UpdatePlaceDto } from '../places/dto/update-place.dto';
 import { ITranslation } from '../translations/interfaces/translation.interface';
+import { ReviewTranslation } from './entities/review-translation.entity';
 
 @Injectable()
 export class ReviewsService {
@@ -24,10 +18,8 @@ export class ReviewsService {
     private reviewsRepository: Repository<Review>,
     @InjectRepository(Place)
     private placesRepository: Repository<Place>,
-    @InjectRepository(ReviewTitleTranslation)
-    private titleTranslationsRepository: Repository<ReviewTitleTranslation>,
-    @InjectRepository(ReviewDescriptionTranslation)
-    private descriptionTranslationsRepository: Repository<ReviewDescriptionTranslation>,
+    @InjectRepository(ReviewTranslation)
+    private reviewTranslationsRepository: Repository<ReviewTranslation>,
     private imagesService: ImagesService,
     private translationsService: TranslationsService,
   ) {}
@@ -36,17 +28,16 @@ export class ReviewsService {
   private async createTranslations(sourceLangId: number, dto: CreateReviewDto) {
     const allLanguages = await this.translationsService.getAllLanguages();
 
-    const titleTranslations: ReviewTitleTranslation[] = [];
-    const descriptionTranslations: ReviewDescriptionTranslation[] = [];
+    const translations: ReviewTranslation[] = [];
 
     await Promise.all(
       allLanguages.map(async (lang) => {
         // translate titles
-        const newTitleTranslation = this.titleTranslationsRepository.create({
+        const newTranslation = this.reviewTranslationsRepository.create({
           language: {
             id: lang.id,
           },
-          text:
+          title:
             lang.id === sourceLangId
               ? dto.title
               : await this.translationsService.createGoogleTranslation(
@@ -54,54 +45,39 @@ export class ReviewsService {
                   lang.code,
                   sourceLangId,
                 ),
+          description:
+            lang.id === sourceLangId
+              ? dto.description
+              : await this.translationsService.createGoogleTranslation(
+                  dto.description,
+                  lang.code,
+                  sourceLangId,
+                ),
           original: lang.id === sourceLangId,
         });
-        titleTranslations.push(newTitleTranslation);
-
-        // translate descriptions
-        const newDescriptionTranslation =
-          this.descriptionTranslationsRepository.create({
-            language: {
-              id: lang.id,
-            },
-            text:
-              lang.id === sourceLangId
-                ? dto.description
-                : await this.translationsService.createGoogleTranslation(
-                    dto.description,
-                    lang.code,
-                    sourceLangId,
-                  ),
-            original: lang.id === sourceLangId,
-          });
-        descriptionTranslations.push(newDescriptionTranslation);
+        translations.push(newTranslation);
         return;
       }),
     );
 
-    return {
-      titleTranslations,
-      descriptionTranslations,
-    };
+    return translations;
   }
 
-  // update place translations
+  // update review translations
   private async updateTranslations(
     sourceLangId: number,
     review: Review,
     dto: UpdateReviewDto,
     translateAll: boolean,
   ) {
-    const titleTranslations: ReviewTitleTranslation[] = [];
-    const descriptionTranslations: ReviewDescriptionTranslation[] = [];
+    const translations: ReviewTranslation[] = [];
 
     // helper function to merge update translations
     const mergeUpdateTranslations = async (
-      arrayToSave: ITranslation[],
-      translation: ITranslation,
-      repository: Repository<ITranslation>,
+      arrayToSave: ReviewTranslation[],
+      translation: ReviewTranslation,
     ) => {
-      const newTranslation = repository.create({
+      const newTranslation = this.reviewTranslationsRepository.create({
         id: translation.id,
         language: {
           id: translation.language.id,
@@ -109,7 +85,7 @@ export class ReviewsService {
         // update if this language was selected in request
         // translate if translateAll option was selected
         // else do not change
-        text:
+        title:
           translation.language.id === sourceLangId
             ? dto.title
             : translateAll
@@ -118,60 +94,43 @@ export class ReviewsService {
                 translation.language.code,
                 sourceLangId,
               )
-            : translation.text,
+            : translation.title,
+        description:
+          translation.language.id === sourceLangId
+            ? dto.description
+            : translateAll
+            ? await this.translationsService.createGoogleTranslation(
+                dto.description,
+                translation.language.code,
+                sourceLangId,
+              )
+            : translation.description,
         original: translation.language.id === sourceLangId,
       });
       arrayToSave.push(newTranslation);
       return;
     };
 
-    const updateTitleTranslations = review.titles.map(async (translation) => {
-      // translate titles
-      await mergeUpdateTranslations(
-        titleTranslations,
-        translation,
-        this.titleTranslationsRepository,
-      );
+    const updateTranslations = review.translations.map(async (translation) => {
+      // translate review
+      await mergeUpdateTranslations(translations, translation);
       return;
     });
-    const updateDescriptionTranslations = review.descriptions.map(
-      async (translation) => {
-        // translate titles
-        await mergeUpdateTranslations(
-          descriptionTranslations,
-          translation,
-          this.descriptionTranslationsRepository,
-        );
-        return;
-      },
-    );
 
-    await Promise.all([
-      Promise.all(updateTitleTranslations),
-      Promise.all(updateDescriptionTranslations),
-    ]);
+    await Promise.all(updateTranslations);
 
-    return {
-      titleTranslations,
-      descriptionTranslations,
-    };
+    return translations;
   }
 
   private getReviewFindOptions(langId: number): FindManyOptions<Review> {
     return {
       relations: {
         images: true,
-        titles: true,
-        descriptions: true,
+        translations: true,
         author: true,
       },
       where: {
-        titles: {
-          language: {
-            id: langId,
-          },
-        },
-        descriptions: {
+        translations: {
           language: {
             id: langId,
           },
@@ -185,36 +144,6 @@ export class ReviewsService {
       },
     };
   }
-
-  // private selectReviewsQuery(
-  //   qb: SelectQueryBuilder<Review>,
-  //   langId: number,
-  // ): SelectQueryBuilder<Review> {
-  //   return qb
-  //     .leftJoinAndSelect('review.images', 'image')
-  //     .addOrderBy('image.position')
-  //     .orderBy('review.createdAt', 'DESC')
-  //     .leftJoinAndMapOne(
-  //       'review.description',
-  //       'translation',
-  //       'description_t',
-  //       'review.description = description_t.textId AND description_t.language = :langId',
-  //       { langId },
-  //     )
-  //     .leftJoinAndMapOne(
-  //       'review.title',
-  //       'translation',
-  //       'title_t',
-  //       'review.title = title_t.textId AND title_t.language = :langId',
-  //       { langId },
-  //     )
-  //     .leftJoinAndMapOne(
-  //       'review.user',
-  //       'user',
-  //       'user',
-  //       'review.authorId = user.id',
-  //     );
-  // }
 
   // create review
   async create(createReviewDto: CreateReviewDto, langId: number, user: User) {
@@ -232,8 +161,7 @@ export class ReviewsService {
     );
     const translations = await this.createTranslations(langId, createReviewDto);
     const review = this.reviewsRepository.create();
-    review.titles = translations.titleTranslations;
-    review.descriptions = translations.descriptionTranslations;
+    review.translations = translations;
     review.images = reviewImages;
     review.author = user;
     review.place = place;
@@ -257,17 +185,6 @@ export class ReviewsService {
       skip: lastIndex,
       take: itemsPerPage,
     });
-    // const qb = this.reviewsRepository
-    //   .createQueryBuilder('review')
-    //   .where('review.placeId = :placeId', { placeId });
-    // const totalCount = await this.reviewsRepository
-    //   .createQueryBuilder('review')
-    //   .where('review.placeId = :placeId', { placeId })
-    //   .getCount();
-    // const reviews = await this.selectReviewsQuery(qb, langId)
-    //   .skip(lastIndex)
-    //   .take(itemsPerPage)
-    //   .getMany();
     const hasMore = totalCount > reviews.length + lastIndex;
     return {
       hasMore,
@@ -285,12 +202,6 @@ export class ReviewsService {
         id: id,
       },
     });
-    // const qb = this.reviewsRepository.createQueryBuilder('review');
-    // return this.selectReviewsQuery(qb, langId)
-    //   .where('review.id = :id', {
-    //     id: id,
-    //   })
-    //   .getOne();
   }
 
   update(id: number, updateReviewDto: UpdateReviewDto) {

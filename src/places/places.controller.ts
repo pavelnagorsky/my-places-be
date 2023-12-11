@@ -16,7 +16,6 @@ import {
 import { PlacesService } from './places.service';
 import {
   ApiBadRequestResponse,
-  ApiBearerAuth,
   ApiBody,
   ApiNotFoundResponse,
   ApiOkResponse,
@@ -42,8 +41,8 @@ import { SearchRequestDto } from './dto/search-request.dto';
 import { ValidationExceptionDto } from '../shared/validation/validation-exception.dto';
 import { SelectPlaceDto } from './dto/select-place.dto';
 import { CreateSlugDto } from './dto/create-slug.dto';
-import { MyPlaceDto } from './dto/my-place.dto';
 import { MyPlacesResponseDto } from './dto/my-places-response.dto';
+import { MyPlacesRequestDto } from './dto/my-places-request.dto';
 
 @ApiTags('Places')
 @Controller('/places')
@@ -279,37 +278,25 @@ export class PlacesController {
     type: MyPlacesResponseDto,
   })
   @ApiQuery({
-    name: 'lastIndex',
-    type: Number,
-    description: 'Last lazy loading index',
-  })
-  @ApiQuery({
-    name: 'itemsPerPage',
-    type: Number,
-    description: 'Items per page',
-  })
-  @ApiQuery({
     name: 'lang',
     type: Number,
     description: 'The ID of the language',
   })
   @UseInterceptors(ClassSerializerInterceptor)
   @Auth()
-  @Get('my-places')
+  @Post('my-places')
   async getMyPlaces(
     @Query('lang', ParseIntPipe) langId: number,
-    @Query('lastIndex', ParseIntPipe) lastIndex: number,
-    @Query('itemsPerPage', ParseIntPipe) itemsPerPage: number,
+    @Body() dto: MyPlacesRequestDto,
     @TokenPayload()
     tokenPayload: TokenPayloadDto,
   ) {
     const [places, total] = await this.placesService.findMyPlaces(
       langId,
-      itemsPerPage,
-      lastIndex,
+      dto,
       tokenPayload,
     );
-    const updatedLastIndex = lastIndex + places.length;
+    const updatedLastIndex = dto.lastIndex + places.length;
     return new MyPlacesResponseDto(
       places,
       updatedLastIndex,

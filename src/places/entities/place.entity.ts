@@ -19,9 +19,7 @@ import { PlaceCategory } from '../../place-categories/entities/place-category.en
 import { PlaceStatusesEnum } from '../enums/place-statuses.enum';
 import { Review } from '../../reviews/entities/review.entity';
 import { Report } from '../../reports/entities/report.entity';
-import { PlaceTitleTranslation } from './place-title-translation.entity';
-import { PlaceDescriptionTranslation } from './place-description-translation.entity';
-import { PlaceAddressTranslation } from './place-address-translation.entity';
+import { PlaceTranslation } from './place-translation.entity';
 
 @Entity()
 export class Place {
@@ -32,17 +30,10 @@ export class Place {
   @Column({ unique: true })
   slug: string;
 
-  @OneToMany(() => PlaceTitleTranslation, (translation) => translation.place, {
+  @OneToMany(() => PlaceTranslation, (translation) => translation.place, {
     cascade: true,
   })
-  titles: PlaceTitleTranslation[];
-
-  @OneToMany(
-    () => PlaceDescriptionTranslation,
-    (translation) => translation.place,
-    { cascade: true },
-  )
-  descriptions: PlaceDescriptionTranslation[];
+  translations: PlaceTranslation[];
 
   @OneToMany(() => Image, (image) => image.place, { cascade: true })
   images: Image[];
@@ -55,13 +46,6 @@ export class Place {
 
   @OneToMany(() => Report, (report) => report.place)
   reports: Report[];
-
-  @OneToMany(
-    () => PlaceAddressTranslation,
-    (translation) => translation.place,
-    { cascade: true },
-  )
-  addresses: PlaceAddressTranslation[];
 
   @Column({ type: 'varchar', nullable: true })
   website: string | null;

@@ -11,27 +11,17 @@ import { Image } from '../../images/entities/image.entity';
 import { User } from '../../users/entities/user.entity';
 import { Place } from '../../places/entities/place.entity';
 import { PlaceStatusesEnum } from '../../places/enums/place-statuses.enum';
-import { ReviewTitleTranslation } from './review-title-translation.entity';
-import { ReviewDescriptionTranslation } from './review-description-translation.entity';
+import { ReviewTranslation } from './review-translation.entity';
 
 @Entity()
 export class Review {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @OneToMany(
-    () => ReviewTitleTranslation,
-    (translation) => translation.review,
-    { cascade: true },
-  )
-  titles: ReviewTitleTranslation[];
-
-  @OneToMany(
-    () => ReviewDescriptionTranslation,
-    (translation) => translation.review,
-    { cascade: true },
-  )
-  descriptions: ReviewDescriptionTranslation[];
+  @OneToMany(() => ReviewTranslation, (translation) => translation.review, {
+    cascade: true,
+  })
+  translations: ReviewTranslation[];
 
   @ManyToOne(() => Place, (place) => place.reviews, {
     onDelete: 'SET NULL',

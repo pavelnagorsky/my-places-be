@@ -1,34 +1,28 @@
 import { TranslationBaseEntity } from '../../translations/entities/translation-base.entity';
 import { ITranslation } from '../../translations/interfaces/translation.interface';
-import {
-  Column,
-  Entity,
-  Index,
-  ManyToOne,
-  PrimaryGeneratedColumn,
-} from 'typeorm';
+import { Column, Entity, Index, ManyToOne } from 'typeorm';
 import { Language } from '../../languages/entities/language.entity';
 import { Place } from './place.entity';
 
 @Entity()
-export class PlaceTitleTranslation
+export class PlaceTranslation
   extends TranslationBaseEntity
   implements ITranslation
 {
-  @PrimaryGeneratedColumn()
-  id: number;
-
   @Index()
   @Column({ type: 'varchar', length: 300, nullable: true })
-  text: string;
+  title: string;
 
-  @Column({ default: false })
-  original: boolean;
+  @Column({ type: 'text', nullable: true })
+  description: string;
+
+  @Column({ type: 'varchar', length: 300, nullable: true })
+  address: string;
 
   @ManyToOne(() => Language, (language) => language.id)
   language: Language;
 
-  @ManyToOne(() => Place, (place) => place.titles, {
+  @ManyToOne(() => Place, (place) => place.translations, {
     onDelete: 'CASCADE',
   })
   place: Place;

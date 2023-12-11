@@ -8,7 +8,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { PlaceType } from './entities/place-type.entity';
 import { Image } from '../images/entities/image.entity';
-import { PlaceTypeTitleTranslation } from './entities/place-type-title-translation.entity';
+import { PlaceTypeTranslation } from './entities/place-type-translation.entity';
 import { UpdatePlaceTypeDto } from './dto/update-place-type.dto';
 import { TranslationsService } from '../translations/translations.service';
 
@@ -17,8 +17,8 @@ export class PlaceTypesService {
   constructor(
     @InjectRepository(PlaceType)
     private placeTypesRepository: Repository<PlaceType>,
-    @InjectRepository(PlaceTypeTitleTranslation)
-    private placeTypesTranslationsRepository: Repository<PlaceTypeTitleTranslation>,
+    @InjectRepository(PlaceTypeTranslation)
+    private placeTypesTranslationsRepository: Repository<PlaceTypeTranslation>,
     private translationsService: TranslationsService,
   ) {}
 

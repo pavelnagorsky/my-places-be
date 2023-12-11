@@ -1,9 +1,9 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Exclude, Expose, Transform } from 'class-transformer';
-import { TranslationBaseEntity } from '../../translations/entities/translation-base.entity';
 import { PlaceStatusesEnum } from '../enums/place-statuses.enum';
 import { PlaceType } from '../../place-types/entities/place-type.entity';
 import { Place } from '../entities/place.entity';
+import { PlaceTranslation } from '../entities/place-translation.entity';
 
 export class MyPlaceDto {
   @ApiProperty({ title: 'Place id', type: Number })
@@ -18,11 +18,11 @@ export class MyPlaceDto {
   @ApiProperty({ type: String, description: 'Place title' })
   @Expose()
   get title(): string {
-    return this.titles[0]?.text || '';
+    return this.translations[0]?.title || '';
   }
 
   @Exclude()
-  titles: TranslationBaseEntity[];
+  translations: PlaceTranslation[];
 
   @ApiProperty({ type: String, description: 'Place type title' })
   @Transform(({ value }: { value: Partial<PlaceType> }) => {
@@ -40,7 +40,13 @@ export class MyPlaceDto {
   viewsCount: number;
 
   @ApiProperty({ type: Number, description: 'Reviews count' })
-  reviewsCount: number;
+  @Expose()
+  get reviewsCount(): number {
+    return this.reviews.length;
+  }
+
+  @Exclude()
+  reviews: number[];
 
   @ApiProperty({ type: Number, description: 'Comments count' })
   @Expose()
@@ -75,12 +81,6 @@ export class MyPlaceDto {
     description: 'updated at',
   })
   updatedAt: Date;
-
-  // @Exclude()
-  // comments: Comment[];
-  //
-  // @Exclude()
-  // likes: Like[];
 
   constructor(partial: Partial<Place>) {
     Object.assign(this, partial);

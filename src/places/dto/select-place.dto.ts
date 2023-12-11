@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Exclude, Expose, Transform } from 'class-transformer';
-import { TranslationBaseEntity } from '../../translations/entities/translation-base.entity';
 import { Place } from '../entities/place.entity';
+import { PlaceTranslation } from '../entities/place-translation.entity';
 
 export class SelectPlaceDto {
   @ApiProperty({ title: 'Place id', type: Number })
@@ -10,11 +10,11 @@ export class SelectPlaceDto {
   @ApiProperty({ type: String, description: 'Place title' })
   @Expose()
   get title(): string {
-    return this.titles[0]?.text || '';
+    return this.translations[0]?.title || '';
   }
 
   @Exclude()
-  titles: TranslationBaseEntity[];
+  translations: PlaceTranslation[];
 
   constructor(partial: Partial<Place>) {
     Object.assign(this, partial);

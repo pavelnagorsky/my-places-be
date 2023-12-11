@@ -10,6 +10,7 @@ import { Place } from '../entities/place.entity';
 import { Like } from '../../likes/entities/like.entity';
 import { PlaceStatusesEnum } from '../enums/place-statuses.enum';
 import { CoordinatesDto } from './coordinates.dto';
+import { PlaceTranslation } from '../entities/place-translation.entity';
 
 export class PlaceDto {
   @ApiProperty({ title: 'Place id', type: Number })
@@ -21,29 +22,23 @@ export class PlaceDto {
   @ApiProperty({ type: String, description: 'Place title' })
   @Expose()
   get title(): string {
-    return this.titles[0]?.text || '';
+    return this.translations[0]?.title || '';
   }
 
   @Exclude()
-  titles: TranslationBaseEntity[];
+  translations: PlaceTranslation[];
 
   @ApiProperty({ type: String, description: 'Place description' })
   @Expose()
   get description(): string {
-    return this.descriptions[0]?.text || '';
+    return this.translations[0]?.description || '';
   }
-
-  @Exclude()
-  descriptions: TranslationBaseEntity[];
 
   @ApiProperty({ type: String, description: 'Place address' })
   @Expose()
   get address(): string {
-    return this.addresses[0]?.text || '';
+    return this.translations[0]?.address || '';
   }
-
-  @Exclude()
-  addresses: TranslationBaseEntity[];
 
   @ApiProperty({ type: PlaceTypeDto, description: 'Place type' })
   @Transform(

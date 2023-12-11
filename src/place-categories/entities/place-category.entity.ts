@@ -8,7 +8,7 @@ import {
 } from 'typeorm';
 import { Place } from '../../places/entities/place.entity';
 import { Image } from '../../images/entities/image.entity';
-import { PlaceCategoryTitleTranslation } from './place-category-title-translation.entity';
+import { PlaceCategoryTranslation } from './place-category-translation.entity';
 
 @Entity()
 export class PlaceCategory {
@@ -16,11 +16,11 @@ export class PlaceCategory {
   id: number;
 
   @OneToMany(
-    () => PlaceCategoryTitleTranslation,
+    () => PlaceCategoryTranslation,
     (translation) => translation.placeCategory,
     { cascade: true },
   )
-  titles: PlaceCategoryTitleTranslation[];
+  titles: PlaceCategoryTranslation[];
 
   @OneToOne(() => Image, (image) => image.id, { cascade: true })
   @JoinColumn()

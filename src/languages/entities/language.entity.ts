@@ -1,11 +1,8 @@
 import { Entity, Column, PrimaryGeneratedColumn, OneToMany } from 'typeorm';
-import { PlaceTypeTitleTranslation } from '../../place-types/entities/place-type-title-translation.entity';
-import { PlaceCategoryTitleTranslation } from '../../place-categories/entities/place-category-title-translation.entity';
-import { PlaceTitleTranslation } from '../../places/entities/place-title-translation.entity';
-import { PlaceDescriptionTranslation } from '../../places/entities/place-description-translation.entity';
-import { PlaceAddressTranslation } from '../../places/entities/place-address-translation.entity';
-import { ReviewTitleTranslation } from '../../reviews/entities/review-title-translation.entity';
-import { ReviewDescriptionTranslation } from '../../reviews/entities/review-description-translation.entity';
+import { PlaceTypeTranslation } from '../../place-types/entities/place-type-translation.entity';
+import { PlaceCategoryTranslation } from '../../place-categories/entities/place-category-translation.entity';
+import { PlaceTranslation } from '../../places/entities/place-translation.entity';
+import { ReviewTranslation } from '../../reviews/entities/review-translation.entity';
 
 @Entity()
 export class Language {
@@ -18,42 +15,18 @@ export class Language {
   @Column({ type: 'varchar', length: 10 })
   code: string;
 
-  @OneToMany(
-    () => PlaceTypeTitleTranslation,
-    (translation) => translation.language,
-  )
-  placeTypeTitleTranslation: PlaceTypeTitleTranslation;
+  @OneToMany(() => PlaceTypeTranslation, (translation) => translation.language)
+  placeTypeTitleTranslation: PlaceTypeTranslation;
 
   @OneToMany(
-    () => PlaceCategoryTitleTranslation,
+    () => PlaceCategoryTranslation,
     (translation) => translation.language,
   )
-  placeCategoryTitleTranslation: PlaceCategoryTitleTranslation;
+  placeCategoryTitleTranslation: PlaceCategoryTranslation;
 
-  @OneToMany(() => PlaceTitleTranslation, (translation) => translation.language)
-  placeTitleTranslation: PlaceTitleTranslation;
+  @OneToMany(() => PlaceTranslation, (translation) => translation.language)
+  placeTranslation: PlaceTranslation;
 
-  @OneToMany(
-    () => PlaceDescriptionTranslation,
-    (translation) => translation.language,
-  )
-  placeDescriptionTranslation: PlaceDescriptionTranslation;
-
-  @OneToMany(
-    () => PlaceAddressTranslation,
-    (translation) => translation.language,
-  )
-  placeAddressTranslation: PlaceAddressTranslation;
-
-  @OneToMany(
-    () => ReviewTitleTranslation,
-    (translation) => translation.language,
-  )
-  reviewTitleTranslation: ReviewTitleTranslation;
-
-  @OneToMany(
-    () => ReviewDescriptionTranslation,
-    (translation) => translation.language,
-  )
-  reviewDescriptionTranslation: ReviewDescriptionTranslation;
+  @OneToMany(() => ReviewTranslation, (translation) => translation.language)
+  reviewTranslation: ReviewTranslation;
 }

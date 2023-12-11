@@ -3,27 +3,24 @@ import { Exclude, Expose, Transform } from 'class-transformer';
 import { PlaceStatusesEnum } from '../../places/enums/place-statuses.enum';
 import { Image } from '../../images/entities/image.entity';
 import { Review } from '../entities/review.entity';
-import { TranslationBaseEntity } from '../../translations/entities/translation-base.entity';
 import { User } from '../../users/entities/user.entity';
+import { ReviewTranslation } from '../entities/review-translation.entity';
 
 export class ReviewDto {
   @ApiProperty({ type: String, description: 'Review title' })
   @Expose()
   get title(): string {
-    return this.titles[0]?.text || '';
+    return this.translations[0]?.title || '';
   }
 
   @Exclude()
-  titles: TranslationBaseEntity[];
+  translations: ReviewTranslation[];
 
   @ApiProperty({ type: String, description: 'Review description' })
   @Expose()
   get description(): string {
-    return this.descriptions[0]?.text || '';
+    return this.translations[0]?.description || '';
   }
-
-  @Exclude()
-  descriptions: TranslationBaseEntity[];
 
   @Exclude()
   status: PlaceStatusesEnum;

@@ -7,9 +7,7 @@ import { TranslationsModule } from '../translations/translations.module';
 import { PlaceType } from '../place-types/entities/place-type.entity';
 import { PlaceCategory } from '../place-categories/entities/place-category.entity';
 import { ImagesModule } from '../images/images.module';
-import { PlaceTitleTranslation } from './entities/place-title-translation.entity';
-import { PlaceDescriptionTranslation } from './entities/place-description-translation.entity';
-import { PlaceAddressTranslation } from './entities/place-address-translation.entity';
+import { PlaceTranslation } from './entities/place-translation.entity';
 
 @Module({
   imports: [
@@ -17,9 +15,7 @@ import { PlaceAddressTranslation } from './entities/place-address-translation.en
       Place,
       PlaceType,
       PlaceCategory,
-      PlaceTitleTranslation,
-      PlaceDescriptionTranslation,
-      PlaceAddressTranslation,
+      PlaceTranslation,
     ]),
     ImagesModule,
     TranslationsModule,
