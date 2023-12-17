@@ -712,6 +712,8 @@ export class PlacesService {
         translations: {
           title: true,
         },
+        moderationMessage: true,
+        advEndDate: true,
         viewsCount: true,
         status: true,
         slug: true,
@@ -737,7 +739,7 @@ export class PlacesService {
         },
         createdAt: getDateWhereOption(),
         status:
-          !!dto.statuses && dto.statuses?.length >= 0
+          !!dto.statuses && dto.statuses?.length > 0
             ? In(dto.statuses)
             : undefined,
         translations: {

@@ -15,6 +15,13 @@ export class MyPlaceDto {
   @ApiProperty({ enum: PlaceStatusesEnum, description: 'Place status' })
   status: PlaceStatusesEnum;
 
+  @ApiProperty({
+    type: String,
+    description: 'Place moderation feedback',
+    nullable: true,
+  })
+  moderationMessage: string | null;
+
   @ApiProperty({ type: String, description: 'Place title' })
   @Expose()
   get title(): string {
