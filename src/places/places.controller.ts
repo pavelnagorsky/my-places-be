@@ -43,6 +43,7 @@ import { SelectPlaceDto } from './dto/select-place.dto';
 import { CreateSlugDto } from './dto/create-slug.dto';
 import { MyPlacesResponseDto } from './dto/my-places-response.dto';
 import { MyPlacesRequestDto } from './dto/my-places-request.dto';
+import { PlaceEditDto } from './dto/place-edit.dto';
 
 @ApiTags('Places')
 @Controller('/places')
@@ -302,5 +303,34 @@ export class PlacesController {
       updatedLastIndex,
       total > updatedLastIndex,
     );
+  }
+
+  @ApiOperation({ summary: 'Get place for editing' })
+  @ApiOkResponse({
+    description: 'OK',
+    type: PlaceEditDto,
+  })
+  @ApiNotFoundResponse({
+    description: 'Not found',
+  })
+  @ApiParam({
+    name: 'id',
+    type: Number,
+    description: 'The id of the place',
+  })
+  @ApiQuery({
+    name: 'lang',
+    type: Number,
+    description: 'The ID of the language',
+  })
+  @UseInterceptors(ClassSerializerInterceptor)
+  @Auth()
+  @Get('edit/:id')
+  async getPlaceForEdit(
+    @Param('id', ParseIntPipe) id: number,
+    @Query('lang', ParseIntPipe) langId: number,
+  ) {
+    const place = await this.placesService.getPlaceForEdit(id, langId);
+    return new PlaceEditDto(place);
   }
 }

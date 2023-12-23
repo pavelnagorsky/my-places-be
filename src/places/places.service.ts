@@ -756,4 +756,31 @@ export class PlacesService {
 
     return res;
   }
+
+  async getPlaceForEdit(id: number, langId: number) {
+    const place = await this.placesRepository.findOne({
+      relations: {
+        translations: true,
+        images: true,
+      },
+      loadRelationIds: {
+        relations: ['categories', 'type'],
+      },
+      where: {
+        id: id,
+        translations: {
+          language: {
+            id: langId,
+          },
+        },
+      },
+      order: {
+        images: {
+          position: 'ASC',
+        },
+      },
+    });
+    if (!place) throw new NotFoundException({ message: 'Place not found' });
+    return place;
+  }
 }

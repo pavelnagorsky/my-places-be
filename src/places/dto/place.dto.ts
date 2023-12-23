@@ -79,9 +79,12 @@ export class PlaceDto {
   )
   images: string[];
 
-  @ApiProperty({ type: String, description: 'Place coordinates [lat;lng]' })
+  @ApiProperty({
+    type: CoordinatesDto,
+    description: 'Place coordinates [lat;lng]',
+  })
   @Transform(({ value }: { value: string }) => new CoordinatesDto(value))
-  coordinates: string;
+  coordinates: CoordinatesDto;
 
   @ApiProperty({
     type: String,
