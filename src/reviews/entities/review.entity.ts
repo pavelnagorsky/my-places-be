@@ -10,8 +10,8 @@ import {
 import { Image } from '../../images/entities/image.entity';
 import { User } from '../../users/entities/user.entity';
 import { Place } from '../../places/entities/place.entity';
-import { PlaceStatusesEnum } from '../../places/enums/place-statuses.enum';
 import { ReviewTranslation } from './review-translation.entity';
+import { ReviewStatusesEnum } from '../enums/review-statuses.enum';
 
 @Entity()
 export class Review {
@@ -31,8 +31,8 @@ export class Review {
   @Column({ default: 0 })
   viewsCount: number;
 
-  @Column({ default: PlaceStatusesEnum.MODERATION })
-  status: PlaceStatusesEnum;
+  @Column({ default: ReviewStatusesEnum.MODERATION })
+  status: ReviewStatusesEnum;
 
   @OneToMany(() => Image, (image) => image.review, { cascade: true })
   images: Image[];

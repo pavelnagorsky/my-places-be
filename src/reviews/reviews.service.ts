@@ -21,11 +21,8 @@ import {
   Repository,
 } from 'typeorm';
 import { Place } from '../places/entities/place.entity';
-import { ITranslation } from '../translations/interfaces/translation.interface';
 import { ReviewTranslation } from './entities/review-translation.entity';
-import { MyPlacesRequestDto } from '../places/dto/my-places-request.dto';
 import { TokenPayloadDto } from '../auth/dto/token-payload.dto';
-import { MyPlacesOrderByEnum } from '../places/enums/my-places-order-by.enum';
 import { MyReviewsRequestDto } from './dto/my-reviews-request.dto';
 import { MyReviewsOrderByEnum } from './enums/my-reviews-order-by.enum';
 
