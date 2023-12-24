@@ -28,6 +28,9 @@ export class Review {
   })
   place: Place;
 
+  @Column({ default: 0 })
+  viewsCount: number;
+
   @Column({ default: PlaceStatusesEnum.MODERATION })
   status: PlaceStatusesEnum;
 
@@ -39,6 +42,9 @@ export class Review {
 
   @ManyToOne(() => User, (user) => user.reviewsModeration)
   moderator: User;
+
+  @Column({ type: 'varchar', nullable: true, default: null })
+  moderationMessage: string | null;
 
   @CreateDateColumn({
     default: () => 'CURRENT_TIMESTAMP',

@@ -1,4 +1,8 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { CreateReviewDto } from './dto/create-review.dto';
 import { UpdateReviewDto } from './dto/update-review.dto';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -6,10 +10,24 @@ import { ImagesService } from '../images/images.service';
 import { TranslationsService } from '../translations/translations.service';
 import { Review } from './entities/review.entity';
 import { User } from '../users/entities/user.entity';
-import { FindManyOptions, Repository } from 'typeorm';
+import {
+  Between,
+  Equal,
+  FindManyOptions,
+  ILike,
+  In,
+  LessThanOrEqual,
+  MoreThanOrEqual,
+  Repository,
+} from 'typeorm';
 import { Place } from '../places/entities/place.entity';
 import { ITranslation } from '../translations/interfaces/translation.interface';
 import { ReviewTranslation } from './entities/review-translation.entity';
+import { MyPlacesRequestDto } from '../places/dto/my-places-request.dto';
+import { TokenPayloadDto } from '../auth/dto/token-payload.dto';
+import { MyPlacesOrderByEnum } from '../places/enums/my-places-order-by.enum';
+import { MyReviewsRequestDto } from './dto/my-reviews-request.dto';
+import { MyReviewsOrderByEnum } from './enums/my-reviews-order-by.enum';
 
 @Injectable()
 export class ReviewsService {
@@ -122,29 +140,6 @@ export class ReviewsService {
     return translations;
   }
 
-  private getReviewFindOptions(langId: number): FindManyOptions<Review> {
-    return {
-      relations: {
-        images: true,
-        translations: true,
-        author: true,
-      },
-      where: {
-        translations: {
-          language: {
-            id: langId,
-          },
-        },
-      },
-      order: {
-        createdAt: 'DESC',
-        images: {
-          position: 'ASC',
-        },
-      },
-    };
-  }
-
   // create review
   async create(createReviewDto: CreateReviewDto, langId: number, user: User) {
     const place = await this.placesRepository.findOne({
@@ -175,12 +170,33 @@ export class ReviewsService {
     itemsPerPage: number,
     lastIndex: number,
   ) {
-    const defaultFindOptions = this.getReviewFindOptions(langId);
     const [reviews, totalCount] = await this.reviewsRepository.findAndCount({
-      ...defaultFindOptions,
+      relations: {
+        translations: true,
+        author: true,
+      },
+      select: {
+        id: true,
+        createdAt: true,
+        translations: {
+          title: true,
+          description: true,
+        },
+        author: {
+          firstName: true,
+          lastName: true,
+        },
+      },
       where: {
-        ...defaultFindOptions.where,
         place: { id: placeId },
+        translations: {
+          language: {
+            id: langId,
+          },
+        },
+      },
+      order: {
+        createdAt: 'DESC',
       },
       skip: lastIndex,
       take: itemsPerPage,
@@ -193,15 +209,53 @@ export class ReviewsService {
     };
   }
 
+  private async addView(reviewId: number) {
+    return this.reviewsRepository
+      .createQueryBuilder()
+      .update()
+      .set({ viewsCount: () => 'viewsCount + 1' })
+      .where({ id: Equal(reviewId) })
+      .execute();
+  }
+
   async findOne(id: number, langId: number) {
-    const defaultFindOptions = this.getReviewFindOptions(langId);
-    return await this.reviewsRepository.findOne({
-      ...defaultFindOptions,
+    const review = await this.reviewsRepository.findOne({
+      relations: {
+        images: true,
+        translations: true,
+        author: true,
+      },
+      select: {
+        id: true,
+        createdAt: true,
+        translations: {
+          title: true,
+          description: true,
+        },
+        author: {
+          firstName: true,
+          lastName: true,
+        },
+        images: true,
+      },
       where: {
-        ...defaultFindOptions.where,
         id: id,
+        translations: {
+          language: {
+            id: langId,
+          },
+        },
+      },
+      order: {
+        images: {
+          position: 'ASC',
+        },
       },
     });
+    if (!review)
+      throw new NotFoundException({ message: 'Review was not found' });
+    this.addView(id);
+    return review;
   }
 
   update(id: number, updateReviewDto: UpdateReviewDto) {
@@ -213,5 +267,104 @@ export class ReviewsService {
       this.reviewsRepository.create({ id }),
     );
     return { id };
+  }
+
+  async findMyReviews(
+    langId: number,
+    dto: MyReviewsRequestDto,
+    tokenPayload: TokenPayloadDto,
+  ) {
+    const orderDirection = dto.orderAsc ? 'ASC' : 'DESC';
+
+    const getDateWhereOption = () => {
+      if (!!dto.dateFrom && !!dto.dateTo)
+        return Between(new Date(dto.dateFrom), new Date(dto.dateTo));
+      if (!!dto.dateFrom) return MoreThanOrEqual(new Date(dto.dateFrom));
+      if (!!dto.dateTo) return LessThanOrEqual(new Date(dto.dateTo));
+      return undefined;
+    };
+
+    const res = await this.reviewsRepository.findAndCount({
+      relations: {
+        translations: true,
+        place: { translations: true },
+      },
+      skip: dto.lastIndex,
+      take: dto.itemsPerPage,
+      order: {
+        createdAt:
+          dto.orderBy === MyReviewsOrderByEnum.CREATED_AT || !dto.orderBy
+            ? orderDirection
+            : undefined,
+        translations: {
+          title:
+            dto.orderBy === MyReviewsOrderByEnum.TITLE
+              ? orderDirection
+              : undefined,
+        },
+        place: {
+          translations: {
+            title:
+              dto.orderBy === MyReviewsOrderByEnum.PLACE_TITLE
+                ? orderDirection
+                : undefined,
+          },
+        },
+        status:
+          dto.orderBy === MyReviewsOrderByEnum.STATUS
+            ? orderDirection
+            : undefined,
+        viewsCount:
+          dto.orderBy === MyReviewsOrderByEnum.VIEWS
+            ? orderDirection
+            : undefined,
+      },
+      select: {
+        id: true,
+        translations: {
+          title: true,
+        },
+        place: {
+          id: true,
+          slug: true,
+          translations: {
+            title: true,
+          },
+        },
+        moderationMessage: true,
+        viewsCount: true,
+        status: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+      where: {
+        author: {
+          id: tokenPayload.id,
+        },
+        place: {
+          translations: {
+            language: {
+              id: langId,
+            },
+          },
+        },
+        createdAt: getDateWhereOption(),
+        status:
+          !!dto.statuses && dto.statuses?.length > 0
+            ? In(dto.statuses)
+            : undefined,
+        translations: {
+          title:
+            !!dto.search && dto.search.length > 0
+              ? ILike(`${dto.search}%`)
+              : undefined,
+          language: {
+            id: langId,
+          },
+        },
+      },
+    });
+
+    return res;
   }
 }

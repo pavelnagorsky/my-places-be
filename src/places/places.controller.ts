@@ -278,6 +278,9 @@ export class PlacesController {
     description: 'OK',
     type: MyPlacesResponseDto,
   })
+  @ApiBody({
+    type: MyPlacesRequestDto,
+  })
   @ApiQuery({
     name: 'lang',
     type: Number,

@@ -34,6 +34,11 @@ import { User } from '../users/entities/user.entity';
 import { ReviewDto } from './dto/review.dto';
 import { SearchResponseDto } from './dto/search-response.dto';
 import { Place } from '../places/entities/place.entity';
+import { MyPlacesResponseDto } from '../places/dto/my-places-response.dto';
+import { MyPlacesRequestDto } from '../places/dto/my-places-request.dto';
+import { TokenPayloadDto } from '../auth/dto/token-payload.dto';
+import { MyReviewsRequestDto } from './dto/my-reviews-request.dto';
+import { MyReviewsResponseDto } from './dto/my-reviews-response.dto';
 
 @ApiTags('Reviews')
 @Controller('reviews')
@@ -135,9 +140,39 @@ export class ReviewsController {
     return new ReviewDto(review);
   }
 
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateReviewDto: UpdateReviewDto) {
-    return this.reviewsService.update(+id, updateReviewDto);
+  @ApiOperation({ summary: 'Get my reviews' })
+  @ApiOkResponse({
+    description: 'OK',
+    type: MyReviewsResponseDto,
+  })
+  @ApiBody({
+    type: MyReviewsRequestDto,
+  })
+  @ApiQuery({
+    name: 'lang',
+    type: Number,
+    description: 'The ID of the language',
+  })
+  @UseInterceptors(ClassSerializerInterceptor)
+  @Auth()
+  @Post('my-reviews')
+  async getMyReviews(
+    @Query('lang', ParseIntPipe) langId: number,
+    @Body() dto: MyReviewsRequestDto,
+    @TokenPayload()
+    tokenPayload: TokenPayloadDto,
+  ) {
+    const [reviews, total] = await this.reviewsService.findMyReviews(
+      langId,
+      dto,
+      tokenPayload,
+    );
+    const updatedLastIndex = dto.lastIndex + reviews.length;
+    return new MyReviewsResponseDto(
+      reviews,
+      updatedLastIndex,
+      total > updatedLastIndex,
+    );
   }
 
   @ApiOperation({ summary: 'Delete Review' })
