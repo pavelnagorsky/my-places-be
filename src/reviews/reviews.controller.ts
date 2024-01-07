@@ -11,6 +11,8 @@ import {
   UseInterceptors,
   ClassSerializerInterceptor,
   NotFoundException,
+  Put,
+  ForbiddenException,
 } from '@nestjs/common';
 import { ReviewsService } from './reviews.service';
 import { CreateReviewDto } from './dto/create-review.dto';
@@ -18,6 +20,7 @@ import { UpdateReviewDto } from './dto/update-review.dto';
 import {
   ApiBadRequestResponse,
   ApiBody,
+  ApiNotFoundResponse,
   ApiOkResponse,
   ApiOperation,
   ApiParam,
@@ -34,11 +37,10 @@ import { User } from '../users/entities/user.entity';
 import { ReviewDto } from './dto/review.dto';
 import { SearchResponseDto } from './dto/search-response.dto';
 import { Place } from '../places/entities/place.entity';
-import { MyPlacesResponseDto } from '../places/dto/my-places-response.dto';
-import { MyPlacesRequestDto } from '../places/dto/my-places-request.dto';
 import { TokenPayloadDto } from '../auth/dto/token-payload.dto';
 import { MyReviewsRequestDto } from './dto/my-reviews-request.dto';
 import { MyReviewsResponseDto } from './dto/my-reviews-response.dto';
+import { ReviewEditDto } from './dto/review-edit.dto';
 
 @ApiTags('Reviews')
 @Controller('reviews')
@@ -70,6 +72,47 @@ export class ReviewsController {
     @Body() createReviewDto: CreateReviewDto,
   ) {
     return await this.reviewsService.create(createReviewDto, langId, user);
+  }
+
+  @ApiOperation({ summary: 'Update Review' })
+  @ApiOkResponse({
+    description: 'OK',
+    type: PickType(Review, ['id']),
+  })
+  @ApiBadRequestResponse({
+    description: 'Validation failed',
+    type: ValidationExceptionDto,
+  })
+  @ApiParam({
+    name: 'id',
+    type: Number,
+    description: 'The ID of the review',
+  })
+  @ApiQuery({
+    name: 'lang',
+    type: Number,
+    description: 'The ID of the language',
+  })
+  @ApiBody({
+    type: UpdateReviewDto,
+  })
+  @Auth()
+  @Put(':id')
+  async update(
+    @Param('id', ParseIntPipe) id: number,
+    @Query('lang', ParseIntPipe) langId: number,
+    @TokenPayload() tokenPayload: TokenPayloadDto,
+    @Body() updateReviewDto: UpdateReviewDto,
+  ) {
+    const userIsReviewAuthor = await this.reviewsService.checkUserRelation(
+      tokenPayload.id,
+      id,
+    );
+    if (!userIsReviewAuthor)
+      throw new ForbiddenException({
+        message: 'Forbidden, user is not author',
+      });
+    return await this.reviewsService.update(id, langId, updateReviewDto);
   }
 
   @ApiOperation({ summary: 'Get all reviews by place id' })
@@ -187,8 +230,37 @@ export class ReviewsController {
   })
   @Auth()
   @Delete(':id')
-  async deletePlace(@Param('id', ParseIntPipe) id: number) {
+  async deleteReview(@Param('id', ParseIntPipe) id: number) {
     const data = await this.reviewsService.removeReview(id);
     return data;
+  }
+
+  @ApiOperation({ summary: 'Get review for editing' })
+  @ApiOkResponse({
+    description: 'OK',
+    type: ReviewEditDto,
+  })
+  @ApiNotFoundResponse({
+    description: 'Not found',
+  })
+  @ApiParam({
+    name: 'id',
+    type: Number,
+    description: 'The ID of the review',
+  })
+  @ApiQuery({
+    name: 'lang',
+    type: Number,
+    description: 'The ID of the language',
+  })
+  @UseInterceptors(ClassSerializerInterceptor)
+  @Auth()
+  @Get('edit/:id')
+  async getReviewForEdit(
+    @Param('id', ParseIntPipe) id: number,
+    @Query('lang', ParseIntPipe) langId: number,
+  ) {
+    const review = await this.reviewsService.getReviewForEdit(id, langId);
+    return new ReviewEditDto(review);
   }
 }

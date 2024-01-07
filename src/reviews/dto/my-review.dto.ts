@@ -6,7 +6,7 @@ import { ReviewTranslation } from '../entities/review-translation.entity';
 import { Place } from '../../places/entities/place.entity';
 
 export class MyReviewDto {
-  @ApiProperty({ title: 'Place id', type: Number })
+  @ApiProperty({ title: 'Review id', type: Number })
   id: number;
 
   @ApiProperty({ enum: ReviewStatusesEnum, description: 'Review status' })

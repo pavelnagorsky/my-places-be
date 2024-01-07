@@ -635,6 +635,7 @@ export class PlacesService {
         website: updatePlaceDto.website,
         status: PlaceStatusesEnum.MODERATION,
         advertisement: updatePlaceDto.isCommercial,
+        moderationMessage: null,
       });
 
       await this.placesRepository.save(updatedPlace);

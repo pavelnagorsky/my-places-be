@@ -20,6 +20,7 @@ import { PlaceStatusesEnum } from '../enums/place-statuses.enum';
 import { Review } from '../../reviews/entities/review.entity';
 import { Report } from '../../reports/entities/report.entity';
 import { PlaceTranslation } from './place-translation.entity';
+import { Favourite } from '../../favourites/entities/favourite.entity';
 
 @Entity()
 export class Place {
@@ -44,7 +45,7 @@ export class Place {
   @OneToMany(() => Comment, (comment) => comment.place, { cascade: true })
   comments: Comment[];
 
-  @OneToMany(() => Report, (report) => report.place)
+  @OneToMany(() => Report, (report) => report.place, { cascade: true })
   reports: Report[];
 
   @Column({ type: 'varchar', nullable: true })
@@ -97,4 +98,7 @@ export class Place {
     onUpdate: 'CURRENT_TIMESTAMP',
   })
   updatedAt: Date;
+
+  @OneToMany(() => Favourite, (favourite) => favourite.place, { cascade: true })
+  favourites: Favourite[];
 }

@@ -13,7 +13,6 @@ import { User } from '../users/entities/user.entity';
 import {
   Between,
   Equal,
-  FindManyOptions,
   ILike,
   In,
   LessThanOrEqual,
@@ -25,6 +24,7 @@ import { ReviewTranslation } from './entities/review-translation.entity';
 import { TokenPayloadDto } from '../auth/dto/token-payload.dto';
 import { MyReviewsRequestDto } from './dto/my-reviews-request.dto';
 import { MyReviewsOrderByEnum } from './enums/my-reviews-order-by.enum';
+import { ReviewStatusesEnum } from './enums/review-statuses.enum';
 
 @Injectable()
 export class ReviewsService {
@@ -255,8 +255,53 @@ export class ReviewsService {
     return review;
   }
 
-  update(id: number, updateReviewDto: UpdateReviewDto) {
-    return `This action updates a #${id} review`;
+  async update(
+    reviewId: number,
+    langId: number,
+    updateReviewDto: UpdateReviewDto,
+  ) {
+    try {
+      const oldReview = await this.reviewsRepository.findOne({
+        relations: {
+          translations: {
+            language: true,
+          },
+        },
+        where: {
+          id: reviewId,
+        },
+      });
+      if (!oldReview)
+        throw new BadRequestException({ message: 'Review not exists' });
+
+      const reviewImages = await this.imagesService.updatePositions(
+        updateReviewDto.imagesIds,
+      );
+
+      const translations = await this.updateTranslations(
+        langId,
+        oldReview,
+        updateReviewDto,
+        updateReviewDto.shouldTranslate,
+      );
+
+      const updatedReview = this.reviewsRepository.create({
+        id: reviewId,
+        images: reviewImages,
+        translations: translations,
+        status: ReviewStatusesEnum.MODERATION,
+        moderationMessage: null,
+      });
+
+      await this.reviewsRepository.save(updatedReview);
+
+      return { id: reviewId };
+    } catch (e) {
+      if (e instanceof BadRequestException) {
+        throw e;
+      }
+      throw new BadRequestException({ message: 'Incorrect details' });
+    }
   }
 
   async removeReview(id: number) {
@@ -264,6 +309,17 @@ export class ReviewsService {
       this.reviewsRepository.create({ id }),
     );
     return { id };
+  }
+
+  async checkUserRelation(userId: number, reviewId: number) {
+    return await this.reviewsRepository.exist({
+      where: {
+        author: {
+          id: Equal(userId),
+        },
+        id: Equal(reviewId),
+      },
+    });
   }
 
   async findMyReviews(
@@ -363,5 +419,43 @@ export class ReviewsService {
     });
 
     return res;
+  }
+
+  async getReviewForEdit(id: number, langId: number) {
+    const review = await this.reviewsRepository.findOne({
+      relations: {
+        translations: true,
+        images: true,
+        place: {
+          translations: true,
+        },
+      },
+      select: {
+        id: true,
+        images: true,
+        translations: true,
+        place: {
+          id: true,
+          translations: {
+            title: true,
+          },
+        },
+      },
+      where: {
+        id: id,
+        translations: {
+          language: {
+            id: langId,
+          },
+        },
+      },
+      order: {
+        images: {
+          position: 'ASC',
+        },
+      },
+    });
+    if (!review) throw new NotFoundException({ message: 'Review not found' });
+    return review;
   }
 }

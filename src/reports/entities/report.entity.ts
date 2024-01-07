@@ -14,7 +14,7 @@ export class Report {
   @Column({ default: () => 'CURRENT_TIMESTAMP' })
   createdAt: Date;
 
-  @ManyToOne(() => Place, (place) => place.reports)
+  @ManyToOne(() => Place, (place) => place.reports, { onDelete: 'CASCADE' })
   place: Place;
 
   @Column({ default: CrmStatusesEnum.PENDING })

@@ -23,6 +23,9 @@ export class UserDto {
   @Exclude()
   password: string;
 
+  @ApiProperty({ title: 'Preferred language', type: Number, nullable: true })
+  preferredLanguage: number | null;
+
   @ApiProperty({ title: 'Created at', type: Date })
   createdAt: Date;
 

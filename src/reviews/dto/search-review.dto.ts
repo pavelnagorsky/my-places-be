@@ -5,6 +5,9 @@ import { User } from '../../users/entities/user.entity';
 import { ReviewTranslation } from '../entities/review-translation.entity';
 
 export class SearchReviewDto {
+  @ApiProperty({ title: 'Review id', type: Number })
+  id: number;
+
   @ApiProperty({ type: String, description: 'Review title' })
   @Expose()
   get title(): string {

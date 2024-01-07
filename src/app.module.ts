@@ -19,6 +19,7 @@ import { ReviewsModule } from './reviews/reviews.module';
 import { LikesModule } from './likes/likes.module';
 import { ReportsModule } from './reports/reports.module';
 import { FeedbackModule } from './feedback/feedback.module';
+import { FavouritesModule } from './favourites/favourites.module';
 
 @Module({
   imports: [
@@ -43,6 +44,7 @@ import { FeedbackModule } from './feedback/feedback.module';
     LikesModule,
     ReportsModule,
     FeedbackModule,
+    FavouritesModule,
   ],
   controllers: [AppController],
 })

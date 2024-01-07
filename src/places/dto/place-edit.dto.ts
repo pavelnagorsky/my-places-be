@@ -1,9 +1,9 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Exclude, Expose, Transform } from 'class-transformer';
 import { PlaceTranslation } from '../entities/place-translation.entity';
-import { Image } from '../../images/entities/image.entity';
 import { CoordinatesDto } from './coordinates.dto';
 import { Place } from '../entities/place.entity';
+import { ImageDto } from '../../images/dto/image.dto';
 
 export class PlaceEditDto {
   @ApiProperty({ title: 'Place id', type: Number })
@@ -56,11 +56,11 @@ export class PlaceEditDto {
   categories: number[];
 
   @ApiProperty({
-    type: Image,
+    type: ImageDto,
     description: 'Place images',
     isArray: true,
   })
-  images: Image[];
+  images: ImageDto[];
 
   @ApiProperty({
     type: CoordinatesDto,

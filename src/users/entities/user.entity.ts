@@ -9,6 +9,7 @@ import {
   ManyToMany,
   CreateDateColumn,
   UpdateDateColumn,
+  ManyToOne,
 } from 'typeorm';
 
 import { Place } from '../../places/entities/place.entity';
@@ -19,6 +20,8 @@ import { Role } from '../../roles/entities/role.entity';
 import { Image } from '../../images/entities/image.entity';
 import { Review } from '../../reviews/entities/review.entity';
 import { Report } from '../../reports/entities/report.entity';
+import { Language } from '../../languages/entities/language.entity';
+import { Favourite } from '../../favourites/entities/favourite.entity';
 
 @Entity()
 export class User {
@@ -72,6 +75,9 @@ export class User {
   @OneToMany(() => Report, (report) => report.moderator)
   reportsModeration: Report;
 
+  @ManyToOne(() => Language, (language) => language.id, { nullable: true })
+  preferredLanguage: Language | null;
+
   @CreateDateColumn({
     default: () => 'CURRENT_TIMESTAMP',
   })
@@ -82,4 +88,7 @@ export class User {
     onUpdate: 'CURRENT_TIMESTAMP',
   })
   updatedAt: Date;
+
+  @OneToMany(() => Favourite, (favourite) => favourite.user, { cascade: true })
+  favourites: Favourite[];
 }

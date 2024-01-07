@@ -3,6 +3,7 @@ import { PlaceTypeTranslation } from '../../place-types/entities/place-type-tran
 import { PlaceCategoryTranslation } from '../../place-categories/entities/place-category-translation.entity';
 import { PlaceTranslation } from '../../places/entities/place-translation.entity';
 import { ReviewTranslation } from '../../reviews/entities/review-translation.entity';
+import { User } from '../../users/entities/user.entity';
 
 @Entity()
 export class Language {
@@ -29,4 +30,7 @@ export class Language {
 
   @OneToMany(() => ReviewTranslation, (translation) => translation.language)
   reviewTranslation: ReviewTranslation;
+
+  @OneToMany(() => User, (user) => user.preferredLanguage)
+  user: User;
 }

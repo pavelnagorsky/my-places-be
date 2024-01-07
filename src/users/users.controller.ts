@@ -1,18 +1,31 @@
 import {
+  Body,
   ClassSerializerInterceptor,
   Controller,
   Get,
+  Param,
+  ParseIntPipe,
   Post,
+  Put,
   UseInterceptors,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
-import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBadRequestResponse,
+  ApiBody,
+  ApiOkResponse,
+  ApiOperation,
+  ApiParam,
+  ApiTags,
+} from '@nestjs/swagger';
 import { UserDto } from './dto/user.dto';
 import { Auth } from '../auth/decorators/auth.decorator';
 import { UserFromTokenPipe } from '../auth/pipes/user-from-token.pipe';
 import { User } from './entities/user.entity';
 import { TokenPayload } from '../auth/decorators/token-payload.decorator';
 import { TokenPayloadDto } from '../auth/dto/token-payload.dto';
+import { UpdateUserDto } from './dto/update-user.dto';
+import { ValidationExceptionDto } from '../shared/validation/validation-exception.dto';
 
 @ApiTags('Users')
 @Controller('users')
@@ -24,6 +37,10 @@ export class UsersController {
     description: 'users',
     type: UserDto,
     isArray: true,
+  })
+  @ApiBadRequestResponse({
+    description: 'Validation failed',
+    type: ValidationExceptionDto,
   })
   @UseInterceptors(ClassSerializerInterceptor)
   @Auth()
@@ -56,11 +73,32 @@ export class UsersController {
     return;
   }
 
-  // @Put(':id')
-  // update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
-  //   return this.usersService.update(+id, updateUserDto);
-  // }
-  //
+  @ApiOperation({ summary: 'Update user' })
+  @ApiParam({
+    name: 'id',
+    type: Number,
+    description: 'The ID of the user',
+  })
+  @ApiBody({
+    type: UpdateUserDto,
+  })
+  @ApiOkResponse({
+    description: 'OK',
+  })
+  @ApiBadRequestResponse({
+    description: 'Validation failed',
+    type: ValidationExceptionDto,
+  })
+  @Auth()
+  @Put(':id')
+  async update(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() updateUserDto: UpdateUserDto,
+  ) {
+    await this.usersService.update(id, updateUserDto);
+    return;
+  }
+
   // @Delete(':id')
   // remove(@Param('id') id: string) {
   //   return this.usersService.remove(+id);
