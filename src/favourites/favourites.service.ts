@@ -5,8 +5,15 @@ import {
 } from '@nestjs/common';
 import { PlacesService } from '../places/places.service';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import {
+  Between,
+  ILike,
+  LessThanOrEqual,
+  MoreThanOrEqual,
+  Repository,
+} from 'typeorm';
 import { Favourite } from './entities/favourite.entity';
+import { FavouritesRequestDto } from './dto/favourites-request.dto';
 
 @Injectable()
 export class FavouritesService {
@@ -48,14 +55,31 @@ export class FavouritesService {
     return await this.favouritesRepository.save(fav);
   }
 
-  async findAllByUser(userId: number, langId: number) {
+  async findAllByUser(
+    userId: number,
+    dto: FavouritesRequestDto,
+    langId: number,
+  ) {
+    const getDateWhereOption = () => {
+      if (!!dto.dateFrom && !!dto.dateTo)
+        return Between(new Date(dto.dateFrom), new Date(dto.dateTo));
+      if (!!dto.dateFrom) return MoreThanOrEqual(new Date(dto.dateFrom));
+      if (!!dto.dateTo) return LessThanOrEqual(new Date(dto.dateTo));
+      return undefined;
+    };
+
     return await this.favouritesRepository.find({
       where: {
         user: {
           id: userId,
         },
+        createdAt: getDateWhereOption(),
         place: {
           translations: {
+            title:
+              !!dto.search && dto.search.length > 0
+                ? ILike(`${dto.search}%`)
+                : undefined,
             language: {
               id: langId,
             },
@@ -78,6 +102,10 @@ export class FavouritesService {
             title: true,
           },
         },
+      },
+      order: {
+        actual: 'desc',
+        createdAt: 'desc',
       },
     });
   }

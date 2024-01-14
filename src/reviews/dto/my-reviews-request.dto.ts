@@ -1,5 +1,11 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsBoolean, IsNumber, IsString, ValidateIf } from 'class-validator';
+import {
+  IsBoolean,
+  IsDateString,
+  IsNumber,
+  IsString,
+  ValidateIf,
+} from 'class-validator';
 import { ReviewStatusesEnum } from '../enums/review-statuses.enum';
 import { MyReviewsOrderByEnum } from '../enums/my-reviews-order-by.enum';
 
@@ -11,11 +17,11 @@ export class MyReviewsRequestDto {
   @IsNumber()
   itemsPerPage: number;
   @ApiProperty({ type: String, description: 'Date from' })
-  @IsString()
+  @IsDateString()
   @ValidateIf((object, value) => Boolean(value))
   dateFrom?: string | null;
   @ApiProperty({ type: String, description: 'Date to' })
-  @IsString()
+  @IsDateString()
   @ValidateIf((object, value) => Boolean(value))
   dateTo?: string | null;
   @ApiProperty({ type: String, description: 'Search' })

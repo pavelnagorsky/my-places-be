@@ -9,9 +9,11 @@ import {
   Query,
   UseInterceptors,
   ClassSerializerInterceptor,
+  Body,
 } from '@nestjs/common';
 import { FavouritesService } from './favourites.service';
 import {
+  ApiBody,
   ApiOkResponse,
   ApiOperation,
   ApiParam,
@@ -23,6 +25,7 @@ import { Auth } from '../auth/decorators/auth.decorator';
 import { FavouriteDto } from './dto/favourite.dto';
 import { TokenPayload } from '../auth/decorators/token-payload.decorator';
 import { TokenPayloadDto } from '../auth/dto/token-payload.dto';
+import { FavouritesRequestDto } from './dto/favourites-request.dto';
 
 @ApiTags('Favourites')
 @Controller('favourites')
@@ -55,6 +58,9 @@ export class FavouritesController {
     type: FavouriteDto,
     isArray: true,
   })
+  @ApiBody({
+    type: FavouritesRequestDto,
+  })
   @ApiQuery({
     name: 'lang',
     type: Number,
@@ -62,13 +68,15 @@ export class FavouritesController {
   })
   @UseInterceptors(ClassSerializerInterceptor)
   @Auth()
-  @Get()
+  @Post()
   async findAll(
     @TokenPayload() tokenPayload: TokenPayloadDto,
+    @Body() dto: FavouritesRequestDto,
     @Query('lang', ParseIntPipe) langId: number,
   ) {
     const favs = await this.favouritesService.findAllByUser(
       tokenPayload.id,
+      dto,
       langId,
     );
     return favs.map((f) => new FavouriteDto(f));
