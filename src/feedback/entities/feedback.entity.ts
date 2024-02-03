@@ -3,7 +3,7 @@ import { UserRequestTypesEnum } from '../enums/user-request-types.enum';
 import { CrmStatusesEnum } from '../../shared/enums/crm-statuses.enum';
 
 @Entity()
-export class FeedbackEntity {
+export class Feedback {
   @PrimaryGeneratedColumn()
   id: number;
 
@@ -13,7 +13,7 @@ export class FeedbackEntity {
   @Column({ type: 'varchar', length: 100 })
   email: string;
 
-  @Column({ type: 'varchar', length: 30 })
+  @Column({ type: 'varchar', length: 30, nullable: true })
   phone: string;
 
   @Column({ type: 'varchar' })

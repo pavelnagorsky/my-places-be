@@ -1,4 +1,4 @@
 export enum UserRequestTypesEnum {
-  USER = 0,
-  COMPANY = 1,
+  USER = 1,
+  COMPANY = 2,
 }

@@ -115,15 +115,15 @@ export class ReviewsController {
     return await this.reviewsService.update(id, langId, updateReviewDto);
   }
 
-  @ApiOperation({ summary: 'Get all reviews by place id' })
+  @ApiOperation({ summary: 'Get reviews by place slug' })
   @ApiOkResponse({
     description: 'OK',
     type: SearchResponseDto,
   })
   @ApiParam({
-    name: 'placeId',
-    type: Number,
-    description: 'The ID of the place',
+    name: 'placeSlug',
+    type: String,
+    description: 'The slug of the place',
   })
   @ApiQuery({
     name: 'lastIndex',
@@ -141,15 +141,15 @@ export class ReviewsController {
     description: 'The ID of the language',
   })
   @UseInterceptors(ClassSerializerInterceptor)
-  @Get('place/:placeId')
+  @Get('place/:placeSlug')
   async findAllByPlace(
-    @Param('placeId', ParseIntPipe) placeId: number,
+    @Param('placeSlug') placeSlug: string,
     @Query('lastIndex', ParseIntPipe) lastIndex: number,
     @Query('itemsPerPage', ParseIntPipe) itemsPerPage: number,
     @Query('lang', ParseIntPipe) langId: number,
   ) {
-    const data = await this.reviewsService.findAllByPlaceId(
-      placeId,
+    const data = await this.reviewsService.findAllByPlaceSlug(
+      placeSlug,
       langId,
       itemsPerPage,
       lastIndex,

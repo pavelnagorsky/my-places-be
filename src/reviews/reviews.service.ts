@@ -161,8 +161,8 @@ export class ReviewsService {
     return { id: id };
   }
 
-  async findAllByPlaceId(
-    placeId: number,
+  async findAllByPlaceSlug(
+    placeSlug: string,
     langId: number,
     itemsPerPage: number,
     lastIndex: number,
@@ -185,7 +185,7 @@ export class ReviewsService {
         },
       },
       where: {
-        place: { id: placeId },
+        place: { slug: Equal(placeSlug) },
         translations: {
           language: {
             id: langId,
