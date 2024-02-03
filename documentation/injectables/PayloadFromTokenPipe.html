@@ -244,7 +244,7 @@
 
     <div class="tab-pane fade  tab-source-code" id="source">
         <pre class="line-numbers compodoc-sourcecode"><code class="language-typescript">import { ArgumentMetadata, Injectable, PipeTransform } from &#x27;@nestjs/common&#x27;;
-import { TokenPayloadDto } from &#x27;../dto/token-payload.dto&#x27;;
+import { AccessTokenPayloadDto } from &#x27;../dto/token-payload.dto&#x27;;
 import { JwtService } from &#x27;@nestjs/jwt&#x27;;
 
 @Injectable()
@@ -255,7 +255,7 @@ export class PayloadFromTokenPipe implements PipeTransform {
     try {
       if (!token) return null;
 
-      const tokenPayload &#x3D; this.jwtService.verify&lt;TokenPayloadDto&gt;(token);
+      const tokenPayload &#x3D; this.jwtService.verify&lt;AccessTokenPayloadDto&gt;(token);
 
       return tokenPayload;
     } catch (error) {

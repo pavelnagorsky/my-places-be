@@ -32,7 +32,7 @@ import { User } from '../users/entities/user.entity';
 import { TokenPayload } from '../auth/decorators/token-payload.decorator';
 import { Auth } from '../auth/decorators/auth.decorator';
 import { PlaceDto } from './dto/place.dto';
-import { TokenPayloadDto } from '../auth/dto/token-payload.dto';
+import { AccessTokenPayloadDto } from '../auth/dto/access-token-payload.dto';
 import { Place } from './entities/place.entity';
 import { UpdatePlaceDto } from './dto/update-place.dto';
 import { PlaceSlugDto } from './dto/place-slug.dto';
@@ -138,7 +138,7 @@ export class PlacesController {
   @Auth()
   @Get('select')
   async getPlacesSelect(
-    @TokenPayload() tokenPayload: TokenPayloadDto,
+    @TokenPayload() tokenPayload: AccessTokenPayloadDto,
     @Query('lang', ParseIntPipe) langId: number,
     @Query('search') search?: string,
     @Query('placeId') placeId?: string,
@@ -242,7 +242,7 @@ export class PlacesController {
   async update(
     @Param('id', ParseIntPipe) id: number,
     @Query('lang', ParseIntPipe) langId: number,
-    @TokenPayload() tokenPayload: TokenPayloadDto,
+    @TokenPayload() tokenPayload: AccessTokenPayloadDto,
     @Body() updatePlaceDto: UpdatePlaceDto,
   ) {
     const userIsPlaceAuthor = await this.placesService.checkUserRelation(
@@ -293,7 +293,7 @@ export class PlacesController {
     @Query('lang', ParseIntPipe) langId: number,
     @Body() dto: MyPlacesRequestDto,
     @TokenPayload()
-    tokenPayload: TokenPayloadDto,
+    tokenPayload: AccessTokenPayloadDto,
   ) {
     const [places, total] = await this.placesService.findMyPlaces(
       langId,

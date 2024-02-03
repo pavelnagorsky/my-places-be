@@ -253,7 +253,7 @@
   UnauthorizedException,
 } from &#x27;@nestjs/common&#x27;;
 import { JwtService } from &#x27;@nestjs/jwt&#x27;;
-import { TokenPayloadDto } from &#x27;../dto/token-payload.dto&#x27;;
+import { AccessTokenPayloadDto } from &#x27;../dto/token-payload.dto&#x27;;
 import { RequestWithTokenPayload } from &#x27;../../shared/types&#x27;;
 
 @Injectable()
@@ -270,7 +270,7 @@ export class JwtAuthGuard implements CanActivate {
       const token &#x3D; authHeader?.split(&#x27; &#x27;)[1];
       if (bearer !&#x3D;&#x3D; &#x27;Bearer&#x27; || !token)
         throw new UnauthorizedException({ message: &#x27;No token provided&#x27; });
-      const tokenPayload &#x3D; this.jwtService.verify&lt;TokenPayloadDto&gt;(token);
+      const tokenPayload &#x3D; this.jwtService.verify&lt;AccessTokenPayloadDto&gt;(token);
       req.tokenPayload &#x3D; tokenPayload;
       return true;
     } catch (error) {

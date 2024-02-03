@@ -23,7 +23,7 @@ import { Auth } from '../auth/decorators/auth.decorator';
 import { UserFromTokenPipe } from '../auth/pipes/user-from-token.pipe';
 import { User } from './entities/user.entity';
 import { TokenPayload } from '../auth/decorators/token-payload.decorator';
-import { TokenPayloadDto } from '../auth/dto/token-payload.dto';
+import { AccessTokenPayloadDto } from '../auth/dto/access-token-payload.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { ValidationExceptionDto } from '../shared/validation/validation-exception.dto';
 
@@ -68,7 +68,7 @@ export class UsersController {
   })
   @Auth()
   @Post('/confirm')
-  async confirmEmail(@TokenPayload() tokenPayload: TokenPayloadDto) {
+  async confirmEmail(@TokenPayload() tokenPayload: AccessTokenPayloadDto) {
     await this.usersService.confirmEmail(tokenPayload.id);
     return;
   }

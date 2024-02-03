@@ -1,40 +1,142 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  ForbiddenException,
+  Injectable,
+  Logger,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { CreateUserDto } from '../users/dto/create-user.dto';
 import { UsersService } from '../users/users.service';
 import { JwtService } from '@nestjs/jwt';
-import * as bcrypt from 'bcrypt';
+import { hash, compare, compareSync } from 'bcrypt';
 import { User } from '../users/entities/user.entity';
 import { LoginDto } from './dto/login.dto';
-import { TokenPayloadDto } from './dto/token-payload.dto';
+import { AccessTokenPayloadDto } from './dto/access-token-payload.dto';
 import { MailingService } from '../mailing/mailing.service';
 import LoginErrorEnum from './enums/login-error.enum';
+import { ConfigService } from '@nestjs/config';
+import { IJwtConfig } from '../config/configuration';
+import { ITokens } from './interfaces/interfaces';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Equal, LessThan, Repository } from 'typeorm';
+import { RefreshTokenEntity } from './entities/refresh-token.entity';
 
 @Injectable()
 export class AuthService {
+  private logger = new Logger();
+
   constructor(
     private readonly usersService: UsersService,
     private readonly jwtService: JwtService,
     private readonly mailingService: MailingService,
+    private readonly config: ConfigService,
+    @InjectRepository(RefreshTokenEntity)
+    private readonly refreshTokensRepository: Repository<RefreshTokenEntity>,
   ) {}
 
+  // register logic:
+  // 1) validate data
+  // 2) hash password
+  // 3) create user
+  // 4) generate email token
+  // 5) send confirmation email
   async register(dto: CreateUserDto) {
+    // validate user email
     const alreadyExists = await this.usersService.getUserByEmail(dto.email);
     if (alreadyExists)
       throw new UnauthorizedException({
         message: 'User with this email already exists',
       });
-    const hashPassword = await bcrypt.hash(dto.password, 12);
-    dto.password = hashPassword;
-    const users = await this.usersService.create(dto);
+    // hash password
+    const hashedPassword = await hash(dto.password, 8);
+    dto.password = hashedPassword;
+    // create user
+    const user = await this.usersService.create(dto);
+    this.logger.log(`SIGNUP success! ID ${user.id}, Email: ${user.email}`);
+    // send confirmation email
     //await this.mailingService.sendEmailConfirm(dto, 'token');
-    return this.generateToken(users);
+    return;
   }
 
-  async login(loginDto: LoginDto) {
+  // login logic:
+  // 1) validate data
+  // 2) generate new tokens
+  // 3) save refresh token in db
+  // 4) if count of refresh tokens in db > 10 delete previous tokens
+  async login(loginDto: LoginDto, userAgent: string | null): Promise<ITokens> {
     const user = await this.validateUser(loginDto);
-    return this.generateToken(user);
+    // generate tokens
+    const tokens = await this.generateTokens(user);
+    // save refresh token in db
+    const savedToken = await this.saveRefreshToken(
+      user.id,
+      tokens.refreshToken,
+      userAgent,
+    );
+    // if count of refresh tokens in db > 10 delete previous tokens
+    const totalUserTokens = await this.refreshTokensRepository.count();
+    if (totalUserTokens > 10) {
+      this.logger.warn(
+        `LOGIN warning! User has more than 10 refresh tokens (${totalUserTokens}). ID: ${user.id}, Refresh token: ${tokens.refreshToken}`,
+      );
+      await this.refreshTokensRepository.delete({
+        id: LessThan(savedToken.id),
+      });
+    }
+
+    this.logger.log(
+      `LOGIN success! ID: ${user.id}, Access Token: ${tokens.accessToken}`,
+    );
+    return tokens;
   }
 
+  // logout logic:
+  // 1) delete current refresh token from db
+  async logout(userId: number, refreshToken: string) {
+    const tokenForDeletion = await this.findUserRefreshToken(
+      userId,
+      refreshToken,
+    );
+    if (!tokenForDeletion) return;
+    await this.refreshTokensRepository.remove([tokenForDeletion]);
+    this.logger.log(`LOGOUT success! user ID: ${userId}`);
+    return;
+  }
+
+  // refresh tokens logic:
+  // 1) find user refresh token in db
+  // 3) throw 401 if no token
+  // 4) generate a new pair of tokens
+  // 5) update refresh token in db (new token value and expiry date)
+  // 6) clean user expired tokens
+  async refreshTokens(user: User, refreshToken: string): Promise<ITokens> {
+    // find user refresh token in db
+    const userRefreshToken = await this.findUserRefreshToken(
+      user.id,
+      refreshToken,
+    );
+    if (!userRefreshToken) {
+      // throw 401 if no token
+      this.logger.error(
+        `TOKEN REFRESH error: No token found with equal value. Requested with value: ${refreshToken} by user ${user.id}`,
+      );
+      throw new UnauthorizedException({ message: 'Invalid refresh token' });
+    }
+    // generate a new pair of tokens
+    const tokens = await this.generateTokens(user);
+    // update refresh token in db (new token value and expiry date)
+    userRefreshToken.expiryDate = this.prepareRefreshTokenExpiryDate();
+    userRefreshToken.token = tokens.refreshToken;
+    await this.refreshTokensRepository.save(userRefreshToken);
+    // clean user expired tokens (await is not needed for optimization)
+    this.cleanExpiredTokens(user.id);
+
+    this.logger.log(
+      `TOKEN REFRESH success: ID: ${user.id}, Email: ${user.email}, Access Token: ${tokens.accessToken}`,
+    );
+    return tokens;
+  }
+
+  // login validation
   private async validateUser(loginDto: LoginDto) {
     const user = await this.usersService.getUserByEmail(loginDto.email);
     if (!user)
@@ -47,10 +149,7 @@ export class AuthService {
         message: 'Email is not confirmed',
         loginError: LoginErrorEnum.EMAIL_NOT_CONFIRMED,
       });
-    const passwordEquals = await bcrypt.compare(
-      loginDto.password,
-      user.password,
-    );
+    const passwordEquals = await compare(loginDto.password, user.password);
     if (!passwordEquals)
       throw new UnauthorizedException({
         message: 'Incorrect password',
@@ -59,12 +158,104 @@ export class AuthService {
     return user;
   }
 
-  private generateToken(user: User) {
-    const payload: TokenPayloadDto = {
+  private async findUserRefreshToken(userId: number, token: string) {
+    const tokenEntity = await this.refreshTokensRepository.findOne({
+      where: {
+        user: {
+          id: userId,
+        },
+        token: Equal(token),
+      },
+      select: {
+        id: true,
+        token: true,
+        user: {
+          id: true,
+        },
+      },
+    });
+
+    return tokenEntity;
+  }
+
+  private async saveRefreshToken(
+    userId: number,
+    token: string,
+    userAgent: string | null,
+  ) {
+    const expiryDate = this.prepareRefreshTokenExpiryDate();
+    return await this.refreshTokensRepository.save({
+      user: {
+        id: userId,
+      },
+      token: token,
+      expiryDate: expiryDate,
+      userAgent: userAgent,
+    });
+  }
+
+  private prepareRefreshTokenExpiryDate() {
+    const expirationFromConfig = this.config.get<IJwtConfig>('jwt')
+      ?.refreshTokenExpiration as string; // as 10s or 10d
+    const parseToMilliseconds = (msStr: string): number => {
+      const numberPart = +msStr.slice(0, -1);
+      const typePart = msStr.substring(msStr.length - 1);
+      if (typePart === 's') {
+        return numberPart * 1000;
+      }
+      if (typePart === 'd') return numberPart * 1000 * 86400;
+      return numberPart;
+    };
+    const expirationInMilliseconds = parseToMilliseconds(expirationFromConfig);
+    const expirationDate = new Date(
+      new Date().getTime() + expirationInMilliseconds,
+    );
+    return expirationDate;
+  }
+
+  private async cleanExpiredTokens(userId: number) {
+    return await this.refreshTokensRepository.delete({
+      user: {
+        id: userId,
+      },
+      expiryDate: LessThan(new Date()),
+    });
+  }
+
+  private async generateTokens(user: User): Promise<ITokens> {
+    const [accessToken, refreshToken] = await Promise.all([
+      this.generateAccessToken(user),
+      this.generateRefreshToken(user),
+    ]);
+    return {
+      accessToken,
+      refreshToken,
+    };
+  }
+
+  private async generateAccessToken(user: User) {
+    const payload: AccessTokenPayloadDto = {
       email: user.email,
       id: user.id,
       roles: user.roles,
     };
-    return this.jwtService.sign(payload);
+    return this.jwtService.signAsync(payload, {
+      expiresIn: this.config.get<IJwtConfig>('jwt')
+        ?.accessTokenExpiration as string,
+      secret: this.config.get<IJwtConfig>('jwt')?.accessTokenSecret as string,
+    });
+  }
+
+  private async generateRefreshToken(user: User) {
+    const payload: AccessTokenPayloadDto = {
+      email: user.email,
+      id: user.id,
+      roles: user.roles,
+    };
+    return this.jwtService.signAsync(payload, {
+      expiresIn: this.config.get<IJwtConfig>('jwt')
+        ?.refreshTokenExpiration as string,
+      secret: this.config.get<IJwtConfig>('jwt')?.refreshTokenSecret as string,
+    });
   }
 }

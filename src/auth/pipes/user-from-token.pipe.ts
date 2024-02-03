@@ -5,13 +5,16 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { UsersService } from '../../users/users.service';
-import { TokenPayloadDto } from '../dto/token-payload.dto';
+import { AccessTokenPayloadDto } from '../dto/access-token-payload.dto';
 
 @Injectable()
 export class UserFromTokenPipe implements PipeTransform {
   public constructor(private readonly usersService: UsersService) {}
 
-  async transform(tokenPayload: TokenPayloadDto, _metadata: ArgumentMetadata) {
+  async transform(
+    tokenPayload: AccessTokenPayloadDto,
+    _metadata: ArgumentMetadata,
+  ) {
     try {
       const user = await this.usersService.findOneById(tokenPayload.id);
 

@@ -37,7 +37,7 @@ import { User } from '../users/entities/user.entity';
 import { ReviewDto } from './dto/review.dto';
 import { SearchResponseDto } from './dto/search-response.dto';
 import { Place } from '../places/entities/place.entity';
-import { TokenPayloadDto } from '../auth/dto/token-payload.dto';
+import { AccessTokenPayloadDto } from '../auth/dto/access-token-payload.dto';
 import { MyReviewsRequestDto } from './dto/my-reviews-request.dto';
 import { MyReviewsResponseDto } from './dto/my-reviews-response.dto';
 import { ReviewEditDto } from './dto/review-edit.dto';
@@ -101,7 +101,7 @@ export class ReviewsController {
   async update(
     @Param('id', ParseIntPipe) id: number,
     @Query('lang', ParseIntPipe) langId: number,
-    @TokenPayload() tokenPayload: TokenPayloadDto,
+    @TokenPayload() tokenPayload: AccessTokenPayloadDto,
     @Body() updateReviewDto: UpdateReviewDto,
   ) {
     const userIsReviewAuthor = await this.reviewsService.checkUserRelation(
@@ -203,7 +203,7 @@ export class ReviewsController {
     @Query('lang', ParseIntPipe) langId: number,
     @Body() dto: MyReviewsRequestDto,
     @TokenPayload()
-    tokenPayload: TokenPayloadDto,
+    tokenPayload: AccessTokenPayloadDto,
   ) {
     const [reviews, total] = await this.reviewsService.findMyReviews(
       langId,

@@ -193,7 +193,7 @@
             <tr>
                 <td class="col-md-4">
                     <span class="modifier-icon icon ion-ios-reset"></span>
-                    <code>create(imageUrl: <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/string" target="_blank">string</a>, tokenPayload: <a href="../classes/TokenPayloadDto.html" target="_self">TokenPayloadDto</a>)</code>
+                    <code>create(imageUrl: <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/string" target="_blank">string</a>, tokenPayload: <a href="../classes/TokenPayloadDto.html" target="_self">AccessTokenPayloadDto</a>)</code>
                 </td>
             </tr>
 
@@ -236,7 +236,7 @@
                                 <tr>
                                     <td>tokenPayload</td>
                                     <td>
-                                                <code><a href="../classes/TokenPayloadDto.html" target="_self" >TokenPayloadDto</a></code>
+                                                <code><a href="../classes/TokenPayloadDto.html" target="_self" >AccessTokenPayloadDto</a></code>
                                     </td>
 
                                     <td>
@@ -454,7 +454,7 @@ import { In, Repository } from &#x27;typeorm&#x27;;
 import { Image } from &#x27;./entities/image.entity&#x27;;
 import { StorageService } from &#x27;../storage/storage.service&#x27;;
 import { User } from &#x27;../users/entities/user.entity&#x27;;
-import { TokenPayloadDto } from &#x27;../auth/dto/token-payload.dto&#x27;;
+import { AccessTokenPayloadDto } from &#x27;../auth/dto/token-payload.dto&#x27;;
 
 @Injectable()
 export class ImagesService {
@@ -464,7 +464,7 @@ export class ImagesService {
     private readonly storageService: StorageService,
   ) {}
 
-  async create(imageUrl: string, tokenPayload: TokenPayloadDto) {
+  async create(imageUrl: string, tokenPayload: AccessTokenPayloadDto) {
     const image &#x3D; this.imagesRepository.create();
     image.url &#x3D; imageUrl;
     image.user &#x3D; new User();

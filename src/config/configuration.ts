@@ -14,8 +14,10 @@ export default () => {
       password: process.env['DATABASE_PASSWORD'],
     },
     jwt: {
-      secret: process.env['JWT_SECRET'],
-      expirationTime: process.env['JWT_EXPIRATION'],
+      accessTokenSecret: process.env['ACCESS_TOKEN_SECRET'],
+      accessTokenExpiration: process.env['ACCESS_TOKEN_EXPIRATION'],
+      refreshTokenSecret: process.env['REFRESH_TOKEN_SECRET'],
+      refreshTokenExpiration: process.env['REFRESH_TOKEN_EXPIRATION'],
     },
     emailConfig: {
       email: process.env['EMAIL'],
@@ -39,8 +41,10 @@ export interface IDatabaseConfig {
 }
 
 export interface IJwtConfig {
-  secret: string;
-  expirationTime: string;
+  accessTokenSecret: string;
+  accessTokenExpiration: string;
+  refreshTokenSecret: string;
+  refreshTokenExpiration: string;
 }
 
 export interface IMailerConfig {

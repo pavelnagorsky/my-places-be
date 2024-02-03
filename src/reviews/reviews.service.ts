@@ -21,7 +21,7 @@ import {
 } from 'typeorm';
 import { Place } from '../places/entities/place.entity';
 import { ReviewTranslation } from './entities/review-translation.entity';
-import { TokenPayloadDto } from '../auth/dto/token-payload.dto';
+import { AccessTokenPayloadDto } from '../auth/dto/access-token-payload.dto';
 import { MyReviewsRequestDto } from './dto/my-reviews-request.dto';
 import { MyReviewsOrderByEnum } from './enums/my-reviews-order-by.enum';
 import { ReviewStatusesEnum } from './enums/review-statuses.enum';
@@ -325,7 +325,7 @@ export class ReviewsService {
   async findMyReviews(
     langId: number,
     dto: MyReviewsRequestDto,
-    tokenPayload: TokenPayloadDto,
+    tokenPayload: AccessTokenPayloadDto,
   ) {
     const orderDirection = dto.orderAsc ? 'ASC' : 'DESC';
 

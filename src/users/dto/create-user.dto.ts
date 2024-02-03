@@ -20,6 +20,7 @@ export class CreateUserDto {
 
   @ApiProperty({ title: 'Password', type: String, default: 'password' })
   @IsString()
+  @MaxLength(50)
   @Matches(regularExpressions.password)
   password: string;
 }

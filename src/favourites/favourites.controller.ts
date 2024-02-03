@@ -24,7 +24,7 @@ import {
 import { Auth } from '../auth/decorators/auth.decorator';
 import { FavouriteDto } from './dto/favourite.dto';
 import { TokenPayload } from '../auth/decorators/token-payload.decorator';
-import { TokenPayloadDto } from '../auth/dto/token-payload.dto';
+import { AccessTokenPayloadDto } from '../auth/dto/access-token-payload.dto';
 import { FavouritesRequestDto } from './dto/favourites-request.dto';
 
 @ApiTags('Favourites')
@@ -46,7 +46,7 @@ export class FavouritesController {
   @Post('places/:placeId')
   async create(
     @Param('placeId', ParseIntPipe) placeId: number,
-    @TokenPayload() tokenPayload: TokenPayloadDto,
+    @TokenPayload() tokenPayload: AccessTokenPayloadDto,
   ) {
     const fav = await this.favouritesService.create(tokenPayload.id, placeId);
     return { id: fav.id };
@@ -70,7 +70,7 @@ export class FavouritesController {
   @Auth()
   @Post()
   async findAll(
-    @TokenPayload() tokenPayload: TokenPayloadDto,
+    @TokenPayload() tokenPayload: AccessTokenPayloadDto,
     @Body() dto: FavouritesRequestDto,
     @Query('lang', ParseIntPipe) langId: number,
   ) {
@@ -95,7 +95,7 @@ export class FavouritesController {
   @Patch(':id')
   async update(
     @Param('id', ParseIntPipe) id: number,
-    @TokenPayload() tokenPayload: TokenPayloadDto,
+    @TokenPayload() tokenPayload: AccessTokenPayloadDto,
   ) {
     return await this.favouritesService.updateIsActual(id, tokenPayload.id);
   }
@@ -113,7 +113,7 @@ export class FavouritesController {
   @Delete(':id')
   async remove(
     @Param('id', ParseIntPipe) id: number,
-    @TokenPayload() tokenPayload: TokenPayloadDto,
+    @TokenPayload() tokenPayload: AccessTokenPayloadDto,
   ) {
     return await this.favouritesService.remove(id, tokenPayload.id);
   }

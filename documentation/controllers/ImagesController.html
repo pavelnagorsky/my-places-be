@@ -154,7 +154,7 @@
             <tr>
                 <td class="col-md-4">
                     <span class="modifier-icon icon ion-ios-reset"></span>
-                    <code>create(fileDto: <a href="../classes/CreateImageDto.html" target="_self">CreateImageDto</a>, image: Express.Multer.File, tokenPayload: <a href="../classes/TokenPayloadDto.html" target="_self">TokenPayloadDto</a>)</code>
+                    <code>create(fileDto: <a href="../classes/CreateImageDto.html" target="_self">CreateImageDto</a>, image: Express.Multer.File, tokenPayload: <a href="../classes/TokenPayloadDto.html" target="_self">AccessTokenPayloadDto</a>)</code>
                 </td>
             </tr>
 
@@ -216,7 +216,7 @@
                                 <tr>
                                     <td>tokenPayload</td>
                                     <td>
-                                                <code><a href="../classes/TokenPayloadDto.html" target="_self" >TokenPayloadDto</a></code>
+                                                <code><a href="../classes/TokenPayloadDto.html" target="_self" >AccessTokenPayloadDto</a></code>
                                     </td>
 
                                     <td>
@@ -404,7 +404,7 @@ import { StorageService } from &#x27;../storage/storage.service&#x27;;
 import { ImageDto } from &#x27;./dto/image.dto&#x27;;
 import { Auth } from &#x27;../auth/decorators/auth.decorator&#x27;;
 import { TokenPayload } from &#x27;../auth/decorators/token-payload.decorator&#x27;;
-import { TokenPayloadDto } from &#x27;../auth/dto/token-payload.dto&#x27;;
+import { AccessTokenPayloadDto } from &#x27;../auth/dto/token-payload.dto&#x27;;
 import { RoleNamesEnum } from &#x27;../roles/enums/role-names.enum&#x27;;
 
 @ApiTags(&#x27;Images&#x27;)
@@ -443,7 +443,7 @@ export class ImagesController {
     @UploadedFile()
     image: Express.Multer.File,
     @TokenPayload()
-    tokenPayload: TokenPayloadDto,
+    tokenPayload: AccessTokenPayloadDto,
   ): Promise&lt;ImageDto&gt; {
     if (!image) throw new BadRequestException(&#x27;No file provided&#x27;);
     const uploaded &#x3D; await this.storageService.uploadFile(image, &#x27;images&#x27;);

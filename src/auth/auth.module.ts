@@ -3,30 +3,30 @@ import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
 import { UsersModule } from '../users/users.module';
 import { JwtModule } from '@nestjs/jwt';
-import { ConfigService } from '@nestjs/config';
-import { IJwtConfig } from '../config/configuration';
 import { UserFromTokenPipe } from './pipes/user-from-token.pipe';
 import { MailingModule } from '../mailing/mailing.module';
 import { PayloadFromTokenPipe } from './pipes/payload-from-token.pipe';
+import { JwtRefreshTokenStrategy } from './strategy/jwt-refresh-token.strategy';
+import { JwtAccessTokenStrategy } from './strategy/jwt-access-token.strategy';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { RefreshTokenEntity } from './entities/refresh-token.entity';
 
 @Global()
 @Module({
   imports: [
     UsersModule,
     MailingModule,
-    JwtModule.registerAsync({
-      useFactory: (configService: ConfigService) => ({
-        secret: configService.get<IJwtConfig>('jwt')?.secret,
-        global: true,
-        signOptions: {
-          expiresIn: configService.get<IJwtConfig>('jwt')?.expirationTime,
-        },
-      }),
-      inject: [ConfigService],
-    }),
+    JwtModule.register({ global: true }),
+    TypeOrmModule.forFeature([RefreshTokenEntity]),
   ],
   controllers: [AuthController],
-  providers: [AuthService, UserFromTokenPipe, PayloadFromTokenPipe],
+  providers: [
+    AuthService,
+    UserFromTokenPipe,
+    PayloadFromTokenPipe,
+    JwtRefreshTokenStrategy,
+    JwtAccessTokenStrategy,
+  ],
   exports: [AuthService, JwtModule, UserFromTokenPipe, UsersModule],
 })
 export class AuthModule {}

@@ -170,7 +170,7 @@
             <tr>
                 <td class="col-md-4">
                     <span class="modifier-icon icon ion-ios-reset"></span>
-                    <code>transform(tokenPayload: <a href="../classes/TokenPayloadDto.html" target="_self">TokenPayloadDto</a>, _metadata: ArgumentMetadata)</code>
+                    <code>transform(tokenPayload: <a href="../classes/TokenPayloadDto.html" target="_self">AccessTokenPayloadDto</a>, _metadata: ArgumentMetadata)</code>
                 </td>
             </tr>
 
@@ -201,7 +201,7 @@
                                 <tr>
                                     <td>tokenPayload</td>
                                     <td>
-                                                <code><a href="../classes/TokenPayloadDto.html" target="_self" >TokenPayloadDto</a></code>
+                                                <code><a href="../classes/TokenPayloadDto.html" target="_self" >AccessTokenPayloadDto</a></code>
                                     </td>
 
                                     <td>
@@ -251,13 +251,13 @@
   UnauthorizedException,
 } from &#x27;@nestjs/common&#x27;;
 import { UsersService } from &#x27;../../users/users.service&#x27;;
-import { TokenPayloadDto } from &#x27;../dto/token-payload.dto&#x27;;
+import { AccessTokenPayloadDto } from &#x27;../dto/token-payload.dto&#x27;;
 
 @Injectable()
 export class UserFromTokenPipe implements PipeTransform {
   public constructor(private readonly usersService: UsersService) {}
 
-  async transform(tokenPayload: TokenPayloadDto, _metadata: ArgumentMetadata) {
+  async transform(tokenPayload: AccessTokenPayloadDto, _metadata: ArgumentMetadata) {
     try {
       const user &#x3D; await this.usersService.findOneById(tokenPayload.id);
 

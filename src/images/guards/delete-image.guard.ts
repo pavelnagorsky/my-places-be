@@ -15,7 +15,7 @@ export class DeleteImageGuard implements CanActivate {
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const req = context.switchToHttp().getRequest<RequestWithTokenPayload>();
     try {
-      const tokenPayload = req.tokenPayload;
+      const tokenPayload = req.user;
       if (!tokenPayload) throw new ForbiddenException();
       const roleNames = tokenPayload.roles.map((r) => r.name);
       // if admin or owner return true

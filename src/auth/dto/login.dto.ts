@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsEmail, Matches } from 'class-validator';
+import { IsEmail, Matches, MaxLength } from 'class-validator';
 import { regularExpressions } from '../../shared/regular-expressions';
 
 export class LoginDto {
@@ -8,6 +8,7 @@ export class LoginDto {
   email: string;
 
   @ApiProperty({ title: 'Password', type: String, default: 'password' })
+  @MaxLength(50)
   @Matches(regularExpressions.password)
   password: string;
 }

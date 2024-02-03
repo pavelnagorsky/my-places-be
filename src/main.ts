@@ -5,6 +5,7 @@ import { ValidationPipe } from '@nestjs/common';
 import { exceptionFactory } from './shared/validation/exception-factory';
 import { swaggerConfig } from './config/swagger.config';
 import { corsConfig } from './config/cors.config';
+import * as cookieParser from 'cookie-parser';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, { cors: corsConfig });
@@ -14,6 +15,7 @@ async function bootstrap() {
       exceptionFactory: exceptionFactory,
     }),
   );
+  app.use(cookieParser());
 
   const document = SwaggerModule.createDocument(app, swaggerConfig);
   SwaggerModule.setup('api', app, document);

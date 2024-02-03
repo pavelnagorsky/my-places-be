@@ -16,7 +16,7 @@ import {
 import { LikesService } from './likes.service';
 import { Auth } from '../auth/decorators/auth.decorator';
 import { TokenPayload } from '../auth/decorators/token-payload.decorator';
-import { TokenPayloadDto } from '../auth/dto/token-payload.dto';
+import { AccessTokenPayloadDto } from '../auth/dto/access-token-payload.dto';
 import { IsLikedDto } from './dto/is-liked.dto';
 
 @ApiTags('Likes')
@@ -39,7 +39,7 @@ export class LikesController {
   @Get('places/:id')
   async checkPlaceLike(
     @Param('id', ParseIntPipe) id: number,
-    @TokenPayload() tokenPayload: TokenPayloadDto,
+    @TokenPayload() tokenPayload: AccessTokenPayloadDto,
   ) {
     const likeExists = await this.likesService.checkPlaceLikedByUser(
       tokenPayload.id,
@@ -61,7 +61,7 @@ export class LikesController {
   @Put('places/:id')
   async changeLike(
     @Param('id', ParseIntPipe) id: number,
-    @TokenPayload() tokenPayload: TokenPayloadDto,
+    @TokenPayload() tokenPayload: AccessTokenPayloadDto,
   ) {
     return await this.likesService.changePlaceLike(tokenPayload.id, id);
   }

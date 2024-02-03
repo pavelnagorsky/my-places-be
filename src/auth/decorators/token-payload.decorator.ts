@@ -8,8 +8,8 @@ import { RequestWithTokenPayload } from '../../shared/types';
 export const TokenPayload = createParamDecorator(
   (data: unknown, ctx: ExecutionContext) => {
     const request = ctx.switchToHttp().getRequest<RequestWithTokenPayload>();
-    if (!request.tokenPayload)
+    if (!request.user)
       throw new UnauthorizedException({ message: 'No token payload found' });
-    return request.tokenPayload;
+    return request.user;
   },
 );

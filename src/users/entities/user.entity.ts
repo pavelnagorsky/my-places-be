@@ -22,6 +22,7 @@ import { Review } from '../../reviews/entities/review.entity';
 import { Report } from '../../reports/entities/report.entity';
 import { Language } from '../../languages/entities/language.entity';
 import { Favourite } from '../../favourites/entities/favourite.entity';
+import { RefreshTokenEntity } from '../../auth/entities/refresh-token.entity';
 
 @Entity()
 export class User {
@@ -71,6 +72,9 @@ export class User {
 
   @OneToMany(() => Comment, (comment) => comment.user)
   comments: Comment[];
+
+  @OneToMany(() => RefreshTokenEntity, (rToken) => rToken.user)
+  refreshTokens: RefreshTokenEntity[];
 
   @OneToMany(() => Report, (report) => report.moderator)
   reportsModeration: Report;

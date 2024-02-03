@@ -489,7 +489,7 @@ import { JwtService } from &#x27;@nestjs/jwt&#x27;;
 import * as bcrypt from &#x27;bcrypt&#x27;;
 import { User } from &#x27;../users/entities/user.entity&#x27;;
 import { LoginDto } from &#x27;./dto/login.dto&#x27;;
-import { TokenPayloadDto } from &#x27;./dto/token-payload.dto&#x27;;
+import { AccessTokenPayloadDto } from &#x27;./dto/token-payload.dto&#x27;;
 import { MailingService } from &#x27;../mailing/mailing.service&#x27;;
 
 @Injectable()
@@ -538,7 +538,7 @@ export class AuthService {
   }
 
   private generateToken(user: User) {
-    const payload: TokenPayloadDto &#x3D; {
+    const payload: AccessTokenPayloadDto &#x3D; {
       email: user.email,
       id: user.id,
       roles: user.roles,

@@ -27,7 +27,7 @@ import { StorageService } from '../storage/storage.service';
 import { ImageDto } from './dto/image.dto';
 import { Auth } from '../auth/decorators/auth.decorator';
 import { TokenPayload } from '../auth/decorators/token-payload.decorator';
-import { TokenPayloadDto } from '../auth/dto/token-payload.dto';
+import { AccessTokenPayloadDto } from '../auth/dto/access-token-payload.dto';
 import { DeleteImageGuard } from './guards/delete-image.guard';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 
@@ -67,7 +67,7 @@ export class ImagesController {
     @UploadedFile()
     image: Express.Multer.File,
     @TokenPayload()
-    tokenPayload: TokenPayloadDto,
+    tokenPayload: AccessTokenPayloadDto,
   ): Promise<ImageDto> {
     if (!image) throw new BadRequestException('No file provided');
     const uploaded = await this.storageService.uploadFile(image, 'images');

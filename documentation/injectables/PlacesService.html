@@ -909,7 +909,7 @@
             <tr>
                 <td class="col-md-4">
                     <span class="modifier-icon icon ion-ios-reset"></span>
-                    <code>findOneBySlug(slug: <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/string" target="_blank">string</a>, langId: <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/number" target="_blank">number</a>, tokenPayload: <a href="../classes/TokenPayloadDto.html" target="_self">TokenPayloadDto | null</a>)</code>
+                    <code>findOneBySlug(slug: <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/string" target="_blank">string</a>, langId: <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/number" target="_blank">number</a>, tokenPayload: <a href="../classes/TokenPayloadDto.html" target="_self">AccessTokenPayloadDto | null</a>)</code>
                 </td>
             </tr>
 
@@ -969,7 +969,7 @@
                                 <tr>
                                     <td>tokenPayload</td>
                                     <td>
-                                                <code><a href="../classes/TokenPayloadDto.html" target="_self" >TokenPayloadDto | null</a></code>
+                                                <code><a href="../classes/TokenPayloadDto.html" target="_self" >AccessTokenPayloadDto | null</a></code>
                                     </td>
 
                                     <td>
@@ -1462,7 +1462,7 @@ import { PlaceType } from &#x27;../place-types/entities/place-type.entity&#x27;;
 import { PlaceCategory } from &#x27;../place-categories/entities/place-category.entity&#x27;;
 import { ImagesService } from &#x27;../images/images.service&#x27;;
 import { User } from &#x27;../users/entities/user.entity&#x27;;
-import { TokenPayloadDto } from &#x27;../auth/dto/token-payload.dto&#x27;;
+import { AccessTokenPayloadDto } from &#x27;../auth/dto/token-payload.dto&#x27;;
 import { Like } from &#x27;./entities/like.entity&#x27;;
 import { UpdatePlaceDto } from &#x27;./dto/update-place.dto&#x27;;
 import { Admin } from &#x27;../entities/admin.entity&#x27;;
@@ -1676,7 +1676,7 @@ export class PlacesService {
   async findOneBySlug(
     slug: string,
     langId: number,
-    tokenPayload: TokenPayloadDto | null &#x3D; null,
+    tokenPayload: AccessTokenPayloadDto | null &#x3D; null,
   ) {
     const place &#x3D; await this.placesRepository
       .createQueryBuilder(&#x27;place&#x27;)

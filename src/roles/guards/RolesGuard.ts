@@ -23,7 +23,7 @@ export class RolesGuard implements CanActivate {
         ROLES_KEY,
         [context.getHandler(), context.getClass()],
       );
-      const tokenPayload = req?.tokenPayload;
+      const tokenPayload = req?.user;
       if (!tokenPayload)
         throw new UnauthorizedException({ message: 'No token provided' });
       if (!requiredRoles || requiredRoles?.length === 0) return true;

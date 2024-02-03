@@ -151,7 +151,7 @@
             <tr>
                 <td class="col-md-4">
                     <span class="modifier-icon icon ion-ios-reset"></span>
-                    <code>confirmEmail(tokenPayload: <a href="../classes/TokenPayloadDto.html" target="_self">TokenPayloadDto</a>)</code>
+                    <code>confirmEmail(tokenPayload: <a href="../classes/TokenPayloadDto.html" target="_self">AccessTokenPayloadDto</a>)</code>
                 </td>
             </tr>
 
@@ -189,7 +189,7 @@
                                 <tr>
                                     <td>tokenPayload</td>
                                     <td>
-                                                <code><a href="../classes/TokenPayloadDto.html" target="_self" >TokenPayloadDto</a></code>
+                                                <code><a href="../classes/TokenPayloadDto.html" target="_self" >AccessTokenPayloadDto</a></code>
                                     </td>
 
                                     <td>
@@ -366,7 +366,7 @@ import { Auth } from &#x27;../auth/decorators/auth.decorator&#x27;;
 import { UserFromTokenPipe } from &#x27;../auth/pipes/user-from-token.pipe&#x27;;
 import { User } from &#x27;./entities/user.entity&#x27;;
 import { TokenPayload } from &#x27;../auth/decorators/token-payload.decorator&#x27;;
-import { TokenPayloadDto } from &#x27;../auth/dto/token-payload.dto&#x27;;
+import { AccessTokenPayloadDto } from &#x27;../auth/dto/token-payload.dto&#x27;;
 
 @ApiTags(&#x27;Users&#x27;)
 @Controller(&#x27;users&#x27;)
@@ -405,7 +405,7 @@ export class UsersController {
   })
   @Auth()
   @Post(&#x27;/confirm&#x27;)
-  async confirmEmail(@TokenPayload() tokenPayload: TokenPayloadDto) {
+  async confirmEmail(@TokenPayload() tokenPayload: AccessTokenPayloadDto) {
     await this.usersService.confirmEmail(tokenPayload.id);
     return;
   }

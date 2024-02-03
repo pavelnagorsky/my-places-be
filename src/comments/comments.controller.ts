@@ -25,7 +25,7 @@ import { CommentsService } from './comments.service';
 import { CommentDto } from './dto/comment.dto';
 import { Token } from '../auth/decorators/token.decorator';
 import { PayloadFromTokenPipe } from '../auth/pipes/payload-from-token.pipe';
-import { TokenPayloadDto } from '../auth/dto/token-payload.dto';
+import { AccessTokenPayloadDto } from '../auth/dto/access-token-payload.dto';
 import { ValidationExceptionDto } from '../shared/validation/validation-exception.dto';
 import { Auth } from '../auth/decorators/auth.decorator';
 import { TokenPayload } from '../auth/decorators/token-payload.decorator';
@@ -54,7 +54,7 @@ export class CommentsController {
   @Get('places/:id')
   async getAllComments(
     @Param('id', ParseIntPipe) id: number,
-    @Token(PayloadFromTokenPipe) tokenPayload: TokenPayloadDto | null,
+    @Token(PayloadFromTokenPipe) tokenPayload: AccessTokenPayloadDto | null,
   ) {
     const comments = await this.commentsService.findAllPlaceComments(
       id,
@@ -82,7 +82,7 @@ export class CommentsController {
   @Post('places/:id')
   async createComment(
     @Param('id', ParseIntPipe) id: number,
-    @TokenPayload() tokenPayload: TokenPayloadDto,
+    @TokenPayload() tokenPayload: AccessTokenPayloadDto,
     @Body() createCommentDto: CreateCommentDto,
   ) {
     const comment = await this.commentsService.createPlaceComment(
@@ -115,7 +115,7 @@ export class CommentsController {
   @Put(':commentId')
   async updateComment(
     @Param('commentId', ParseIntPipe) commentId: number,
-    @TokenPayload() tokenPayload: TokenPayloadDto,
+    @TokenPayload() tokenPayload: AccessTokenPayloadDto,
     @Body() updateCommentDto: UpdateCommentDto,
   ) {
     const userIsCommentOwner = await this.commentsService.checkCanManage(
@@ -174,7 +174,7 @@ export class CommentsController {
   @Delete(':commentId')
   async deleteComment(
     @Param('commentId', ParseIntPipe) commentId: number,
-    @TokenPayload() tokenPayload: TokenPayloadDto,
+    @TokenPayload() tokenPayload: AccessTokenPayloadDto,
   ) {
     const userIsCommentOwner = await this.commentsService.checkCanManage(
       tokenPayload.id,

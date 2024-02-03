@@ -44,7 +44,7 @@
 
 <ol class="breadcrumb">
   <li class="breadcrumb-item">Classes</li>
-  <li class="breadcrumb-item" >TokenPayloadDto</li>
+  <li class="breadcrumb-item" >AccessTokenPayloadDto</li>
 </ol>
 
 <ul class="nav nav-tabs" role="tablist">
@@ -68,7 +68,7 @@
             <h3>File</h3>
         </p>
         <p class="comment">
-            <code>src/auth/dto/token-payload.dto.ts</code>
+            <code>src/auth/dto/access-token-payload.dto.ts</code>
         </p>
 
 
@@ -116,12 +116,12 @@
             <tbody>
                 <tr>
                     <td class="col-md-4">
-<code>constructor(partial: <a href="../classes/TokenPayloadDto.html" target="_self">Partial&lt;TokenPayloadDto&gt;</a>)</code>
+<code>constructor(partial: <a href="../classes/TokenPayloadDto.html" target="_self">Partial&lt;AccessTokenPayloadDto&gt;</a>)</code>
                     </td>
                 </tr>
                         <tr>
                             <td class="col-md-4">
-                                <div class="io-line">Defined in <a href="" data-line="6" class="link-to-prism">src/auth/dto/token-payload.dto.ts:6</a></div>
+                                <div class="io-line">Defined in <a href="" data-line="6" class="link-to-prism">src/auth/dto/access-token-payload.dto.ts:6</a></div>
                             </td>
                         </tr>
 
@@ -142,7 +142,7 @@
                                                         <td>partial</td>
                                                   
                                                         <td>
-                                                                        <code><a href="../classes/TokenPayloadDto.html" target="_self" >Partial&lt;TokenPayloadDto&gt;</a></code>
+                                                                        <code><a href="../classes/TokenPayloadDto.html" target="_self" >Partial&lt;AccessTokenPayloadDto&gt;</a></code>
                                                         </td>
                                                   
                                                     <td>
@@ -183,7 +183,7 @@
                 </tr>
                     <tr>
                         <td class="col-md-4">
-                                <div class="io-line">Defined in <a href="" data-line="5" class="link-to-prism">src/auth/dto/token-payload.dto.ts:5</a></div>
+                                <div class="io-line">Defined in <a href="" data-line="5" class="link-to-prism">src/auth/dto/access-token-payload.dto.ts:5</a></div>
                         </td>
                     </tr>
 
@@ -209,7 +209,7 @@
                 </tr>
                     <tr>
                         <td class="col-md-4">
-                                <div class="io-line">Defined in <a href="" data-line="4" class="link-to-prism">src/auth/dto/token-payload.dto.ts:4</a></div>
+                                <div class="io-line">Defined in <a href="" data-line="4" class="link-to-prism">src/auth/dto/access-token-payload.dto.ts:4</a></div>
                         </td>
                     </tr>
 
@@ -235,7 +235,7 @@
                 </tr>
                     <tr>
                         <td class="col-md-4">
-                                <div class="io-line">Defined in <a href="" data-line="6" class="link-to-prism">src/auth/dto/token-payload.dto.ts:6</a></div>
+                                <div class="io-line">Defined in <a href="" data-line="6" class="link-to-prism">src/auth/dto/access-token-payload.dto.ts:6</a></div>
                         </td>
                     </tr>
 
@@ -256,12 +256,12 @@
     <div class="tab-pane fade  tab-source-code" id="source">
         <pre class="line-numbers compodoc-sourcecode"><code class="language-typescript">import { Role } from &#x27;../../roles/entities/role.entity&#x27;;
 
-export class TokenPayloadDto {
+export class AccessTokenPayloadDto {
   id: number;
   email: string;
   roles: Role[];
 
-  constructor(partial: Partial&lt;TokenPayloadDto&gt;) {
+  constructor(partial: Partial&lt;AccessTokenPayloadDto&gt;) {
     Object.assign(this, partial);
   }
 }

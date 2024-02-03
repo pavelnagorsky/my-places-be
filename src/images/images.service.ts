@@ -4,7 +4,7 @@ import { In, Repository, Equal } from 'typeorm';
 import { Image } from './entities/image.entity';
 import { StorageService } from '../storage/storage.service';
 import { User } from '../users/entities/user.entity';
-import { TokenPayloadDto } from '../auth/dto/token-payload.dto';
+import { AccessTokenPayloadDto } from '../auth/dto/access-token-payload.dto';
 
 @Injectable()
 export class ImagesService {
@@ -14,7 +14,7 @@ export class ImagesService {
     private readonly storageService: StorageService,
   ) {}
 
-  async create(imageUrl: string, tokenPayload: TokenPayloadDto) {
+  async create(imageUrl: string, tokenPayload: AccessTokenPayloadDto) {
     const image = this.imagesRepository.create();
     image.url = imageUrl;
     image.user = new User();

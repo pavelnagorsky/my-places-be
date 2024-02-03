@@ -1,5 +1,5 @@
 import { ArgumentMetadata, Injectable, PipeTransform } from '@nestjs/common';
-import { TokenPayloadDto } from '../dto/token-payload.dto';
+import { AccessTokenPayloadDto } from '../dto/access-token-payload.dto';
 import { JwtService } from '@nestjs/jwt';
 
 @Injectable()
@@ -10,7 +10,7 @@ export class PayloadFromTokenPipe implements PipeTransform {
     try {
       if (!token) return null;
 
-      const tokenPayload = this.jwtService.verify<TokenPayloadDto>(token);
+      const tokenPayload = this.jwtService.verify<AccessTokenPayloadDto>(token);
 
       return tokenPayload;
     } catch (error) {

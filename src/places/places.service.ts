@@ -25,7 +25,7 @@ import { PlaceType } from '../place-types/entities/place-type.entity';
 import { PlaceCategory } from '../place-categories/entities/place-category.entity';
 import { ImagesService } from '../images/images.service';
 import { User } from '../users/entities/user.entity';
-import { TokenPayloadDto } from '../auth/dto/token-payload.dto';
+import { AccessTokenPayloadDto } from '../auth/dto/access-token-payload.dto';
 import { UpdatePlaceDto } from './dto/update-place.dto';
 import { SearchRequestDto } from './dto/search-request.dto';
 import { ISearchServiceResponse } from './interfaces';
@@ -348,7 +348,7 @@ export class PlacesService {
   }
 
   async getPlacesSelect(
-    tokenPayload: TokenPayloadDto,
+    tokenPayload: AccessTokenPayloadDto,
     langId: number,
     search: string,
     placeId: number | null,
@@ -659,7 +659,7 @@ export class PlacesService {
   async findMyPlaces(
     langId: number,
     dto: MyPlacesRequestDto,
-    tokenPayload: TokenPayloadDto,
+    tokenPayload: AccessTokenPayloadDto,
   ) {
     const orderDirection = dto.orderAsc ? 'ASC' : 'DESC';
 
