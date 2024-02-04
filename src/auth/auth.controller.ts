@@ -25,7 +25,6 @@ import { CookiesEnum } from './enums/cookies.enum';
 import { Cookies } from './decorators/cookies.decorator';
 import { TokenPayload } from './decorators/token-payload.decorator';
 import { AccessTokenPayloadDto } from './dto/access-token-payload.dto';
-import { Auth } from './decorators/auth.decorator';
 import { cookieConfig } from './config/cookie.config';
 import { JwtRefreshGuard } from './guards/jwt-refresh.guard';
 import { UserFromTokenPipe } from './pipes/user-from-token.pipe';
@@ -79,7 +78,8 @@ export class AuthController {
 
   @ApiOperation({ summary: 'Refresh tokens' })
   @ApiOkResponse({
-    description: 'OK',
+    description: 'token response',
+    type: AuthDto,
   })
   @ApiUnauthorizedResponse({
     description: 'Invalid credentials',
