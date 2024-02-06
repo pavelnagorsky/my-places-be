@@ -25,6 +25,8 @@ import { AccessTokenPayloadDto } from '../auth/dto/access-token-payload.dto';
 import { MyReviewsRequestDto } from './dto/my-reviews-request.dto';
 import { MyReviewsOrderByEnum } from './enums/my-reviews-order-by.enum';
 import { ReviewStatusesEnum } from './enums/review-statuses.enum';
+import { ModerationReviewsRequestDto } from './dto/moderation-reviews-request.dto';
+import { ModerationReviewsOrderByEnum } from './enums/moderation-reviews-order-by';
 
 @Injectable()
 export class ReviewsService {
@@ -457,5 +459,110 @@ export class ReviewsService {
     });
     if (!review) throw new NotFoundException({ message: 'Review not found' });
     return review;
+  }
+
+  async findModerationReviews(
+    langId: number,
+    dto: ModerationReviewsRequestDto,
+  ) {
+    const orderDirection = dto.orderAsc ? 'ASC' : 'DESC';
+
+    const getDateWhereOption = () => {
+      if (!!dto.dateFrom && !!dto.dateTo)
+        return Between(new Date(dto.dateFrom), new Date(dto.dateTo));
+      if (!!dto.dateFrom) return MoreThanOrEqual(new Date(dto.dateFrom));
+      if (!!dto.dateTo) return LessThanOrEqual(new Date(dto.dateTo));
+      return undefined;
+    };
+
+    const res = await this.reviewsRepository.findAndCount({
+      relations: {
+        translations: true,
+        place: { translations: true },
+        author: true,
+      },
+      skip: dto.lastIndex,
+      take: dto.itemsPerPage,
+      order: {
+        createdAt:
+          dto.orderBy === ModerationReviewsOrderByEnum.CREATED_AT
+            ? orderDirection
+            : undefined,
+        updatedAt:
+          dto.orderBy === ModerationReviewsOrderByEnum.UPDATED_AT ||
+          !dto.orderBy
+            ? orderDirection
+            : undefined,
+        translations: {
+          title:
+            dto.orderBy === ModerationReviewsOrderByEnum.TITLE
+              ? orderDirection
+              : undefined,
+        },
+        place: {
+          translations: {
+            title:
+              dto.orderBy === ModerationReviewsOrderByEnum.PLACE_TITLE
+                ? orderDirection
+                : undefined,
+          },
+        },
+        author: {
+          firstName:
+            dto.orderBy === ModerationReviewsOrderByEnum.AUTHOR
+              ? orderDirection
+              : undefined,
+          lastName:
+            dto.orderBy === ModerationReviewsOrderByEnum.AUTHOR
+              ? orderDirection
+              : undefined,
+        },
+      },
+      select: {
+        id: true,
+        translations: {
+          title: true,
+        },
+        place: {
+          id: true,
+          slug: true,
+          translations: {
+            title: true,
+          },
+        },
+        author: {
+          firstName: true,
+          lastName: true,
+          email: true,
+        },
+        createdAt: true,
+        updatedAt: true,
+      },
+      where: {
+        author: {
+          email: dto.authorEmail ? ILike(`${dto.authorEmail}%`) : undefined,
+        },
+        place: {
+          translations: {
+            language: {
+              id: langId,
+            },
+          },
+        },
+        updatedAt: getDateWhereOption(),
+        status: ReviewStatusesEnum.MODERATION,
+        translations: {
+          title:
+            !!dto.search && dto.search.length > 0
+              ? ILike(`${dto.search}%`)
+              : undefined,
+          language: {
+            id: langId,
+          },
+        },
+      },
+    });
+
+    return res;
   }
 }

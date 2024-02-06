@@ -44,6 +44,9 @@ import { CreateSlugDto } from './dto/create-slug.dto';
 import { MyPlacesResponseDto } from './dto/my-places-response.dto';
 import { MyPlacesRequestDto } from './dto/my-places-request.dto';
 import { PlaceEditDto } from './dto/place-edit.dto';
+import { ModerationPlacesResponseDto } from './dto/moderation-places-response.dto';
+import { ModerationPlacesRequestDto } from './dto/moderation-places-request.dto';
+import { RoleNamesEnum } from '../roles/enums/role-names.enum';
 
 @ApiTags('Places')
 @Controller('/places')
@@ -335,5 +338,37 @@ export class PlacesController {
   ) {
     const place = await this.placesService.getPlaceForEdit(id, langId);
     return new PlaceEditDto(place);
+  }
+
+  @ApiOperation({ summary: 'Get moderation places' })
+  @ApiOkResponse({
+    description: 'OK',
+    type: ModerationPlacesResponseDto,
+  })
+  @ApiBody({
+    type: ModerationPlacesRequestDto,
+  })
+  @ApiQuery({
+    name: 'lang',
+    type: Number,
+    description: 'The ID of the language',
+  })
+  @UseInterceptors(ClassSerializerInterceptor)
+  @Auth(RoleNamesEnum.MODERATOR, RoleNamesEnum.ADMIN)
+  @Post('moderation-places')
+  async getModerationPlaces(
+    @Query('lang', ParseIntPipe) langId: number,
+    @Body() dto: ModerationPlacesRequestDto,
+  ) {
+    const [places, total] = await this.placesService.findModerationPlaces(
+      langId,
+      dto,
+    );
+    const updatedLastIndex = dto.lastIndex + places.length;
+    return new ModerationPlacesResponseDto(
+      places,
+      updatedLastIndex,
+      total > updatedLastIndex,
+    );
   }
 }

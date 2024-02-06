@@ -1,18 +1,17 @@
 import {
-  Controller,
-  Get,
-  Post,
   Body,
-  Patch,
-  Param,
-  Delete,
-  Query,
-  ParseIntPipe,
-  UseInterceptors,
   ClassSerializerInterceptor,
-  NotFoundException,
-  Put,
+  Controller,
+  Delete,
   ForbiddenException,
+  Get,
+  NotFoundException,
+  Param,
+  ParseIntPipe,
+  Post,
+  Put,
+  Query,
+  UseInterceptors,
 } from '@nestjs/common';
 import { ReviewsService } from './reviews.service';
 import { CreateReviewDto } from './dto/create-review.dto';
@@ -41,6 +40,9 @@ import { AccessTokenPayloadDto } from '../auth/dto/access-token-payload.dto';
 import { MyReviewsRequestDto } from './dto/my-reviews-request.dto';
 import { MyReviewsResponseDto } from './dto/my-reviews-response.dto';
 import { ReviewEditDto } from './dto/review-edit.dto';
+import { ModerationReviewsResponseDto } from './dto/moderation-reviews-response.dto';
+import { ModerationReviewsRequestDto } from './dto/moderation-reviews-request.dto';
+import { RoleNamesEnum } from '../roles/enums/role-names.enum';
 
 @ApiTags('Reviews')
 @Controller('reviews')
@@ -262,5 +264,37 @@ export class ReviewsController {
   ) {
     const review = await this.reviewsService.getReviewForEdit(id, langId);
     return new ReviewEditDto(review);
+  }
+
+  @ApiOperation({ summary: 'Get moderation reviews' })
+  @ApiOkResponse({
+    description: 'OK',
+    type: ModerationReviewsResponseDto,
+  })
+  @ApiBody({
+    type: ModerationReviewsRequestDto,
+  })
+  @ApiQuery({
+    name: 'lang',
+    type: Number,
+    description: 'The ID of the language',
+  })
+  @UseInterceptors(ClassSerializerInterceptor)
+  @Auth(RoleNamesEnum.MODERATOR, RoleNamesEnum.ADMIN)
+  @Post('moderation-reviews')
+  async getModerationReviews(
+    @Query('lang', ParseIntPipe) langId: number,
+    @Body() dto: ModerationReviewsRequestDto,
+  ) {
+    const [reviews, total] = await this.reviewsService.findModerationReviews(
+      langId,
+      dto,
+    );
+    const updatedLastIndex = dto.lastIndex + reviews.length;
+    return new ModerationReviewsResponseDto(
+      reviews,
+      updatedLastIndex,
+      total > updatedLastIndex,
+    );
   }
 }

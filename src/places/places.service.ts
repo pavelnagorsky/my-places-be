@@ -34,6 +34,8 @@ import { CreateSlugDto } from './dto/create-slug.dto';
 import { PlaceTranslation } from './entities/place-translation.entity';
 import { MyPlacesOrderByEnum } from './enums/my-places-order-by.enum';
 import { MyPlacesRequestDto } from './dto/my-places-request.dto';
+import { ModerationPlacesRequestDto } from './dto/moderation-places-request.dto';
+import { ModerationPlacesOrderByEnum } from './enums/moderation-places-order-by.enum';
 
 @Injectable()
 export class PlacesService {
@@ -783,5 +785,107 @@ export class PlacesService {
     });
     if (!place) throw new NotFoundException({ message: 'Place not found' });
     return place;
+  }
+
+  async findModerationPlaces(langId: number, dto: ModerationPlacesRequestDto) {
+    const orderDirection = dto.orderAsc ? 'ASC' : 'DESC';
+
+    const getDateWhereOption = () => {
+      if (!!dto.dateFrom && !!dto.dateTo)
+        return Between(new Date(dto.dateFrom), new Date(dto.dateTo));
+      if (!!dto.dateFrom) return MoreThanOrEqual(new Date(dto.dateFrom));
+      if (!!dto.dateTo) return LessThanOrEqual(new Date(dto.dateTo));
+      return undefined;
+    };
+
+    const res = await this.placesRepository.findAndCount({
+      relations: {
+        translations: true,
+        type: {
+          titles: true,
+        },
+        author: true,
+      },
+      skip: dto.lastIndex,
+      take: dto.itemsPerPage,
+      order: {
+        createdAt:
+          dto.orderBy === ModerationPlacesOrderByEnum.CREATED_AT
+            ? orderDirection
+            : undefined,
+        updatedAt:
+          dto.orderBy === ModerationPlacesOrderByEnum.UPDATED_AT || !dto.orderBy
+            ? orderDirection
+            : undefined,
+        translations: {
+          title:
+            dto.orderBy === ModerationPlacesOrderByEnum.TITLE
+              ? orderDirection
+              : undefined,
+        },
+        type: {
+          titles: {
+            text:
+              dto.orderBy === ModerationPlacesOrderByEnum.TYPE
+                ? orderDirection
+                : undefined,
+          },
+        },
+        advertisement:
+          dto.orderBy === ModerationPlacesOrderByEnum.COMMERCIAL
+            ? orderDirection
+            : undefined,
+        author: {
+          firstName:
+            dto.orderBy === ModerationPlacesOrderByEnum.AUTHOR
+              ? orderDirection
+              : undefined,
+          lastName:
+            dto.orderBy === ModerationPlacesOrderByEnum.AUTHOR
+              ? orderDirection
+              : undefined,
+        },
+      },
+      select: {
+        id: true,
+        translations: {
+          title: true,
+        },
+        author: {
+          firstName: true,
+          lastName: true,
+          email: true,
+        },
+        slug: true,
+        advertisement: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+      where: {
+        author: {
+          email: dto.authorEmail ? ILike(`${dto.authorEmail}%`) : undefined,
+        },
+        type: {
+          titles: {
+            language: {
+              id: langId,
+            },
+          },
+        },
+        updatedAt: getDateWhereOption(),
+        status: PlaceStatusesEnum.MODERATION,
+        translations: {
+          title:
+            !!dto.search && dto.search.length > 0
+              ? ILike(`${dto.search}%`)
+              : undefined,
+          language: {
+            id: langId,
+          },
+        },
+      },
+    });
+
+    return res;
   }
 }
