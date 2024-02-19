@@ -36,6 +36,7 @@ import { MyPlacesOrderByEnum } from './enums/my-places-order-by.enum';
 import { MyPlacesRequestDto } from './dto/my-places-request.dto';
 import { ModerationPlacesRequestDto } from './dto/moderation-places-request.dto';
 import { ModerationPlacesOrderByEnum } from './enums/moderation-places-order-by.enum';
+import { ModerationDto } from './dto/moderation.dto';
 
 @Injectable()
 export class PlacesService {
@@ -212,16 +213,20 @@ export class PlacesService {
 
     const translations = await this.createTranslations(langId, createPlaceDto);
 
-    const place = this.placesRepository.create();
-    place.slug = createPlaceDto.slug;
-    place.translations = translations;
-    place.type = placeType;
-    place.coordinates = createPlaceDto.coordinates;
-    place.categories = placeCategories;
-    place.images = placeImages;
-    place.advertisement = createPlaceDto.isCommercial;
-    if (createPlaceDto.website) place.website = createPlaceDto.website;
-    place.author = author;
+    const place = this.placesRepository.create({
+      originalLanguage: {
+        id: langId,
+      },
+      slug: createPlaceDto.slug,
+      translations: translations,
+      type: placeType,
+      coordinates: createPlaceDto.coordinates,
+      categories: placeCategories,
+      images: placeImages,
+      advertisement: createPlaceDto.isCommercial,
+      website: createPlaceDto.website ? createPlaceDto.website : undefined,
+      author: author,
+    });
 
     const { id } = await this.placesRepository.save(place);
     return { id: id };
@@ -266,6 +271,9 @@ export class PlacesService {
     langId: number,
   ): SelectQueryBuilder<Place> {
     return qb
+      .where('place.status = :approvedStatus', {
+        approvedStatus: PlaceStatusesEnum.APPROVED,
+      })
       .leftJoinAndSelect('place.categories', 'categories')
       .leftJoinAndSelect(
         'categories.titles',
@@ -292,6 +300,12 @@ export class PlacesService {
         'image',
         'type_image',
         'type.image = type_image.id',
+      )
+      .leftJoinAndMapOne(
+        'type.image2',
+        'image',
+        'type_image2',
+        'type.image2 = type_image2.id',
       )
       .leftJoinAndMapOne(
         'categories.image',
@@ -357,7 +371,7 @@ export class PlacesService {
   ) {
     // default sql request options
     const defaultFindOptions = this.getPlacesSelectFindOptions(langId, search);
-    // select places on moderation, that belongs to user
+    // select not published places, that belong to user
     const userPlaces = await this.placesRepository.find({
       ...defaultFindOptions,
       where: {
@@ -365,15 +379,18 @@ export class PlacesService {
         author: {
           id: tokenPayload.id,
         },
-        status: PlaceStatusesEnum.MODERATION,
+        status: In([
+          PlaceStatusesEnum.MODERATION,
+          PlaceStatusesEnum.NEEDS_PAYMENT,
+        ]),
       },
     });
-    // select public places
+    // select published places
     const placesSearch = await this.placesRepository.find({
       ...defaultFindOptions,
       where: {
         ...defaultFindOptions.where,
-        status: PlaceStatusesEnum.MODERATION,
+        status: PlaceStatusesEnum.APPROVED,
       },
     });
     // select place by id
@@ -532,6 +549,7 @@ export class PlacesService {
         images: true,
       },
       where: {
+        status: PlaceStatusesEnum.APPROVED,
         slug: Equal(slug),
         translations: {
           language: {
@@ -578,6 +596,9 @@ export class PlacesService {
   async getPlacesSlugs() {
     return this.placesRepository
       .createQueryBuilder('place')
+      .where('place.status = :approvedStatus', {
+        approvedStatus: PlaceStatusesEnum.APPROVED,
+      })
       .select(['place.id', 'place.slug'])
       .getMany();
   }
@@ -629,6 +650,9 @@ export class PlacesService {
       const updatedPlace = this.placesRepository.create({
         id: placeId,
         slug: updatePlaceDto.slug,
+        originalLanguage: {
+          id: langId,
+        },
         images: placeImages,
         translations: translations,
         type: placeType,
@@ -644,6 +668,7 @@ export class PlacesService {
 
       return { id: placeId };
     } catch (e) {
+      this.logger.error(e);
       if (e instanceof BadRequestException) {
         throw e;
       }
@@ -758,6 +783,23 @@ export class PlacesService {
     });
 
     return res;
+  }
+
+  async getPlaceForModeration(id: number) {
+    const place = await this.placesRepository.findOne({
+      relations: {
+        originalLanguage: true,
+      },
+      select: {
+        originalLanguage: {
+          id: true,
+        },
+        id: true,
+      },
+      where: { id: id },
+    });
+
+    return await this.getPlaceForEdit(id, place?.originalLanguage?.id || 1);
   }
 
   async getPlaceForEdit(id: number, langId: number) {
@@ -887,5 +929,33 @@ export class PlacesService {
     });
 
     return res;
+  }
+
+  async moderatePlace(placeId: number, dto: ModerationDto, moderator: User) {
+    const place = await this.placesRepository.findOne({
+      where: {
+        id: placeId,
+      },
+      select: {
+        id: true,
+        advertisement: true,
+      },
+    });
+    if (!place)
+      throw new NotFoundException({
+        message: 'Place not found',
+      });
+
+    await this.placesRepository.save({
+      id: place.id,
+      moderator: moderator,
+      status: dto.accept
+        ? place.advertisement
+          ? PlaceStatusesEnum.NEEDS_PAYMENT
+          : PlaceStatusesEnum.APPROVED
+        : PlaceStatusesEnum.REJECTED,
+      moderationMessage: dto.feedback || null,
+    });
+    return;
   }
 }

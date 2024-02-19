@@ -6,8 +6,9 @@ export const corsConfig: CorsOptions = {
     'Access-Control-Allow-Headers',
     'X-Requested-With, Content-Type',
     'Authorization',
+    'Access-Control-Allow-Credentials',
   ],
-  methods: '*',
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   optionsSuccessStatus: 200,
   credentials: true,
 };

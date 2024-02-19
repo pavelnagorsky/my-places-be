@@ -43,6 +43,7 @@ import { ReviewEditDto } from './dto/review-edit.dto';
 import { ModerationReviewsResponseDto } from './dto/moderation-reviews-response.dto';
 import { ModerationReviewsRequestDto } from './dto/moderation-reviews-request.dto';
 import { RoleNamesEnum } from '../roles/enums/role-names.enum';
+import { ModerationDto } from '../places/dto/moderation.dto';
 
 @ApiTags('Reviews')
 @Controller('reviews')
@@ -296,5 +297,28 @@ export class ReviewsController {
       updatedLastIndex,
       total > updatedLastIndex,
     );
+  }
+
+  @ApiOperation({ summary: 'Moderate review' })
+  @ApiOkResponse({
+    description: 'OK',
+  })
+  @ApiParam({
+    name: 'id',
+    type: Number,
+    description: 'The id of the review',
+  })
+  @ApiBody({
+    type: ModerationDto,
+  })
+  @Auth(RoleNamesEnum.MODERATOR, RoleNamesEnum.ADMIN)
+  @Post('moderation/:id')
+  async moderateReview(
+    @Param('id', ParseIntPipe) reviewId: number,
+    @Body() dto: ModerationDto,
+    @TokenPayload(UserFromTokenPipe) moderator: User,
+  ) {
+    await this.reviewsService.moderateReview(reviewId, dto, moderator);
+    return;
   }
 }

@@ -4,6 +4,7 @@ import { PlaceCategoryTranslation } from '../../place-categories/entities/place-
 import { PlaceTranslation } from '../../places/entities/place-translation.entity';
 import { ReviewTranslation } from '../../reviews/entities/review-translation.entity';
 import { User } from '../../users/entities/user.entity';
+import { Place } from '../../places/entities/place.entity';
 
 @Entity()
 export class Language {
@@ -33,4 +34,7 @@ export class Language {
 
   @OneToMany(() => User, (user) => user.preferredLanguage)
   user: User;
+
+  @OneToMany(() => Place, (place) => place.originalLanguage)
+  place: Place;
 }

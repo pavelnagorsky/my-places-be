@@ -27,6 +27,7 @@ import { MyReviewsOrderByEnum } from './enums/my-reviews-order-by.enum';
 import { ReviewStatusesEnum } from './enums/review-statuses.enum';
 import { ModerationReviewsRequestDto } from './dto/moderation-reviews-request.dto';
 import { ModerationReviewsOrderByEnum } from './enums/moderation-reviews-order-by';
+import { ModerationDto } from '../places/dto/moderation.dto';
 
 @Injectable()
 export class ReviewsService {
@@ -159,6 +160,7 @@ export class ReviewsService {
     review.images = reviewImages;
     review.author = user;
     review.place = place;
+    review.status = ReviewStatusesEnum.MODERATION;
     const { id } = await this.reviewsRepository.save(review);
     return { id: id };
   }
@@ -188,6 +190,7 @@ export class ReviewsService {
       },
       where: {
         place: { slug: Equal(placeSlug) },
+        status: ReviewStatusesEnum.APPROVED,
         translations: {
           language: {
             id: langId,
@@ -239,6 +242,7 @@ export class ReviewsService {
       },
       where: {
         id: id,
+        status: ReviewStatusesEnum.APPROVED,
         translations: {
           language: {
             id: langId,
@@ -564,5 +568,30 @@ export class ReviewsService {
     });
 
     return res;
+  }
+
+  async moderateReview(reviewId: number, dto: ModerationDto, moderator: User) {
+    const review = await this.reviewsRepository.findOne({
+      where: {
+        id: reviewId,
+      },
+      select: {
+        id: true,
+      },
+    });
+    if (!review)
+      throw new NotFoundException({
+        message: 'Review not found',
+      });
+
+    await this.reviewsRepository.save({
+      id: review.id,
+      moderator: moderator,
+      status: dto.accept
+        ? ReviewStatusesEnum.APPROVED
+        : ReviewStatusesEnum.REJECTED,
+      moderationMessage: dto.feedback || null,
+    });
+    return;
   }
 }

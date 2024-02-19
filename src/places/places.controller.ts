@@ -47,6 +47,7 @@ import { PlaceEditDto } from './dto/place-edit.dto';
 import { ModerationPlacesResponseDto } from './dto/moderation-places-response.dto';
 import { ModerationPlacesRequestDto } from './dto/moderation-places-request.dto';
 import { RoleNamesEnum } from '../roles/enums/role-names.enum';
+import { ModerationDto } from './dto/moderation.dto';
 
 @ApiTags('Places')
 @Controller('/places')
@@ -340,6 +341,27 @@ export class PlacesController {
     return new PlaceEditDto(place);
   }
 
+  @ApiOperation({ summary: 'Get place for moderation' })
+  @ApiOkResponse({
+    description: 'OK',
+    type: PlaceEditDto,
+  })
+  @ApiNotFoundResponse({
+    description: 'Not found',
+  })
+  @ApiParam({
+    name: 'id',
+    type: Number,
+    description: 'The id of the place',
+  })
+  @UseInterceptors(ClassSerializerInterceptor)
+  @Auth(RoleNamesEnum.MODERATOR, RoleNamesEnum.ADMIN)
+  @Get('moderation/:id')
+  async getPlaceForModeration(@Param('id', ParseIntPipe) id: number) {
+    const place = await this.placesService.getPlaceForModeration(id);
+    return new PlaceEditDto(place);
+  }
+
   @ApiOperation({ summary: 'Get moderation places' })
   @ApiOkResponse({
     description: 'OK',
@@ -370,5 +392,28 @@ export class PlacesController {
       updatedLastIndex,
       total > updatedLastIndex,
     );
+  }
+
+  @ApiOperation({ summary: 'Moderate place' })
+  @ApiOkResponse({
+    description: 'OK',
+  })
+  @ApiParam({
+    name: 'id',
+    type: Number,
+    description: 'The id of the place',
+  })
+  @ApiBody({
+    type: ModerationDto,
+  })
+  @Auth(RoleNamesEnum.MODERATOR, RoleNamesEnum.ADMIN)
+  @Post('moderation/:id')
+  async moderatePlace(
+    @Param('id', ParseIntPipe) placeId: number,
+    @Body() dto: ModerationDto,
+    @TokenPayload(UserFromTokenPipe) moderator: User,
+  ) {
+    await this.placesService.moderatePlace(placeId, dto, moderator);
+    return;
   }
 }

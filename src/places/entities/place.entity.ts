@@ -21,6 +21,7 @@ import { Review } from '../../reviews/entities/review.entity';
 import { Report } from '../../reports/entities/report.entity';
 import { PlaceTranslation } from './place-translation.entity';
 import { Favourite } from '../../favourites/entities/favourite.entity';
+import { Language } from '../../languages/entities/language.entity';
 
 @Entity()
 export class Place {
@@ -66,6 +67,9 @@ export class Place {
 
   @Column({ nullable: true })
   advEndDate: Date;
+
+  @ManyToOne(() => Language, (language) => language.place)
+  originalLanguage: Language;
 
   @ManyToOne(() => User, (user) => user.places)
   author: User;
