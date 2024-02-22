@@ -8,6 +8,7 @@ import {
   Param,
   ParseIntPipe,
   Post,
+  UnauthorizedException,
   UploadedFile,
   UseGuards,
   UseInterceptors,
@@ -15,11 +16,13 @@ import {
 import { ImagesService } from './images.service';
 import { CreateImageDto } from './dto/create-image.dto';
 import {
+  ApiBearerAuth,
   ApiConsumes,
   ApiOkResponse,
   ApiOperation,
   ApiParam,
   ApiTags,
+  ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { memoryStorage } from 'multer';
@@ -86,6 +89,11 @@ export class ImagesController {
   }
 
   @ApiOperation({ summary: 'Delete image by id' })
+  @ApiBearerAuth('access-token')
+  @ApiUnauthorizedResponse({
+    description: 'Unauthorized',
+    type: UnauthorizedException,
+  })
   @ApiParam({
     name: 'id',
     description: 'image id',

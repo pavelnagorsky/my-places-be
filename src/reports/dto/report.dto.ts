@@ -27,6 +27,12 @@ export class ReportDto {
     return this.place?.slug || '';
   }
 
+  @ApiProperty({ title: 'Place id', type: Number })
+  @Expose()
+  get placeId(): number {
+    return this.place.id;
+  }
+
   @Exclude()
-  place: Partial<Place>;
+  place: Place;
 }
