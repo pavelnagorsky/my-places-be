@@ -3,7 +3,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import { PaginationResponseDto } from '../../shared/dto/pagination-response.dto';
 import { Place } from '../entities/place.entity';
 
-export class SearchResponseDto extends PaginationResponseDto {
+export class PlacesSearchResponseDto extends PaginationResponseDto {
   @ApiProperty({ type: SearchPlaceDto, isArray: true })
   items: SearchPlaceDto[];
 

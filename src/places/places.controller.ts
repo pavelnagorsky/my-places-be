@@ -35,7 +35,6 @@ import { AccessTokenPayloadDto } from '../auth/dto/access-token-payload.dto';
 import { Place } from './entities/place.entity';
 import { UpdatePlaceDto } from './dto/update-place.dto';
 import { PlaceSlugDto } from './dto/place-slug.dto';
-import { SearchResponseDto } from './dto/search-response.dto';
 import { SearchRequestDto } from './dto/search-request.dto';
 import { ValidationExceptionDto } from '../shared/validation/validation-exception.dto';
 import { SelectPlaceDto } from './dto/select-place.dto';
@@ -47,6 +46,7 @@ import { ModerationPlacesResponseDto } from './dto/moderation-places-response.dt
 import { ModerationPlacesRequestDto } from './dto/moderation-places-request.dto';
 import { RoleNamesEnum } from '../roles/enums/role-names.enum';
 import { ModerationDto } from './dto/moderation.dto';
+import { PlacesSearchResponseDto } from './dto/places-search-response.dto';
 
 @ApiTags('Places')
 @Controller('/places')
@@ -160,7 +160,7 @@ export class PlacesController {
   @ApiOperation({ summary: 'Search places' })
   @ApiOkResponse({
     description: 'OK',
-    type: SearchResponseDto,
+    type: PlacesSearchResponseDto,
   })
   @ApiBadRequestResponse({
     description: 'Validation failed',
@@ -181,7 +181,7 @@ export class PlacesController {
     @Body() searchDto: SearchRequestDto,
   ) {
     const [places, total] = await this.placesService.search(langId, searchDto);
-    return new SearchResponseDto(places, {
+    return new PlacesSearchResponseDto(places, {
       requestedPage: searchDto.page,
       pageSize: searchDto.pageSize,
       totalItems: total,

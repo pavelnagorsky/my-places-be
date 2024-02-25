@@ -34,7 +34,7 @@ import { TokenPayload } from '../auth/decorators/token-payload.decorator';
 import { UserFromTokenPipe } from '../auth/pipes/user-from-token.pipe';
 import { User } from '../users/entities/user.entity';
 import { ReviewDto } from './dto/review.dto';
-import { SearchResponseDto } from './dto/search-response.dto';
+import { ReviewsSearchResponseDto } from './dto/reviews-search-response.dto';
 import { Place } from '../places/entities/place.entity';
 import { AccessTokenPayloadDto } from '../auth/dto/access-token-payload.dto';
 import { MyReviewsRequestDto } from './dto/my-reviews-request.dto';
@@ -121,7 +121,7 @@ export class ReviewsController {
   @ApiOperation({ summary: 'Get reviews by place slug' })
   @ApiOkResponse({
     description: 'OK',
-    type: SearchResponseDto,
+    type: ReviewsSearchResponseDto,
   })
   @ApiParam({
     name: 'placeSlug',
@@ -129,12 +129,12 @@ export class ReviewsController {
     description: 'The slug of the place',
   })
   @ApiQuery({
-    name: 'lastIndex',
+    name: 'page',
     type: Number,
-    description: 'Last lazy loading index',
+    description: 'page index',
   })
   @ApiQuery({
-    name: 'itemsPerPage',
+    name: 'pageSize',
     type: Number,
     description: 'Items per page',
   })
@@ -147,21 +147,21 @@ export class ReviewsController {
   @Get('place/:placeSlug')
   async findAllByPlace(
     @Param('placeSlug') placeSlug: string,
-    @Query('lastIndex', ParseIntPipe) lastIndex: number,
-    @Query('itemsPerPage', ParseIntPipe) itemsPerPage: number,
+    @Query('page', ParseIntPipe) page: number,
+    @Query('pageSize', ParseIntPipe) pageSize: number,
     @Query('lang', ParseIntPipe) langId: number,
   ) {
-    const data = await this.reviewsService.findAllByPlaceSlug(
+    const [reviews, total] = await this.reviewsService.findAllByPlaceSlug(
       placeSlug,
       langId,
-      itemsPerPage,
-      lastIndex,
+      pageSize,
+      page,
     );
-    return new SearchResponseDto(
-      data.reviews.map((r) => new ReviewDto(r)),
-      data.hasMore,
-      data.totalCount,
-    );
+    return new ReviewsSearchResponseDto(reviews, {
+      requestedPage: page,
+      pageSize: pageSize,
+      totalItems: total,
+    });
   }
 
   @ApiOperation({ summary: 'Get review by id and language id' })

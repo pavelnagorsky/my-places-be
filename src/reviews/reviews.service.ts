@@ -168,10 +168,12 @@ export class ReviewsService {
   async findAllByPlaceSlug(
     placeSlug: string,
     langId: number,
-    itemsPerPage: number,
-    lastIndex: number,
+    pageSize: number,
+    page: number,
   ) {
-    const [reviews, totalCount] = await this.reviewsRepository.findAndCount({
+    const result = await this.reviewsRepository.findAndCount({
+      skip: page * pageSize,
+      take: pageSize,
       relations: {
         translations: true,
         author: true,
@@ -200,15 +202,8 @@ export class ReviewsService {
       order: {
         createdAt: 'DESC',
       },
-      skip: lastIndex,
-      take: itemsPerPage,
     });
-    const hasMore = totalCount > reviews.length + lastIndex;
-    return {
-      hasMore,
-      reviews,
-      totalCount,
-    };
+    return result;
   }
 
   private async addView(reviewId: number) {
