@@ -22,10 +22,6 @@ export class ImagesService {
     return await this.imagesRepository.save(image);
   }
 
-  async findAll() {
-    return await this.imagesRepository.find();
-  }
-
   async findByIdAndUserId(id: number, userId: number) {
     return await this.imagesRepository.findOne({
       where: {

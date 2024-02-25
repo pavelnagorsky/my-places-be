@@ -213,12 +213,11 @@ export class ReviewsController {
       dto,
       tokenPayload,
     );
-    const updatedLastIndex = dto.lastIndex + reviews.length;
-    return new MyReviewsResponseDto(
-      reviews,
-      updatedLastIndex,
-      total > updatedLastIndex,
-    );
+    return new MyReviewsResponseDto(reviews, {
+      requestedPage: dto.page,
+      pageSize: dto.pageSize,
+      totalItems: total,
+    });
   }
 
   @ApiOperation({ summary: 'Delete Review' })
@@ -291,12 +290,11 @@ export class ReviewsController {
       langId,
       dto,
     );
-    const updatedLastIndex = dto.lastIndex + reviews.length;
-    return new ModerationReviewsResponseDto(
-      reviews,
-      updatedLastIndex,
-      total > updatedLastIndex,
-    );
+    return new ModerationReviewsResponseDto(reviews, {
+      requestedPage: dto.page,
+      pageSize: dto.pageSize,
+      totalItems: total,
+    });
   }
 
   @ApiOperation({ summary: 'Moderate review' })

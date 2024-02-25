@@ -40,12 +40,11 @@ export class ReportsController {
   @Post('list')
   async getAll(@Body() dto: ReportsRequestDto) {
     const [reports, total] = await this.reportsService.getAll(dto);
-    const updatedLastIndex = dto.lastIndex + reports.length;
-    return new ReportsResponseDto(
-      reports,
-      updatedLastIndex,
-      total > updatedLastIndex,
-    );
+    return new ReportsResponseDto(reports, {
+      requestedPage: dto.page,
+      pageSize: dto.pageSize,
+      totalItems: total,
+    });
   }
 
   @ApiOperation({ summary: 'Create report' })

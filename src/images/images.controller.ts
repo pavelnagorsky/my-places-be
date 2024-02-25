@@ -81,13 +81,6 @@ export class ImagesController {
     return new ImageDto(savedImage);
   }
 
-  @ApiOperation({ summary: 'Get all images' })
-  @ApiOkResponse({ type: ImageDto, isArray: true })
-  @Get()
-  async findAll() {
-    return await this.imagesService.findAll();
-  }
-
   @ApiOperation({ summary: 'Delete image by id' })
   @ApiBearerAuth('access-token')
   @ApiUnauthorizedResponse({

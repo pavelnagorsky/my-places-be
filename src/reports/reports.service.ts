@@ -10,7 +10,6 @@ import {
 } from 'typeorm';
 import { Report } from './entities/report.entity';
 import { CreateReportDto } from './dto/create-report.dto';
-import { Place } from '../places/entities/place.entity';
 import { PlacesService } from '../places/places.service';
 import { ReportsRequestDto } from './dto/reports-request.dto';
 import { ReportsOrderByEnum } from './enums/reports-order-by.enum';
@@ -36,8 +35,8 @@ export class ReportsService {
     };
 
     return await this.reportsRepository.findAndCount({
-      skip: dto.lastIndex,
-      take: dto.itemsPerPage,
+      skip: dto.page * dto.pageSize,
+      take: dto.pageSize,
       where: {
         createdAt: getDateWhereOption(),
         status:

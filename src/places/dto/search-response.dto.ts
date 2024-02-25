@@ -1,26 +1,21 @@
 import { SearchPlaceDto } from './search-place.dto';
 import { ApiProperty } from '@nestjs/swagger';
+import { PaginationResponseDto } from '../../shared/dto/pagination-response.dto';
+import { Place } from '../entities/place.entity';
 
-export class SearchResponseDto {
+export class SearchResponseDto extends PaginationResponseDto {
   @ApiProperty({ type: SearchPlaceDto, isArray: true })
-  data: SearchPlaceDto[];
-
-  @ApiProperty({ type: Number })
-  currentPage: number;
-  @ApiProperty({ type: Number })
-  totalPages: number;
-  @ApiProperty({ type: Number })
-  totalResults: number;
+  items: SearchPlaceDto[];
 
   constructor(
-    data: SearchPlaceDto[],
-    currentPage: number,
-    totalPages: number,
-    totalResults: number,
+    data: Place[],
+    pagination: {
+      requestedPage: number;
+      pageSize: number;
+      totalItems: number;
+    },
   ) {
-    this.data = data;
-    this.currentPage = currentPage;
-    this.totalPages = totalPages;
-    this.totalResults = totalResults;
+    super(pagination.requestedPage, pagination.pageSize, pagination.totalItems);
+    this.items = data.map((place) => new SearchPlaceDto(place));
   }
 }

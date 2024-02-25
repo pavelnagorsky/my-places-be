@@ -1,20 +1,9 @@
 import { ApiProperty } from '@nestjs/swagger';
-import {
-  IsBoolean,
-  IsDateString,
-  IsNumber,
-  IsString,
-  ValidateIf,
-} from 'class-validator';
+import { IsDateString, IsString, ValidateIf } from 'class-validator';
 import { ModerationReviewsOrderByEnum } from '../enums/moderation-reviews-order-by';
+import { PaginationRequestDto } from '../../shared/dto/pagination-request.dto';
 
-export class ModerationReviewsRequestDto {
-  @ApiProperty({ type: Number, description: 'Last pagination index' })
-  @IsNumber()
-  lastIndex: number;
-  @ApiProperty({ type: Number, description: 'Items per page' })
-  @IsNumber()
-  itemsPerPage: number;
+export class ModerationReviewsRequestDto extends PaginationRequestDto<ModerationReviewsOrderByEnum> {
   @ApiProperty({ type: String, description: 'Date from' })
   @IsDateString()
   @ValidateIf((object, value) => Boolean(value))
@@ -31,12 +20,4 @@ export class ModerationReviewsRequestDto {
   @IsString()
   @ValidateIf((object, value) => Boolean(value))
   search?: string;
-  @ApiProperty({ enum: ModerationReviewsOrderByEnum, description: 'Order by' })
-  @IsNumber()
-  @ValidateIf((object, value) => Boolean(value))
-  orderBy?: ModerationReviewsOrderByEnum;
-  @ApiProperty({ type: Boolean, description: 'Is order direction ASC' })
-  @IsBoolean()
-  @ValidateIf((object, value) => Boolean(value))
-  orderAsc?: boolean;
 }

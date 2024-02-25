@@ -25,7 +25,6 @@ import {
   ApiTags,
   PickType,
 } from '@nestjs/swagger';
-import { SearchPlaceDto } from './dto/search-place.dto';
 import { CreatePlaceDto } from './dto/create-place.dto';
 import { UserFromTokenPipe } from '../auth/pipes/user-from-token.pipe';
 import { User } from '../users/entities/user.entity';
@@ -104,6 +103,7 @@ export class PlacesController {
   @ApiBody({
     type: CreateSlugDto,
   })
+  @Auth()
   @Post('slugs/validate')
   async checkSlugValidity(@Body() createSlugDto: CreateSlugDto) {
     const slugExists = await this.placesService.validateSlug(createSlugDto);
@@ -179,16 +179,13 @@ export class PlacesController {
   async search(
     @Query('lang', ParseIntPipe) langId: number,
     @Body() searchDto: SearchRequestDto,
-  ): Promise<SearchResponseDto> {
-    const result = await this.placesService.search(langId, searchDto);
-    const mappedPlaces = result.places.map((p) => new SearchPlaceDto(p));
-    const response = new SearchResponseDto(
-      mappedPlaces,
-      result.currentPage,
-      result.totalPages,
-      result.totalResults,
-    );
-    return response;
+  ) {
+    const [places, total] = await this.placesService.search(langId, searchDto);
+    return new SearchResponseDto(places, {
+      requestedPage: searchDto.page,
+      pageSize: searchDto.pageSize,
+      totalItems: total,
+    });
   }
 
   @ApiOperation({ summary: 'Get place by slug and language id' })
@@ -272,7 +269,18 @@ export class PlacesController {
   })
   @Auth()
   @Delete(':id')
-  async deletePlace(@Param('id', ParseIntPipe) id: number) {
+  async deletePlace(
+    @Param('id', ParseIntPipe) id: number,
+    @TokenPayload() tokenPayload: AccessTokenPayloadDto,
+  ) {
+    const userIsPlaceAuthor = await this.placesService.checkUserRelation(
+      tokenPayload.id,
+      id,
+    );
+    if (!userIsPlaceAuthor)
+      throw new ForbiddenException({
+        message: 'Forbidden, user is not author',
+      });
     const data = await this.placesService.removePlace(id);
     return data;
   }
@@ -304,12 +312,11 @@ export class PlacesController {
       dto,
       tokenPayload,
     );
-    const updatedLastIndex = dto.lastIndex + places.length;
-    return new MyPlacesResponseDto(
-      places,
-      updatedLastIndex,
-      total > updatedLastIndex,
-    );
+    return new MyPlacesResponseDto(places, {
+      requestedPage: dto.page,
+      pageSize: dto.pageSize,
+      totalItems: total,
+    });
   }
 
   @ApiOperation({ summary: 'Get place for editing' })
@@ -386,12 +393,11 @@ export class PlacesController {
       langId,
       dto,
     );
-    const updatedLastIndex = dto.lastIndex + places.length;
-    return new ModerationPlacesResponseDto(
-      places,
-      updatedLastIndex,
-      total > updatedLastIndex,
-    );
+    return new ModerationPlacesResponseDto(places, {
+      requestedPage: dto.page,
+      pageSize: dto.pageSize,
+      totalItems: total,
+    });
   }
 
   @ApiOperation({ summary: 'Moderate place' })

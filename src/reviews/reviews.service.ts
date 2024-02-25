@@ -348,8 +348,8 @@ export class ReviewsService {
         translations: true,
         place: { translations: true },
       },
-      skip: dto.lastIndex,
-      take: dto.itemsPerPage,
+      skip: dto.page * dto.pageSize,
+      take: dto.pageSize,
       order: {
         createdAt:
           dto.orderBy === MyReviewsOrderByEnum.CREATED_AT || !dto.orderBy
@@ -485,8 +485,8 @@ export class ReviewsService {
         place: { translations: true },
         author: true,
       },
-      skip: dto.lastIndex,
-      take: dto.itemsPerPage,
+      skip: dto.page * dto.pageSize,
+      take: dto.pageSize,
       order: {
         createdAt:
           dto.orderBy === ModerationReviewsOrderByEnum.CREATED_AT

@@ -1,20 +1,21 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Review } from '../entities/review.entity';
 import { ModerationReviewDto } from './moderation-review.dto';
+import { PaginationResponseDto } from '../../shared/dto/pagination-response.dto';
 
-export class ModerationReviewsResponseDto {
+export class ModerationReviewsResponseDto extends PaginationResponseDto {
   @ApiProperty({ type: ModerationReviewDto, isArray: true })
-  data: ModerationReviewDto[];
+  items: ModerationReviewDto[];
 
-  @ApiProperty({ type: Boolean })
-  hasMore: boolean;
-
-  @ApiProperty({ type: Number })
-  lastIndex: number;
-
-  constructor(data: Review[], lastIndex: number, hasMore: boolean) {
-    this.data = data.map((r) => new ModerationReviewDto(r));
-    this.lastIndex = lastIndex;
-    this.hasMore = hasMore;
+  constructor(
+    data: Review[],
+    pagination: {
+      requestedPage: number;
+      pageSize: number;
+      totalItems: number;
+    },
+  ) {
+    super(pagination.requestedPage, pagination.pageSize, pagination.totalItems);
+    this.items = data.map((r) => new ModerationReviewDto(r));
   }
 }

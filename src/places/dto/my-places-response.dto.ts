@@ -1,20 +1,21 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { MyPlaceDto } from './my-place.dto';
 import { Place } from '../entities/place.entity';
+import { PaginationResponseDto } from '../../shared/dto/pagination-response.dto';
 
-export class MyPlacesResponseDto {
+export class MyPlacesResponseDto extends PaginationResponseDto {
   @ApiProperty({ type: MyPlaceDto, isArray: true })
-  data: MyPlaceDto[];
+  items: MyPlaceDto[];
 
-  @ApiProperty({ type: Boolean })
-  hasMore: boolean;
-
-  @ApiProperty({ type: Number })
-  lastIndex: number;
-
-  constructor(data: Place[], lastIndex: number, hasMore: boolean) {
-    this.data = data.map((p) => new MyPlaceDto(p));
-    this.lastIndex = lastIndex;
-    this.hasMore = hasMore;
+  constructor(
+    data: Place[],
+    pagination: {
+      requestedPage: number;
+      pageSize: number;
+      totalItems: number;
+    },
+  ) {
+    super(pagination.requestedPage, pagination.pageSize, pagination.totalItems);
+    this.items = data.map((p) => new MyPlaceDto(p));
   }
 }

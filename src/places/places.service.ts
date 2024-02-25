@@ -326,16 +326,6 @@ export class PlacesService {
       });
   }
 
-  private countTotalPages(totalResults: number, resultsPerPage: number) {
-    if (totalResults === 0) return 0;
-    if (resultsPerPage === 0)
-      throw new BadRequestException({
-        message: 'Results per page must be greater than 0',
-      });
-    const defaultCount = 1;
-    return Math.ceil(totalResults / resultsPerPage) || defaultCount;
-  }
-
   private getPlacesSelectFindOptions(
     langId: number,
     search: string,
@@ -433,36 +423,27 @@ export class PlacesService {
     <= :radius    
   `;
 
-  async search(
-    langId: number,
-    searchDto: SearchRequestDto,
-  ): Promise<ISearchServiceResponse> {
+  async search(langId: number, searchDto: SearchRequestDto) {
     try {
-      let totalResults = 0;
-      let totalPages = 0;
-      const limit = searchDto.itemsPerPage;
-      const skip = (searchDto.pageToReturn - 1) * limit;
+      // let totalResults = 0;
+      // let totalPages = 0;
       const isSearchByTitle = searchDto.title?.length > 0;
       // initial query builder to provide base sql request with all joins and mappings
       const initialQb = this.placesRepository
         .createQueryBuilder('place')
-        .skip(skip)
-        .take(limit);
+        .skip(searchDto.pageSize * searchDto.page)
+        .take(searchDto.pageSize);
       const qb = this.selectPlacesForSearchQuery(initialQb, langId);
       // if search is by place titles
       if (isSearchByTitle) {
-        const resultQueryTitle = qb.where('placeTitles.text LIKE :title', {
-          title: `%${searchDto.title}%`,
-        });
-        totalResults = await resultQueryTitle.getCount();
-        totalPages = this.countTotalPages(totalResults, searchDto.itemsPerPage);
-        const places = await resultQueryTitle.getMany();
-        return {
-          places,
-          currentPage: searchDto.pageToReturn,
-          totalPages: totalPages,
-          totalResults: totalResults,
-        };
+        const resultQueryTitle = qb.where(
+          'placeTranslations.title LIKE :title',
+          {
+            title: `%${searchDto.title}%`,
+          },
+        );
+        const result = await resultQueryTitle.getManyAndCount();
+        return result;
       }
       let resultQuery = qb;
       // if there is place type filter with > 0 items
@@ -494,21 +475,14 @@ export class PlacesService {
           radius: searchDto.radius * 1000, // km to meters
         });
       }
-      totalResults = await resultQuery.getCount();
-      totalPages = this.countTotalPages(totalResults, searchDto.itemsPerPage);
       // console.log(resultQuery.getSql());
-      const places = await resultQuery.getMany();
       // console.log(
       //   searchDto.searchCoordinates,
       //   places[0]?.coordinates,
       //   searchDto.radius * 1000,
       // );
-      return {
-        places,
-        currentPage: searchDto.pageToReturn,
-        totalPages: totalPages,
-        totalResults: totalResults,
-      };
+      const result = await resultQuery.getManyAndCount();
+      return result;
     } catch (e) {
       this.logger.error('Error occured while search request', e);
       throw new BadRequestException({ message: 'Error occured' });
@@ -705,8 +679,8 @@ export class PlacesService {
           titles: true,
         },
       },
-      skip: dto.lastIndex,
-      take: dto.itemsPerPage,
+      skip: dto.page * dto.pageSize,
+      take: dto.pageSize,
       order: {
         createdAt:
           dto.orderBy === MyPlacesOrderByEnum.CREATED_AT || !dto.orderBy
@@ -848,8 +822,8 @@ export class PlacesService {
         },
         author: true,
       },
-      skip: dto.lastIndex,
-      take: dto.itemsPerPage,
+      skip: dto.page * dto.pageSize,
+      take: dto.pageSize,
       order: {
         createdAt:
           dto.orderBy === ModerationPlacesOrderByEnum.CREATED_AT
