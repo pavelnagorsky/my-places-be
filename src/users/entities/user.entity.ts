@@ -13,7 +13,7 @@ import {
 } from 'typeorm';
 
 import { Place } from '../../places/entities/place.entity';
-import { Admin } from '../../entities/admin.entity';
+import { Moderator } from './moderator.entity';
 import { Like } from '../../likes/entities/like.entity';
 import { Comment } from '../../comments/entities/comment.entity';
 import { Role } from '../../roles/entities/role.entity';
@@ -44,6 +44,12 @@ export class User {
   @Column({ type: 'varchar' })
   password: string;
 
+  @Column({ default: null, type: 'datetime', nullable: true })
+  blockedUntil: null | Date;
+
+  @Column({ default: null, type: 'varchar', length: 300, nullable: true })
+  blockReason: null | string;
+
   @OneToMany(() => Place, (place) => place.author)
   places: Place[];
 
@@ -56,9 +62,9 @@ export class User {
   @OneToMany(() => Review, (review) => review.moderator)
   reviewsModeration: Review[];
 
-  @OneToOne(() => Admin, (admin) => admin.user, { cascade: true })
+  @OneToOne(() => Moderator, (moderator) => moderator.user, { cascade: true })
   @JoinColumn()
-  admin: Admin;
+  moderator: Moderator;
 
   @ManyToMany(() => Role, (role) => role.users)
   @JoinTable()

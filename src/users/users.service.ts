@@ -6,11 +6,22 @@ import {
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Equal, Repository } from 'typeorm';
+import {
+  Between,
+  Equal,
+  ILike,
+  In,
+  IsNull,
+  LessThanOrEqual,
+  MoreThanOrEqual,
+  Not,
+  Repository,
+} from 'typeorm';
 import { User } from './entities/user.entity';
 import { RolesService } from '../roles/roles.service';
 import { RoleNamesEnum } from '../roles/enums/role-names.enum';
-import { Language } from '../languages/entities/language.entity';
+import { UsersRequestDto } from './dto/users-request.dto';
+import { Moderator } from './entities/moderator.entity';
 import { LanguagesService } from '../languages/languages.service';
 
 @Injectable()
@@ -18,6 +29,8 @@ export class UsersService {
   constructor(
     @InjectRepository(User)
     private readonly usersRepository: Repository<User>,
+    @InjectRepository(Moderator)
+    private readonly moderatorsRepository: Repository<Moderator>,
     private readonly rolesService: RolesService,
     private readonly languagesService: LanguagesService,
   ) {}
@@ -54,19 +67,91 @@ export class UsersService {
     });
   }
 
-  async findAll() {
-    return await this.usersRepository.find({ relations: { roles: true } });
+  async findAll(dto: UsersRequestDto) {
+    const getDateWhereOption = () => {
+      if (!!dto.dateFrom && !!dto.dateTo)
+        return Between(new Date(dto.dateFrom), new Date(dto.dateTo));
+      if (!!dto.dateFrom) return MoreThanOrEqual(new Date(dto.dateFrom));
+      if (!!dto.dateTo) return LessThanOrEqual(new Date(dto.dateTo));
+      return undefined;
+    };
+
+    return await this.usersRepository.findAndCount({
+      relations: {
+        roles: true,
+        preferredLanguage: true,
+      },
+      skip: dto.page * dto.pageSize,
+      take: dto.pageSize,
+      order: {
+        id: 'desc',
+      },
+      where: {
+        blockedUntil:
+          dto.isBlocked === true
+            ? Not(IsNull())
+            : dto.isBlocked === false
+            ? IsNull()
+            : undefined,
+        createdAt: getDateWhereOption(),
+        email:
+          !!dto.email && dto.email.length > 0
+            ? ILike(`${dto.email}%`)
+            : undefined,
+        roles: {
+          name:
+            !!dto.roles && dto.roles?.length > 0 ? In(dto.roles) : undefined,
+        },
+      },
+    });
   }
 
   async findOneById(id: number) {
     return await this.usersRepository.findOne({
-      loadRelationIds: { relations: ['preferredLanguage'] },
       relations: {
         roles: true,
-        admin: true,
+        preferredLanguage: true,
       },
       where: {
         id: Equal(id),
+      },
+    });
+  }
+
+  async deleteModeratorAccess(userId: number) {
+    const user = await this.usersRepository.findOne({
+      relations: {
+        roles: true,
+        moderator: true,
+      },
+      where: {
+        id: Equal(userId),
+      },
+    });
+    if (!user) throw new NotFoundException({ message: 'User was not found' });
+    user.roles = user.roles.filter((r) => r.name === RoleNamesEnum.USER);
+    await this.moderatorsRepository.remove([user.moderator]);
+    await this.usersRepository.save(user);
+    return;
+  }
+
+  async findModeratorByUserId(id: number) {
+    return await this.moderatorsRepository.findOne({
+      relations: {
+        user: true,
+      },
+      where: {
+        user: {
+          id: Equal(id),
+        },
+      },
+      select: {
+        user: {
+          id: true,
+        },
+        id: true,
+        address: true,
+        phone: true,
       },
     });
   }
@@ -91,9 +176,5 @@ export class UsersService {
     user.email = updateUserDto.email;
     await this.usersRepository.save(user);
     return;
-  }
-
-  remove(id: number) {
-    return `This action removes a #${id} user`;
   }
 }

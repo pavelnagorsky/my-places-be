@@ -1,10 +1,11 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Exclude, Transform } from 'class-transformer';
+import { Exclude, Expose } from 'class-transformer';
 import { Moderator } from '../entities/moderator.entity';
 import { RoleDto } from '../../roles/dto/role.dto';
 import { User } from '../entities/user.entity';
+import { Language } from '../../languages/entities/language.entity';
 
-export class UserDto {
+export class UserShortInfoDto {
   @ApiProperty({ title: 'User id', type: Number, default: 1 })
   id: number;
 
@@ -23,11 +24,18 @@ export class UserDto {
   @Exclude()
   password: string;
 
-  @ApiProperty({ title: 'Preferred language id', type: Number, nullable: true })
-  @Transform(({ value }) => {
-    return value?.id || null;
+  @ApiProperty({
+    title: 'Preferred language code',
+    type: String,
+    nullable: true,
   })
-  preferredLanguage: number | null;
+  @Expose()
+  get language(): string | null {
+    return this.preferredLanguage?.title || null;
+  }
+
+  @Exclude()
+  preferredLanguage: Language | null;
 
   @ApiProperty({ title: 'Created at', type: Date })
   createdAt: Date;
@@ -35,17 +43,17 @@ export class UserDto {
   @ApiProperty({ title: 'Updated at', type: Date })
   updatedAt: Date;
 
-  @Exclude()
+  @ApiProperty({ title: 'Blocked until', type: Date, nullable: true })
   blockedUntil: null | Date;
 
-  @Exclude()
+  @ApiProperty({ title: 'Block reason', type: String, nullable: true })
   blockReason: null | string;
-
-  @Exclude()
-  moderator: Moderator;
 
   @ApiProperty({ title: 'Roles', type: RoleDto, isArray: true })
   roles: RoleDto[];
+
+  @Exclude()
+  admin: Moderator;
 
   constructor(partial: Partial<User>) {
     Object.assign(this, partial);

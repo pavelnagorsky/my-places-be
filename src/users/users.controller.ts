@@ -3,6 +3,7 @@ import {
   ClassSerializerInterceptor,
   Controller,
   Get,
+  NotFoundException,
   Param,
   ParseIntPipe,
   Post,
@@ -26,6 +27,11 @@ import { TokenPayload } from '../auth/decorators/token-payload.decorator';
 import { AccessTokenPayloadDto } from '../auth/dto/access-token-payload.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { ValidationExceptionDto } from '../shared/validation/validation-exception.dto';
+import { RoleNamesEnum } from '../roles/enums/role-names.enum';
+import { UserShortInfoDto } from './dto/user-short-info.dto';
+import { UsersRequestDto } from './dto/users-request.dto';
+import { UsersResponseDto } from './dto/users-response.dto';
+import { ModeratorDto } from './dto/moderator.dto';
 
 @ApiTags('Users')
 @Controller('users')
@@ -35,31 +41,77 @@ export class UsersController {
   @ApiOperation({ summary: 'Get all users' })
   @ApiOkResponse({
     description: 'users',
-    type: UserDto,
+    type: UserShortInfoDto,
     isArray: true,
   })
   @ApiBadRequestResponse({
     description: 'Validation failed',
     type: ValidationExceptionDto,
   })
+  @ApiBody({
+    type: UsersRequestDto,
+  })
   @UseInterceptors(ClassSerializerInterceptor)
-  @Auth()
-  @Get()
-  async findAll() {
-    const users = await this.usersService.findAll();
-    return users.map((u) => new UserDto(u));
+  @Auth(RoleNamesEnum.ADMIN)
+  @Post('List')
+  async findAll(@Body() dto: UsersRequestDto) {
+    const [users, total] = await this.usersService.findAll(dto);
+    return new UsersResponseDto(users, {
+      requestedPage: dto.page,
+      pageSize: dto.pageSize,
+      totalItems: total,
+    });
   }
 
-  @ApiOperation({ summary: 'Get user data' })
+  @ApiOperation({ summary: 'Get user data by token' })
   @ApiOkResponse({
     description: 'user',
     type: UserDto,
   })
   @UseInterceptors(ClassSerializerInterceptor)
   @Auth()
-  @Get('/userData')
+  @Get('userData')
   async userData(@TokenPayload(UserFromTokenPipe) user: User) {
     return new UserDto(user);
+  }
+
+  @ApiOperation({ summary: 'Get user info for admin' })
+  @ApiOkResponse({
+    description: 'user',
+    type: UserShortInfoDto,
+  })
+  @ApiParam({
+    name: 'id',
+    type: Number,
+    description: 'User id',
+  })
+  @UseInterceptors(ClassSerializerInterceptor)
+  @Auth(RoleNamesEnum.ADMIN)
+  @Get(':id')
+  async getUserById(@Param('id', ParseIntPipe) id: number) {
+    const user = await this.usersService.findOneById(id);
+    if (!user) throw new NotFoundException({ message: 'User was not found' });
+    return new UserShortInfoDto(user);
+  }
+
+  @ApiOperation({ summary: 'Get moderator info for admin' })
+  @ApiOkResponse({
+    description: 'user',
+    type: ModeratorDto,
+  })
+  @ApiParam({
+    name: 'id',
+    type: Number,
+    description: 'User id',
+  })
+  @UseInterceptors(ClassSerializerInterceptor)
+  @Auth(RoleNamesEnum.ADMIN)
+  @Get(':id/moderator')
+  async getModeratorByUserId(@Param('id', ParseIntPipe) id: number) {
+    const moderator = await this.usersService.findModeratorByUserId(id);
+    if (!moderator)
+      throw new NotFoundException({ message: 'Moderator was not found' });
+    return new ModeratorDto(moderator);
   }
 
   @ApiOperation({ summary: 'Confirm user email' })
@@ -73,12 +125,7 @@ export class UsersController {
     return;
   }
 
-  @ApiOperation({ summary: 'Update user' })
-  @ApiParam({
-    name: 'id',
-    type: Number,
-    description: 'The ID of the user',
-  })
+  @ApiOperation({ summary: 'Update user by token' })
   @ApiBody({
     type: UpdateUserDto,
   })
@@ -90,17 +137,12 @@ export class UsersController {
     type: ValidationExceptionDto,
   })
   @Auth()
-  @Put(':id')
+  @Put()
   async update(
-    @Param('id', ParseIntPipe) id: number,
+    @TokenPayload() tokenPayload: AccessTokenPayloadDto,
     @Body() updateUserDto: UpdateUserDto,
   ) {
-    await this.usersService.update(id, updateUserDto);
+    await this.usersService.update(tokenPayload.id, updateUserDto);
     return;
   }
-
-  // @Delete(':id')
-  // remove(@Param('id') id: string) {
-  //   return this.usersService.remove(+id);
-  // }
 }

@@ -169,6 +169,11 @@ export class ReviewsController {
     description: 'OK',
     type: ReviewDto,
   })
+  @ApiParam({
+    name: 'id',
+    type: Number,
+    description: 'Review id',
+  })
   @ApiQuery({
     name: 'lang',
     type: Number,
