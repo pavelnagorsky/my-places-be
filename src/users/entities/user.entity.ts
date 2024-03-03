@@ -62,9 +62,13 @@ export class User {
   @OneToMany(() => Review, (review) => review.moderator)
   reviewsModeration: Review[];
 
-  @OneToOne(() => Moderator, (moderator) => moderator.user, { cascade: true })
+  @OneToOne(() => Moderator, (moderator) => moderator.user, {
+    nullable: true,
+    cascade: true,
+    onDelete: 'SET NULL',
+  })
   @JoinColumn()
-  moderator: Moderator;
+  moderator: Moderator | null;
 
   @ManyToMany(() => Role, (role) => role.users)
   @JoinTable()

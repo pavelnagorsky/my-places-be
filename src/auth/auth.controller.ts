@@ -1,10 +1,12 @@
 import {
   Body,
+  ClassSerializerInterceptor,
   Controller,
   Post,
   Res,
   UnauthorizedException,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import {
@@ -29,6 +31,9 @@ import { cookieConfig } from './config/cookie.config';
 import { JwtRefreshGuard } from './guards/jwt-refresh.guard';
 import { UserFromTokenPipe } from './pipes/user-from-token.pipe';
 import { User } from '../users/entities/user.entity';
+import { JwtEmailGuard } from './guards/jwt-email.guard';
+import { LoginException } from './exceptions/login.exception';
+import { LoginFailureDto } from './dto/login-failure.dto';
 
 @ApiTags('Authentication')
 @Controller('auth')
@@ -76,6 +81,17 @@ export class AuthController {
     return;
   }
 
+  @ApiOperation({ summary: 'Confirm user email' })
+  @ApiOkResponse({
+    description: 'OK',
+  })
+  @UseGuards(JwtEmailGuard)
+  @Post('/confirm-email')
+  async confirmEmail(@TokenPayload() tokenPayload: AccessTokenPayloadDto) {
+    await this.authService.confirmEmail(tokenPayload.id);
+    return;
+  }
+
   @ApiOperation({ summary: 'Refresh tokens' })
   @ApiOkResponse({
     description: 'token response',
@@ -86,6 +102,7 @@ export class AuthController {
     type: UnauthorizedException,
   })
   @UseGuards(JwtRefreshGuard)
+  @UseInterceptors(ClassSerializerInterceptor)
   @Post('refresh')
   async refresh(
     @Res({ passthrough: true }) response: Response,
@@ -112,11 +129,12 @@ export class AuthController {
   })
   @ApiUnauthorizedResponse({
     description: 'Invalid credentials',
-    type: UnauthorizedException,
+    type: LoginFailureDto,
   })
   @ApiBody({
     type: LoginDto,
   })
+  @UseInterceptors(ClassSerializerInterceptor)
   @Post('login')
   async login(
     @Body() loginDto: LoginDto,

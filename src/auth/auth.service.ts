@@ -19,6 +19,7 @@ import { ITokens } from './interfaces/interfaces';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Equal, LessThan, Repository } from 'typeorm';
 import { RefreshTokenEntity } from './entities/refresh-token.entity';
+import { LoginException } from './exceptions/login.exception';
 
 @Injectable()
 export class AuthService {
@@ -52,8 +53,10 @@ export class AuthService {
     // create user
     const user = await this.usersService.create(dto);
     this.logger.log(`SIGNUP success! ID ${user.id}, Email: ${user.email}`);
+    // generate email token
+    const emailToken = await this.generateEmailToken(user);
     // send confirmation email
-    //await this.mailingService.sendEmailConfirm(dto, 'token');
+    await this.mailingService.sendEmailConfirm(dto, emailToken);
     return;
   }
 
@@ -136,22 +139,34 @@ export class AuthService {
     return tokens;
   }
 
+  // confirm user email
+  async confirmEmail(userId: number) {
+    await this.usersService.confirmEmail(userId);
+    return;
+  }
+
   // login validation
   private async validateUser(loginDto: LoginDto) {
     const user = await this.usersService.getUserByEmail(loginDto.email);
     if (!user)
-      throw new UnauthorizedException({
+      throw new LoginException({
         message: 'No users with this email found',
         loginError: LoginErrorEnum.INVALID_DATA,
       });
     if (!user.isEmailConfirmed)
-      throw new UnauthorizedException({
+      throw new LoginException({
         message: 'Email is not confirmed',
         loginError: LoginErrorEnum.EMAIL_NOT_CONFIRMED,
       });
+    if (user.blockedUntil && user.blockedUntil.getTime() > new Date().getTime())
+      throw new LoginException({
+        message: 'User is blocked',
+        loginError: LoginErrorEnum.USER_BLOCKED,
+        blockedUntil: user.blockedUntil,
+      });
     const passwordEquals = await compare(loginDto.password, user.password);
     if (!passwordEquals)
-      throw new UnauthorizedException({
+      throw new LoginException({
         message: 'Incorrect password',
         loginError: LoginErrorEnum.INVALID_DATA,
       });
@@ -231,6 +246,19 @@ export class AuthService {
       accessToken,
       refreshToken,
     };
+  }
+
+  private async generateEmailToken(user: User) {
+    const payload: AccessTokenPayloadDto = {
+      email: user.email,
+      id: user.id,
+      roles: user.roles,
+    };
+    return this.jwtService.signAsync(payload, {
+      expiresIn: this.config.get<IJwtConfig>('jwt')
+        ?.emailTokenExpiration as string,
+      secret: this.config.get<IJwtConfig>('jwt')?.emailTokenSecret as string,
+    });
   }
 
   private async generateAccessToken(user: User) {

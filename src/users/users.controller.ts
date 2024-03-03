@@ -2,6 +2,7 @@ import {
   Body,
   ClassSerializerInterceptor,
   Controller,
+  Delete,
   Get,
   NotFoundException,
   Param,
@@ -32,6 +33,8 @@ import { UserShortInfoDto } from './dto/user-short-info.dto';
 import { UsersRequestDto } from './dto/users-request.dto';
 import { UsersResponseDto } from './dto/users-response.dto';
 import { ModeratorDto } from './dto/moderator.dto';
+import { SaveModeratorDto } from './dto/save-moderator.dto';
+import { BlockUserDto } from './dto/block-user.dto';
 
 @ApiTags('Users')
 @Controller('users')
@@ -96,7 +99,7 @@ export class UsersController {
 
   @ApiOperation({ summary: 'Get moderator info for admin' })
   @ApiOkResponse({
-    description: 'user',
+    description: 'ok',
     type: ModeratorDto,
   })
   @ApiParam({
@@ -114,14 +117,79 @@ export class UsersController {
     return new ModeratorDto(moderator);
   }
 
-  @ApiOperation({ summary: 'Confirm user email' })
+  @ApiOperation({ summary: 'Block user' })
   @ApiOkResponse({
-    description: 'OK',
+    description: 'ok',
   })
-  @Auth()
-  @Post('/confirm')
-  async confirmEmail(@TokenPayload() tokenPayload: AccessTokenPayloadDto) {
-    await this.usersService.confirmEmail(tokenPayload.id);
+  @ApiParam({
+    name: 'id',
+    type: Number,
+    description: 'User id',
+  })
+  @ApiBody({
+    type: BlockUserDto,
+  })
+  @Auth(RoleNamesEnum.ADMIN)
+  @Post(':id/block')
+  async blockUser(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: BlockUserDto,
+  ) {
+    await this.usersService.blockUser(id, dto);
+    return;
+  }
+
+  @ApiOperation({ summary: 'Unblock user' })
+  @ApiOkResponse({
+    description: 'ok',
+  })
+  @ApiParam({
+    name: 'id',
+    type: Number,
+    description: 'User id',
+  })
+  @Auth(RoleNamesEnum.ADMIN)
+  @Post(':id/unblock')
+  async unblockUser(@Param('id', ParseIntPipe) id: number) {
+    await this.usersService.unblockUser(id);
+    return;
+  }
+
+  @ApiOperation({ summary: 'Update or create moderator info' })
+  @ApiOkResponse({
+    description: 'ok',
+  })
+  @ApiParam({
+    name: 'id',
+    type: Number,
+    description: 'User id',
+  })
+  @ApiBody({
+    type: SaveModeratorDto,
+  })
+  @Auth(RoleNamesEnum.ADMIN)
+  @Put(':id/moderator')
+  async saveModerator(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: SaveModeratorDto,
+  ) {
+    await this.usersService.saveModerator(id, dto);
+    return;
+  }
+
+  @ApiOperation({ summary: 'Delete moderator' })
+  @ApiOkResponse({
+    description: 'ok',
+  })
+  @ApiParam({
+    name: 'id',
+    type: Number,
+    description: 'User id',
+  })
+  @Auth(RoleNamesEnum.ADMIN)
+  @Delete(':id/moderator')
+  async deleteModerator(@Param('id', ParseIntPipe) id: number) {
+    await this.usersService.deleteModeratorAccess(id);
     return;
   }
 

@@ -7,6 +7,7 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import {
+  And,
   Between,
   Equal,
   ILike,
@@ -23,6 +24,8 @@ import { RoleNamesEnum } from '../roles/enums/role-names.enum';
 import { UsersRequestDto } from './dto/users-request.dto';
 import { Moderator } from './entities/moderator.entity';
 import { LanguagesService } from '../languages/languages.service';
+import { SaveModeratorDto } from './dto/save-moderator.dto';
+import { BlockUserDto } from './dto/block-user.dto';
 
 @Injectable()
 export class UsersService {
@@ -47,12 +50,10 @@ export class UsersService {
   }
 
   async confirmEmail(userId: number) {
-    await this.usersRepository
-      .createQueryBuilder('user')
-      .update()
-      .set({ isEmailConfirmed: true })
-      .where('id = :id', { id: userId })
-      .execute();
+    const user = await this.findOneById(userId);
+    if (!user) throw new NotFoundException({ message: 'User was not found' });
+    user.isEmailConfirmed = true;
+    await this.usersRepository.save(user);
     return;
   }
 
@@ -129,8 +130,85 @@ export class UsersService {
       },
     });
     if (!user) throw new NotFoundException({ message: 'User was not found' });
-    user.roles = user.roles.filter((r) => r.name === RoleNamesEnum.USER);
-    await this.moderatorsRepository.remove([user.moderator]);
+    // delete roles
+    user.roles = user.roles.filter((r) => r.name !== RoleNamesEnum.MODERATOR);
+    // delete associated info
+    if (user.moderator) {
+      await this.moderatorsRepository.remove([user.moderator]);
+    }
+    user.moderator = null;
+    await this.usersRepository.save(user);
+    return;
+  }
+
+  async blockUser(userId: number, dto: BlockUserDto) {
+    const user = await this.usersRepository.findOne({
+      relations: {
+        refreshTokens: true,
+      },
+      where: {
+        id: Equal(userId),
+      },
+    });
+    if (!user) throw new NotFoundException({ message: 'User was not found' });
+    user.blockedUntil = new Date(dto.blockEnd);
+    user.blockReason = dto.reason;
+    user.refreshTokens = [];
+    await this.usersRepository.save(user);
+    return;
+  }
+
+  async unblockUser(userId: number) {
+    const user = await this.findOneById(userId);
+    if (!user) throw new NotFoundException({ message: 'User was not found' });
+    user.blockedUntil = null;
+    user.blockReason = null;
+    await this.usersRepository.save(user);
+    return;
+  }
+
+  async unblockUsersAutomatic() {
+    const users = await this.usersRepository.find({
+      where: {
+        blockedUntil: And(Not(IsNull()), LessThanOrEqual(new Date())),
+      },
+    });
+    const updatedUsers = users.map((u) => {
+      u.blockedUntil = null;
+      u.blockReason = null;
+      return u;
+    });
+    await this.usersRepository.save(updatedUsers);
+  }
+
+  async saveModerator(userId: number, dto: SaveModeratorDto) {
+    const user = await this.usersRepository.findOne({
+      where: {
+        id: userId,
+      },
+      relations: {
+        moderator: true,
+        roles: true,
+      },
+    });
+    if (!user) throw new NotFoundException({ message: 'User was not found' });
+    const updatedModerator = this.moderatorsRepository.create({
+      id: user.moderator?.id,
+      phone: dto.phone || user.moderator?.phone,
+      address: dto.address || user.moderator?.address,
+    });
+    user.moderator = updatedModerator;
+    console.log(user.moderator);
+    if (
+      user.roles.findIndex((r) => r.name === RoleNamesEnum.MODERATOR) === -1
+    ) {
+      const moderatorRole = await this.rolesService.getRoleByName(
+        RoleNamesEnum.MODERATOR,
+      );
+      if (!moderatorRole)
+        throw new NotFoundException({ message: 'Moderator role not found' });
+      user.roles.push(moderatorRole);
+    }
     await this.usersRepository.save(user);
     return;
   }

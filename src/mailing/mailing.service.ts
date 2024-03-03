@@ -21,7 +21,7 @@ export class MailingService {
       template: getFullTemplatePath('users/confirm-email'),
       context: {
         user_firstname: userDto.firstName,
-        confirm_link: 'https://my-client-domain/auth/confirm=' + feedbackToken,
+        confirm_link: 'http://localhost:3001/auth/confirm/' + feedbackToken,
       },
     });
   }
