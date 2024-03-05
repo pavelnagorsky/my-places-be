@@ -6,10 +6,11 @@ import { User } from './entities/user.entity';
 import { RolesModule } from '../roles/roles.module';
 import { Moderator } from './entities/moderator.entity';
 import { LanguagesModule } from '../languages/languages.module';
+import { RefreshTokenEntity } from '../auth/entities/refresh-token.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([User, Moderator]),
+    TypeOrmModule.forFeature([User, Moderator, RefreshTokenEntity]),
     RolesModule,
     LanguagesModule,
   ],

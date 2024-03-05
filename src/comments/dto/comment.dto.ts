@@ -23,9 +23,6 @@ export class CommentDto {
     return this.user?.id || null;
   }
 
-  @ApiProperty({ title: 'Can manage', type: Boolean })
-  canManage: boolean;
-
   @Exclude()
   user: Partial<User>;
 

@@ -18,7 +18,4 @@ export class Comment {
 
   @ManyToOne(() => Place, (place) => place.comments, { onDelete: 'CASCADE' })
   place: Place;
-
-  // calculated field
-  canManage: boolean;
 }

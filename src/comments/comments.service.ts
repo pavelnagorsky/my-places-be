@@ -51,10 +51,7 @@ export class CommentsService {
         },
       },
     });
-    return comments.map((c) => {
-      c.canManage = c.user.id === userId;
-      return c;
-    });
+    return comments;
   }
 
   private async findOnePlaceComment(commentId: number, canManage: boolean) {

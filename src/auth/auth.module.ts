@@ -10,6 +10,7 @@ import { JwtRefreshTokenStrategy } from './strategy/jwt-refresh-token.strategy';
 import { JwtAccessTokenStrategy } from './strategy/jwt-access-token.strategy';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { RefreshTokenEntity } from './entities/refresh-token.entity';
+import { JwtEmailTokenStrategy } from './strategy/jwt-email-token.strategy';
 
 @Global()
 @Module({
@@ -26,6 +27,7 @@ import { RefreshTokenEntity } from './entities/refresh-token.entity';
     PayloadFromTokenPipe,
     JwtRefreshTokenStrategy,
     JwtAccessTokenStrategy,
+    JwtEmailTokenStrategy,
   ],
   exports: [AuthService, JwtModule, UserFromTokenPipe, UsersModule],
 })

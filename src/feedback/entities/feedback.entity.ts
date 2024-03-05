@@ -1,4 +1,9 @@
-import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  Column,
+  CreateDateColumn,
+  Entity,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
 import { UserRequestTypesEnum } from '../enums/user-request-types.enum';
 import { CrmStatusesEnum } from '../../shared/enums/crm-statuses.enum';
 
@@ -24,4 +29,9 @@ export class Feedback {
 
   @Column({ default: CrmStatusesEnum.PENDING })
   status: CrmStatusesEnum;
+
+  @CreateDateColumn({
+    default: () => 'CURRENT_TIMESTAMP',
+  })
+  createdAt: Date;
 }

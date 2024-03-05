@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsEmail, IsIn, IsString, ValidateIf } from 'class-validator';
+import { IsEmail, IsEnum, IsIn, IsString, ValidateIf } from 'class-validator';
 import { UserRequestTypesEnum } from '../enums/user-request-types.enum';
 
 export class CreateFeedbackDto {
@@ -12,7 +12,7 @@ export class CreateFeedbackDto {
   email: string;
 
   @ApiProperty({ title: 'User request type', enum: UserRequestTypesEnum })
-  @IsIn([UserRequestTypesEnum.USER, UserRequestTypesEnum.COMPANY])
+  @IsEnum(UserRequestTypesEnum)
   userType: UserRequestTypesEnum;
 
   @ApiProperty({ title: 'Phone', type: String, required: false })

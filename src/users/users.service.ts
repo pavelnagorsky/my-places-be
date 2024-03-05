@@ -26,6 +26,7 @@ import { Moderator } from './entities/moderator.entity';
 import { LanguagesService } from '../languages/languages.service';
 import { SaveModeratorDto } from './dto/save-moderator.dto';
 import { BlockUserDto } from './dto/block-user.dto';
+import { RefreshTokenEntity } from '../auth/entities/refresh-token.entity';
 
 @Injectable()
 export class UsersService {
@@ -34,6 +35,8 @@ export class UsersService {
     private readonly usersRepository: Repository<User>,
     @InjectRepository(Moderator)
     private readonly moderatorsRepository: Repository<Moderator>,
+    @InjectRepository(RefreshTokenEntity)
+    private readonly refreshTokensRepository: Repository<RefreshTokenEntity>,
     private readonly rolesService: RolesService,
     private readonly languagesService: LanguagesService,
   ) {}
@@ -153,6 +156,7 @@ export class UsersService {
     if (!user) throw new NotFoundException({ message: 'User was not found' });
     user.blockedUntil = new Date(dto.blockEnd);
     user.blockReason = dto.reason;
+    await this.refreshTokensRepository.remove(user.refreshTokens);
     user.refreshTokens = [];
     await this.usersRepository.save(user);
     return;
@@ -198,7 +202,6 @@ export class UsersService {
       address: dto.address || user.moderator?.address,
     });
     user.moderator = updatedModerator;
-    console.log(user.moderator);
     if (
       user.roles.findIndex((r) => r.name === RoleNamesEnum.MODERATOR) === -1
     ) {

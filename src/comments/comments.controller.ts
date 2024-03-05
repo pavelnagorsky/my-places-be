@@ -142,7 +142,7 @@ export class CommentsController {
     description: 'The ID of the comment',
   })
   @UseInterceptors(ClassSerializerInterceptor)
-  @Auth(RoleNamesEnum.ADMIN, RoleNamesEnum.MODERATOR)
+  @Auth(RoleNamesEnum.ADMIN)
   @Put(':commentId/administration')
   async administrationUpdateComment(
     @Param('commentId', ParseIntPipe) commentId: number,
