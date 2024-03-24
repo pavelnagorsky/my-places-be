@@ -1,25 +1,25 @@
 import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
-import { PlacesModule } from './places/places.module';
+import { PlacesModule } from './modules/places/places.module';
 import { ConfigModule } from '@nestjs/config';
 import configuration from './config/configuration';
 import { DatabaseModule } from './database/database.module';
-import { PlaceTypesModule } from './place-types/place-types.module';
-import { LanguagesModule } from './languages/languages.module';
-import { TranslationsModule } from './translations/translations.module';
-import { StorageModule } from './storage/storage.module';
-import { ImagesModule } from './images/images.module';
+import { PlaceTypesModule } from './modules/place-types/place-types.module';
+import { LanguagesModule } from './modules/languages/languages.module';
+import { TranslationsModule } from './modules/translations/translations.module';
+import { StorageModule } from './modules/storage/storage.module';
+import { ImagesModule } from './modules/images/images.module';
 import { AuthModule } from './auth/auth.module';
-import { UsersModule } from './users/users.module';
-import { RolesModule } from './roles/roles.module';
-import { MailingModule } from './mailing/mailing.module';
-import { PlaceCategoriesModule } from './place-categories/place-categories.module';
-import { CommentsModule } from './comments/comments.module';
-import { ReviewsModule } from './reviews/reviews.module';
-import { LikesModule } from './likes/likes.module';
-import { ReportsModule } from './reports/reports.module';
-import { FeedbackModule } from './feedback/feedback.module';
-import { FavouritesModule } from './favourites/favourites.module';
+import { UsersModule } from './modules/users/users.module';
+import { RolesModule } from './modules/roles/roles.module';
+import { MailingModule } from './modules/mailing/mailing.module';
+import { PlaceCategoriesModule } from './modules/place-categories/place-categories.module';
+import { CommentsModule } from './modules/comments/comments.module';
+import { ReviewsModule } from './modules/reviews/reviews.module';
+import { LikesModule } from './modules/likes/likes.module';
+import { ReportsModule } from './modules/reports/reports.module';
+import { FeedbackModule } from './modules/feedback/feedback.module';
+import { FavouritesModule } from './modules/favourites/favourites.module';
 
 @Module({
   imports: [

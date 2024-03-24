@@ -21,6 +21,9 @@ export default () => {
       refreshTokenSecret: process.env['REFRESH_TOKEN_SECRET'],
       refreshTokenExpiration: process.env['REFRESH_TOKEN_EXPIRATION'],
     },
+    frontend: {
+      domain: process.env['DOMAIN'],
+    },
     emailConfig: {
       email: process.env['EMAIL'],
       emailPw: process.env['EMAIL_PW'],
@@ -54,4 +57,8 @@ export interface IJwtConfig {
 export interface IMailerConfig {
   email: string;
   emailPw: string;
+}
+
+export interface IFrontendConfig {
+  domain: string;
 }

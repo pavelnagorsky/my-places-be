@@ -17,7 +17,7 @@ import {
   ApiTags,
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
-import { CreateUserDto } from '../users/dto/create-user.dto';
+import { CreateUserDto } from '../modules/users/dto/create-user.dto';
 import { AuthDto } from './dto/auth.dto';
 import { LoginDto } from './dto/login.dto';
 import { ValidationExceptionDto } from '../shared/validation/validation-exception.dto';
@@ -30,7 +30,7 @@ import { AccessTokenPayloadDto } from './dto/access-token-payload.dto';
 import { cookieConfig } from './config/cookie.config';
 import { JwtRefreshGuard } from './guards/jwt-refresh.guard';
 import { UserFromTokenPipe } from './pipes/user-from-token.pipe';
-import { User } from '../users/entities/user.entity';
+import { User } from '../modules/users/entities/user.entity';
 import { JwtEmailGuard } from './guards/jwt-email.guard';
 import { LoginException } from './exceptions/login.exception';
 import { LoginFailureDto } from './dto/login-failure.dto';
