@@ -6,13 +6,13 @@ export class RefreshTokenEntity {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column({ type: 'nvarchar', length: 'MAX' })
+  @Column({ type: 'varchar' })
   token: string;
 
   @Column()
   expiryDate: Date;
 
-  @Column({ type: 'nvarchar', length: 'MAX', nullable: true })
+  @Column({ type: 'varchar', nullable: true })
   userAgent: string | null;
 
   @ManyToOne(() => User, (user) => user.refreshTokens)

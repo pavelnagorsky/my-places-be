@@ -44,14 +44,9 @@ export class Review {
   @Column({ type: 'varchar', nullable: true, default: null })
   moderationMessage: string | null;
 
-  @CreateDateColumn({
-    default: () => 'CURRENT_TIMESTAMP',
-  })
+  @CreateDateColumn()
   createdAt: Date;
 
-  @UpdateDateColumn({
-    default: () => 'CURRENT_TIMESTAMP',
-    onUpdate: 'CURRENT_TIMESTAMP',
-  })
+  @UpdateDateColumn()
   updatedAt: Date;
 }

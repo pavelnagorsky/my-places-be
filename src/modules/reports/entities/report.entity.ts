@@ -1,4 +1,10 @@
-import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  Column,
+  CreateDateColumn,
+  Entity,
+  ManyToOne,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
 import { Place } from '../../places/entities/place.entity';
 import { CrmStatusesEnum } from '../../../shared/enums/crm-statuses.enum';
 import { User } from '../../users/entities/user.entity';
@@ -11,7 +17,7 @@ export class Report {
   @Column({ type: 'varchar', length: 1000 })
   text: string;
 
-  @Column({ default: () => 'CURRENT_TIMESTAMP' })
+  @CreateDateColumn()
   createdAt: Date;
 
   @ManyToOne(() => Place, (place) => place.reports, { onDelete: 'CASCADE' })

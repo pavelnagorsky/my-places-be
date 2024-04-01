@@ -27,11 +27,17 @@ export class PlaceType {
   @Column({ default: false })
   commercial: boolean;
 
-  @OneToOne(() => Image, (image) => image.id, { cascade: true })
+  @OneToOne(() => Image, (image) => image.placeType, {
+    cascade: true,
+    nullable: true,
+  })
   @JoinColumn()
   image: Image | null;
 
-  @OneToOne(() => Image, (image) => image.id, { cascade: true })
+  @OneToOne(() => Image, (image) => image.placeType2, {
+    cascade: true,
+    nullable: true,
+  })
   @JoinColumn()
   image2: Image | null;
 

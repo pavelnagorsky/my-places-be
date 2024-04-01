@@ -30,8 +30,6 @@ export class Feedback {
   @Column({ default: CrmStatusesEnum.PENDING })
   status: CrmStatusesEnum;
 
-  @CreateDateColumn({
-    default: () => 'CURRENT_TIMESTAMP',
-  })
+  @CreateDateColumn()
   createdAt: Date;
 }

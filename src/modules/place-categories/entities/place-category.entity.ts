@@ -12,7 +12,7 @@ import { PlaceCategoryTranslation } from './place-category-translation.entity';
 
 @Entity()
 export class PlaceCategory {
-  @PrimaryGeneratedColumn({ type: 'int' })
+  @PrimaryGeneratedColumn()
   id: number;
 
   @OneToMany(
@@ -22,11 +22,11 @@ export class PlaceCategory {
   )
   titles: PlaceCategoryTranslation[];
 
-  @OneToOne(() => Image, (image) => image.id, { cascade: true })
+  @OneToOne(() => Image, (image) => image.placeCategory, { cascade: true })
   @JoinColumn()
   image: Image | null;
 
-  @OneToOne(() => Image, (image) => image.id, { cascade: true })
+  @OneToOne(() => Image, (image) => image.placeCategory2, { cascade: true })
   @JoinColumn()
   image2: Image | null;
 

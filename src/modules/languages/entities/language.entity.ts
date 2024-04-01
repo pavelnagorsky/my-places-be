@@ -15,7 +15,7 @@ import { LanguageIdEnum } from '../enums/language-id.enum';
 
 @Entity()
 export class Language {
-  @PrimaryColumn({ type: 'int', enum: LanguageIdEnum })
+  @PrimaryColumn({ type: 'int' })
   id: LanguageIdEnum;
 
   @Column({ type: 'varchar', length: 25 })

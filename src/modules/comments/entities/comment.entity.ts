@@ -1,4 +1,10 @@
-import { Entity, PrimaryGeneratedColumn, ManyToOne, Column } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  ManyToOne,
+  Column,
+  CreateDateColumn,
+} from 'typeorm';
 import { Place } from '../../places/entities/place.entity';
 import { User } from '../../users/entities/user.entity';
 
@@ -10,7 +16,7 @@ export class Comment {
   @Column({ type: 'varchar', length: 1000 })
   text: string;
 
-  @Column({ default: () => 'CURRENT_TIMESTAMP' })
+  @CreateDateColumn()
   createdAt: Date;
 
   @ManyToOne(() => User, (user) => user.comments)

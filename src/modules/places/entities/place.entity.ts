@@ -29,7 +29,7 @@ export class Place {
   id: number;
 
   @Index({ unique: true })
-  @Column({ unique: true })
+  @Column()
   slug: string;
 
   @OneToMany(() => PlaceTranslation, (translation) => translation.place, {
@@ -65,7 +65,7 @@ export class Place {
   @Column({ default: false })
   advertisement: boolean;
 
-  @Column({ type: 'timestamp', nullable: true })
+  @Column({ type: 'datetime', nullable: true })
   advEndDate: Date | null;
 
   @ManyToOne(() => Language, (language) => language.id)
@@ -92,15 +92,10 @@ export class Place {
   @Column({ default: PlaceStatusesEnum.MODERATION })
   status: PlaceStatusesEnum;
 
-  @CreateDateColumn({
-    default: () => 'CURRENT_TIMESTAMP',
-  })
+  @CreateDateColumn()
   createdAt: Date;
 
-  @UpdateDateColumn({
-    default: () => 'CURRENT_TIMESTAMP',
-    onUpdate: 'CURRENT_TIMESTAMP',
-  })
+  @UpdateDateColumn()
   updatedAt: Date;
 
   @OneToMany(() => Favourite, (favourite) => favourite.place, { cascade: true })

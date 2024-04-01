@@ -8,7 +8,7 @@ import { IDatabaseConfig } from '../config/configuration';
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) => ({
-        type: 'mssql',
+        type: 'mysql',
         host: configService.get<IDatabaseConfig>('database')?.host,
         username: configService.get<IDatabaseConfig>('database')?.user,
         password: configService.get<IDatabaseConfig>('database')?.password,
@@ -16,9 +16,6 @@ import { IDatabaseConfig } from '../config/configuration';
         entities: [__dirname + '/../**/*.entity{.ts,.js}'],
         synchronize: true,
         autoLoadEntities: true,
-        extra: {
-          trustServerCertificate: true,
-        },
       }),
       inject: [ConfigService],
     }),

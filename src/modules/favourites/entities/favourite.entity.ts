@@ -23,14 +23,9 @@ export class Favourite {
   @ManyToOne(() => User, (user) => user.favourites, { onDelete: 'CASCADE' })
   user: User;
 
-  @CreateDateColumn({
-    default: () => 'CURRENT_TIMESTAMP',
-  })
+  @CreateDateColumn()
   createdAt: Date;
 
-  @UpdateDateColumn({
-    default: () => 'CURRENT_TIMESTAMP',
-    onUpdate: 'CURRENT_TIMESTAMP',
-  })
+  @UpdateDateColumn()
   updatedAt: Date;
 }
