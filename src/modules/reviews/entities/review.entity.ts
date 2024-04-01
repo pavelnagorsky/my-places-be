@@ -23,9 +23,7 @@ export class Review {
   })
   translations: ReviewTranslation[];
 
-  @ManyToOne(() => Place, (place) => place.reviews, {
-    onDelete: 'SET NULL',
-  })
+  @ManyToOne(() => Place, (place) => place.reviews)
   place: Place;
 
   @Column({ default: 0 })

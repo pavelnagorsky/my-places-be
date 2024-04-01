@@ -44,6 +44,8 @@ import { ModerationReviewsResponseDto } from './dto/moderation-reviews-response.
 import { ModerationReviewsRequestDto } from './dto/moderation-reviews-request.dto';
 import { RoleNamesEnum } from '../roles/enums/role-names.enum';
 import { ModerationDto } from '../places/dto/moderation.dto';
+import { ReviewStatusesEnum } from './enums/review-statuses.enum';
+import { AdministrationReviewsRequestDto } from './dto/administration-reviews-request.dto';
 
 @ApiTags('Reviews')
 @Controller('reviews')
@@ -118,6 +120,38 @@ export class ReviewsController {
     return await this.reviewsService.update(id, langId, updateReviewDto);
   }
 
+  @ApiOperation({ summary: 'Update Review by administration' })
+  @ApiOkResponse({
+    description: 'OK',
+    type: PickType(Review, ['id']),
+  })
+  @ApiBadRequestResponse({
+    description: 'Validation failed',
+    type: ValidationExceptionDto,
+  })
+  @ApiParam({
+    name: 'id',
+    type: Number,
+    description: 'The ID of the review',
+  })
+  @ApiQuery({
+    name: 'lang',
+    type: Number,
+    description: 'The ID of the language',
+  })
+  @ApiBody({
+    type: UpdateReviewDto,
+  })
+  @Auth(RoleNamesEnum.ADMIN)
+  @Put(':id/administration')
+  async updateByAdministration(
+    @Param('id', ParseIntPipe) id: number,
+    @Query('lang', ParseIntPipe) langId: number,
+    @Body() updateReviewDto: UpdateReviewDto,
+  ) {
+    return await this.reviewsService.update(id, langId, updateReviewDto, true);
+  }
+
   @ApiOperation({ summary: 'Get reviews by place slug' })
   @ApiOkResponse({
     description: 'OK',
@@ -156,6 +190,7 @@ export class ReviewsController {
       langId,
       pageSize,
       page,
+      ReviewStatusesEnum.APPROVED,
     );
     return new ReviewsSearchResponseDto(reviews, {
       requestedPage: page,
@@ -225,6 +260,37 @@ export class ReviewsController {
     });
   }
 
+  @ApiOperation({ summary: 'Get reviews for administration' })
+  @ApiOkResponse({
+    description: 'OK',
+    type: MyReviewsResponseDto,
+  })
+  @ApiBody({
+    type: AdministrationReviewsRequestDto,
+  })
+  @ApiQuery({
+    name: 'lang',
+    type: Number,
+    description: 'The ID of the language',
+  })
+  @UseInterceptors(ClassSerializerInterceptor)
+  @Auth(RoleNamesEnum.ADMIN)
+  @Post('administration-reviews')
+  async getAdminReviews(
+    @Query('lang', ParseIntPipe) langId: number,
+    @Body() dto: AdministrationReviewsRequestDto,
+  ) {
+    const [reviews, total] = await this.reviewsService.findAdminReviews(
+      langId,
+      dto,
+    );
+    return new MyReviewsResponseDto(reviews, {
+      requestedPage: dto.page,
+      pageSize: dto.pageSize,
+      totalItems: total,
+    });
+  }
+
   @ApiOperation({ summary: 'Delete Review' })
   @ApiOkResponse({
     description: 'OK',
@@ -237,7 +303,21 @@ export class ReviewsController {
   })
   @Auth()
   @Delete(':id')
-  async deleteReview(@Param('id', ParseIntPipe) id: number) {
+  async deleteReview(
+    @Param('id', ParseIntPipe) id: number,
+    @TokenPayload() tokenPayload: AccessTokenPayloadDto,
+  ) {
+    const roleNames = tokenPayload.roles.map((r) => r.name);
+    if (!roleNames.includes(RoleNamesEnum.ADMIN)) {
+      const userIsReviewAuthor = await this.reviewsService.checkUserRelation(
+        tokenPayload.id,
+        id,
+      );
+      if (!userIsReviewAuthor)
+        throw new ForbiddenException({
+          message: 'Forbidden, user is not author',
+        });
+    }
     const data = await this.reviewsService.removeReview(id);
     return data;
   }
@@ -262,11 +342,26 @@ export class ReviewsController {
   })
   @UseInterceptors(ClassSerializerInterceptor)
   @Auth()
-  @Get('edit/:id')
+  @Get(':id/edit')
   async getReviewForEdit(
     @Param('id', ParseIntPipe) id: number,
     @Query('lang', ParseIntPipe) langId: number,
+    @TokenPayload() tokenPayload: AccessTokenPayloadDto,
   ) {
+    const roleNames = tokenPayload.roles.map((r) => r.name);
+    if (
+      !roleNames.includes(RoleNamesEnum.MODERATOR) ||
+      !roleNames.includes(RoleNamesEnum.ADMIN)
+    ) {
+      const userIsReviewAuthor = await this.reviewsService.checkUserRelation(
+        tokenPayload.id,
+        id,
+      );
+      if (!userIsReviewAuthor)
+        throw new ForbiddenException({
+          message: 'Forbidden, user is not author',
+        });
+    }
     const review = await this.reviewsService.getReviewForEdit(id, langId);
     return new ReviewEditDto(review);
   }
@@ -315,7 +410,7 @@ export class ReviewsController {
     type: ModerationDto,
   })
   @Auth(RoleNamesEnum.MODERATOR, RoleNamesEnum.ADMIN)
-  @Post('moderation/:id')
+  @Post(':id/moderation')
   async moderateReview(
     @Param('id', ParseIntPipe) reviewId: number,
     @Body() dto: ModerationDto,

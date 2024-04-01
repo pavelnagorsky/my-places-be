@@ -9,6 +9,7 @@ import { PlaceCategory } from '../place-categories/entities/place-category.entit
 import { ImagesModule } from '../images/images.module';
 import { PlaceTranslation } from './entities/place-translation.entity';
 import { MailingModule } from '../mailing/mailing.module';
+import { Review } from '../reviews/entities/review.entity';
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import { MailingModule } from '../mailing/mailing.module';
       PlaceType,
       PlaceCategory,
       PlaceTranslation,
+      Review,
     ]),
     ImagesModule,
     TranslationsModule,

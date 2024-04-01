@@ -41,6 +41,7 @@ import { MailingService } from '../mailing/mailing.service';
 import { PlaceEmail } from '../mailing/emails/place.email';
 import { PlaceForEmailDto } from './dto/place-for-email.dto';
 import { ChangePlaceStatusDto } from './dto/change-place-status.dto';
+import { Review } from '../reviews/entities/review.entity';
 
 @Injectable()
 export class PlacesService {
@@ -48,6 +49,8 @@ export class PlacesService {
   constructor(
     @InjectRepository(Place)
     private placesRepository: Repository<Place>,
+    @InjectRepository(Review)
+    private reviewsRepository: Repository<Review>,
     @InjectRepository(PlaceType)
     private placeTypesRepository: Repository<PlaceType>,
     @InjectRepository(PlaceCategory)
@@ -236,10 +239,6 @@ export class PlacesService {
     const { id } = await this.placesRepository.save(place);
     return { id: id };
   }
-
-  // private getLatLng(coordinatesString: string): CoordinatesDto {
-  //   return new CoordinatesDto(coordinatesString);
-  // }
 
   // private filterByCoordinates(
   //   placeCoordinates: string,
@@ -595,6 +594,7 @@ export class PlacesService {
     placeId: number,
     langId: number,
     updatePlaceDto: UpdatePlaceDto,
+    byAdmin = false,
   ) {
     try {
       const oldPlace = await this.placesRepository.findOne({
@@ -638,14 +638,21 @@ export class PlacesService {
         coordinates: updatePlaceDto.coordinates,
         categories: placeCategories,
         website: updatePlaceDto.website,
-        status: PlaceStatusesEnum.MODERATION,
         advertisement: updatePlaceDto.isCommercial,
-        moderationMessage: null,
       });
+      if (!updatePlaceDto.isCommercial) {
+        updatedPlace.advEndDate = null;
+      }
+      if (!byAdmin) {
+        updatedPlace.status = PlaceStatusesEnum.MODERATION;
+        updatedPlace.moderationMessage = null;
+      }
 
       await this.placesRepository.save(updatedPlace);
 
-      return { id: placeId };
+      return {
+        id: placeId,
+      };
     } catch (e) {
       this.logger.error(e);
       if (e instanceof BadRequestException) {
@@ -846,6 +853,7 @@ export class PlacesService {
           email: true,
           firstName: true,
           lastName: true,
+          receiveEmails: true,
         },
         advEndDate: true,
       },
@@ -994,9 +1002,6 @@ export class PlacesService {
     const place = await this.placesRepository.findOne({ where: { id: id } });
     if (!place) throw new NotFoundException({ message: 'Place not found' });
     const statusChanged = place.status !== dto.status;
-    const commercialChanged = place.advertisement !== dto.advertisement;
-    if (!statusChanged && !commercialChanged)
-      throw new BadRequestException({ message: 'Nothing was changed' });
 
     // update status
     place.status = dto.status;
@@ -1017,7 +1022,7 @@ export class PlacesService {
     await this.placesRepository.save(place);
 
     const placeForEmail = await this.getPlaceForEmail(id);
-    if (!placeForEmail) return;
+    if (!placeForEmail || !placeForEmail.author.receiveEmails) return;
 
     const email = new PlaceEmail(
       statusChanged
@@ -1064,7 +1069,7 @@ export class PlacesService {
 
     // send email
     const placeForEmail = await this.getPlaceForEmail(place.id);
-    if (!placeForEmail) return;
+    if (!placeForEmail || !placeForEmail.author.receiveEmails) return;
     const email = new PlaceEmail(
       {
         status: updatedStatus,
@@ -1073,5 +1078,15 @@ export class PlacesService {
       new PlaceForEmailDto(placeForEmail),
     );
     this.mailingService.sendEmail(email);
+  }
+
+  async deletePlaceAdministration(id: number, newPlaceIdForReviews?: number) {
+    if (newPlaceIdForReviews) {
+      await this.reviewsRepository.update(
+        { place: { id: id } },
+        { place: { id: newPlaceIdForReviews } },
+      );
+    }
+    await this.removePlace(id);
   }
 }

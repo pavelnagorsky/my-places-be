@@ -28,6 +28,7 @@ import { ReviewStatusesEnum } from './enums/review-statuses.enum';
 import { ModerationReviewsRequestDto } from './dto/moderation-reviews-request.dto';
 import { ModerationReviewsOrderByEnum } from './enums/moderation-reviews-order-by';
 import { ModerationDto } from '../places/dto/moderation.dto';
+import { AdministrationReviewsRequestDto } from './dto/administration-reviews-request.dto';
 
 @Injectable()
 export class ReviewsService {
@@ -170,6 +171,7 @@ export class ReviewsService {
     langId: number,
     pageSize: number,
     page: number,
+    statusFilter?: ReviewStatusesEnum,
   ) {
     const result = await this.reviewsRepository.findAndCount({
       skip: page * pageSize,
@@ -192,7 +194,7 @@ export class ReviewsService {
       },
       where: {
         place: { slug: Equal(placeSlug) },
-        status: ReviewStatusesEnum.APPROVED,
+        status: statusFilter,
         translations: {
           language: {
             id: langId,
@@ -260,6 +262,7 @@ export class ReviewsService {
     reviewId: number,
     langId: number,
     updateReviewDto: UpdateReviewDto,
+    byAdmin = false,
   ) {
     try {
       const oldReview = await this.reviewsRepository.findOne({
@@ -290,9 +293,11 @@ export class ReviewsService {
         id: reviewId,
         images: reviewImages,
         translations: translations,
-        status: ReviewStatusesEnum.MODERATION,
-        moderationMessage: null,
       });
+      if (!byAdmin) {
+        updatedReview.status = ReviewStatusesEnum.MODERATION;
+        updatedReview.moderationMessage = null;
+      }
 
       await this.reviewsRepository.save(updatedReview);
 
@@ -407,6 +412,86 @@ export class ReviewsService {
           !!dto.statuses && dto.statuses?.length > 0
             ? In(dto.statuses)
             : undefined,
+        translations: {
+          title:
+            !!dto.search && dto.search.length > 0
+              ? ILike(`${dto.search}%`)
+              : undefined,
+          language: {
+            id: langId,
+          },
+        },
+      },
+    });
+
+    return res;
+  }
+
+  async findAdminReviews(langId: number, dto: AdministrationReviewsRequestDto) {
+    const orderDirection = dto.orderAsc ? 'ASC' : 'DESC';
+
+    const res = await this.reviewsRepository.findAndCount({
+      relations: {
+        translations: true,
+        place: { translations: true },
+      },
+      skip: dto.page * dto.pageSize,
+      take: dto.pageSize,
+      order: {
+        createdAt:
+          dto.orderBy === MyReviewsOrderByEnum.CREATED_AT || !dto.orderBy
+            ? orderDirection
+            : undefined,
+        translations: {
+          title:
+            dto.orderBy === MyReviewsOrderByEnum.TITLE
+              ? orderDirection
+              : undefined,
+        },
+        place: {
+          translations: {
+            title:
+              dto.orderBy === MyReviewsOrderByEnum.PLACE_TITLE
+                ? orderDirection
+                : undefined,
+          },
+        },
+        status:
+          dto.orderBy === MyReviewsOrderByEnum.STATUS
+            ? orderDirection
+            : undefined,
+        viewsCount:
+          dto.orderBy === MyReviewsOrderByEnum.VIEWS
+            ? orderDirection
+            : undefined,
+      },
+      select: {
+        id: true,
+        translations: {
+          title: true,
+        },
+        place: {
+          id: true,
+          slug: true,
+          translations: {
+            title: true,
+          },
+        },
+        moderationMessage: true,
+        viewsCount: true,
+        status: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+      where: {
+        place: {
+          id: dto.placeId,
+          translations: {
+            language: {
+              id: langId,
+            },
+          },
+        },
         translations: {
           title:
             !!dto.search && dto.search.length > 0

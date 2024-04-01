@@ -27,6 +27,9 @@ export class PlaceForEmailDto {
     return this.author.lastName || '';
   }
 
+  @ApiProperty({ title: 'Receive emails', type: Boolean })
+  receiveEmails: boolean;
+
   @ApiProperty({ title: 'Email', type: String, default: 'johndoe@gmail.com' })
   @Expose()
   get email(): string {

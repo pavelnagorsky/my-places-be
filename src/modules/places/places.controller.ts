@@ -241,6 +241,7 @@ export class PlacesController {
   @ApiBody({
     type: UpdatePlaceDto,
   })
+  @UseInterceptors(ClassSerializerInterceptor)
   @Auth()
   @Put(':id')
   async update(
@@ -258,6 +259,44 @@ export class PlacesController {
         message: 'Forbidden, user is not author',
       });
     return await this.placesService.updatePlace(id, langId, updatePlaceDto);
+  }
+
+  @ApiOperation({ summary: 'Update Place by administration' })
+  @ApiOkResponse({
+    description: 'OK',
+    type: PickType(Place, ['id']),
+  })
+  @ApiBadRequestResponse({
+    description: 'Validation failed',
+    type: ValidationExceptionDto,
+  })
+  @ApiParam({
+    name: 'id',
+    type: Number,
+    description: 'The ID of the place',
+  })
+  @ApiQuery({
+    name: 'lang',
+    type: Number,
+    description: 'The ID of the language',
+  })
+  @ApiBody({
+    type: UpdatePlaceDto,
+  })
+  @UseInterceptors(ClassSerializerInterceptor)
+  @Auth(RoleNamesEnum.ADMIN)
+  @Put(':id/administration')
+  async updateByAdmin(
+    @Param('id', ParseIntPipe) id: number,
+    @Query('lang', ParseIntPipe) langId: number,
+    @Body() updatePlaceDto: UpdatePlaceDto,
+  ) {
+    return await this.placesService.updatePlace(
+      id,
+      langId,
+      updatePlaceDto,
+      true,
+    );
   }
 
   @ApiOperation({ summary: 'Delete Place' })
@@ -339,7 +378,7 @@ export class PlacesController {
   })
   @UseInterceptors(ClassSerializerInterceptor)
   @Auth(RoleNamesEnum.ADMIN)
-  @Get('administration/:id')
+  @Get(':id/administration')
   async getPlaceShortInfo(
     @Query('lang', ParseIntPipe) langId: number,
     @Param('id', ParseIntPipe) id: number,
@@ -400,11 +439,26 @@ export class PlacesController {
   })
   @UseInterceptors(ClassSerializerInterceptor)
   @Auth()
-  @Get('edit/:id')
+  @Get(':id/edit')
   async getPlaceForEdit(
     @Param('id', ParseIntPipe) id: number,
     @Query('lang', ParseIntPipe) langId: number,
+    @TokenPayload() tokenPayload: AccessTokenPayloadDto,
   ) {
+    const roleNames = tokenPayload.roles.map((r) => r.name);
+    if (
+      !roleNames.includes(RoleNamesEnum.MODERATOR) ||
+      !roleNames.includes(RoleNamesEnum.ADMIN)
+    ) {
+      const userIsPlaceAuthor = await this.placesService.checkUserRelation(
+        tokenPayload.id,
+        id,
+      );
+      if (!userIsPlaceAuthor)
+        throw new ForbiddenException({
+          message: 'Forbidden, user is not author',
+        });
+    }
     const place = await this.placesService.getPlaceForEdit(id, langId);
     return new PlaceEditDto(place);
   }
@@ -424,7 +478,7 @@ export class PlacesController {
   })
   @UseInterceptors(ClassSerializerInterceptor)
   @Auth(RoleNamesEnum.MODERATOR, RoleNamesEnum.ADMIN)
-  @Get('moderation/:id')
+  @Get(':id/moderation')
   async getPlaceForModeration(@Param('id', ParseIntPipe) id: number) {
     const place = await this.placesService.getPlaceForModeration(id);
     return new PlaceEditDto(place);
@@ -475,7 +529,7 @@ export class PlacesController {
   })
   @UseInterceptors(ClassSerializerInterceptor)
   @Auth(RoleNamesEnum.MODERATOR, RoleNamesEnum.ADMIN)
-  @Post('moderation/:id')
+  @Post(':id/moderation')
   async moderatePlace(
     @Param('id', ParseIntPipe) placeId: number,
     @Body() dto: ModerationDto,
@@ -499,12 +553,41 @@ export class PlacesController {
   })
   @UseInterceptors(ClassSerializerInterceptor)
   @Auth(RoleNamesEnum.ADMIN)
-  @Post('administration/:id/change-status')
+  @Post(':id/administration/change-status')
   async changePlaceStatus(
     @Param('id', ParseIntPipe) placeId: number,
     @Body() dto: ChangePlaceStatusDto,
   ) {
     await this.placesService.changePlaceStatus(placeId, dto);
+    return;
+  }
+
+  @ApiOperation({ summary: 'Delete place and assign reviews to another place' })
+  @ApiOkResponse({
+    description: 'OK',
+  })
+  @ApiParam({
+    name: 'id',
+    type: Number,
+    description: 'The id of the place',
+  })
+  @ApiQuery({
+    name: 'newPlaceId',
+    type: Number,
+    required: false,
+    description: 'The ID of the place where to assign reviews',
+  })
+  @UseInterceptors(ClassSerializerInterceptor)
+  @Auth(RoleNamesEnum.ADMIN)
+  @Delete(':id/administration/safe-delete')
+  async safeDeletePlace(
+    @Param('id', ParseIntPipe) placeId: number,
+    @Query('newPlaceId') newPlaceId: string | undefined,
+  ) {
+    await this.placesService.deletePlaceAdministration(
+      placeId,
+      newPlaceId ? +newPlaceId : undefined,
+    );
     return;
   }
 }

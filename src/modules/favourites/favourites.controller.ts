@@ -43,7 +43,7 @@ export class FavouritesController {
     description: 'The id of the place',
   })
   @Auth()
-  @Post('places/:placeId')
+  @Post(':placeId/add')
   async create(
     @Param('placeId', ParseIntPipe) placeId: number,
     @TokenPayload() tokenPayload: AccessTokenPayloadDto,
