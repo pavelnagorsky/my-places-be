@@ -23,11 +23,11 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { UserDto } from './dto/user.dto';
-import { Auth } from '../../auth/decorators/auth.decorator';
-import { UserFromTokenPipe } from '../../auth/pipes/user-from-token.pipe';
+import { Auth } from '../auth/decorators/auth.decorator';
+import { UserFromTokenPipe } from '../auth/pipes/user-from-token.pipe';
 import { User } from './entities/user.entity';
-import { TokenPayload } from '../../auth/decorators/token-payload.decorator';
-import { AccessTokenPayloadDto } from '../../auth/dto/access-token-payload.dto';
+import { TokenPayload } from '../auth/decorators/token-payload.decorator';
+import { AccessTokenPayloadDto } from '../auth/dto/access-token-payload.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { ValidationExceptionDto } from '../../shared/validation/validation-exception.dto';
 import { RoleNamesEnum } from '../roles/enums/role-names.enum';
@@ -37,6 +37,7 @@ import { UsersResponseDto } from './dto/users-response.dto';
 import { ModeratorDto } from './dto/moderator.dto';
 import { SaveModeratorDto } from './dto/save-moderator.dto';
 import { BlockUserDto } from './dto/block-user.dto';
+import { EmailDto } from './dto/email.dto';
 
 @ApiTags('Users')
 @Controller('users')
@@ -217,18 +218,13 @@ export class UsersController {
   }
 
   @ApiOperation({ description: 'send email to user' })
-  @ApiBody({ type: Object })
-  @ApiQuery({
-    name: 'to',
-    type: String,
-    description: 'User email',
-  })
+  @ApiBody({ type: EmailDto })
   @ApiOkResponse({
     description: 'OK',
   })
-  //@Auth(RoleNamesEnum.ADMIN)
-  @Post(':id/email')
-  async sendEmail(@Query('to') to: string, @Body() dto: any) {
-    await this.usersService.sendEmail(to, dto);
+  @Auth(RoleNamesEnum.ADMIN)
+  @Post('email')
+  async sendEmail(@Body() dto: EmailDto) {
+    await this.usersService.sendEmail(dto);
   }
 }

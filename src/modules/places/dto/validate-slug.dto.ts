@@ -2,7 +2,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import { IsNumber, Matches, ValidateIf } from 'class-validator';
 import { regularExpressions } from '../../../shared/regular-expressions';
 
-export class CreateSlugDto {
+export class ValidateSlugDto {
   @ApiProperty({ type: String, description: 'Place url path' })
   @Matches(regularExpressions.slugPattern)
   slug: string;

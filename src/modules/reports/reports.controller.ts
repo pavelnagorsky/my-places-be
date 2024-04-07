@@ -18,7 +18,7 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { CreateReportDto } from './dto/create-report.dto';
-import { Auth } from '../../auth/decorators/auth.decorator';
+import { Auth } from '../auth/decorators/auth.decorator';
 import { RoleNamesEnum } from '../roles/enums/role-names.enum';
 import { ReportsResponseDto } from './dto/reports-response.dto';
 import { ReportsRequestDto } from './dto/reports-request.dto';

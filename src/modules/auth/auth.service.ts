@@ -4,23 +4,23 @@ import {
   Logger,
   UnauthorizedException,
 } from '@nestjs/common';
-import { CreateUserDto } from '../modules/users/dto/create-user.dto';
-import { UsersService } from '../modules/users/users.service';
+import { CreateUserDto } from '../users/dto/create-user.dto';
+import { UsersService } from '../users/users.service';
 import { JwtService } from '@nestjs/jwt';
 import { hash, compare, compareSync } from 'bcrypt';
-import { User } from '../modules/users/entities/user.entity';
+import { User } from '../users/entities/user.entity';
 import { LoginDto } from './dto/login.dto';
 import { AccessTokenPayloadDto } from './dto/access-token-payload.dto';
-import { MailingService } from '../modules/mailing/mailing.service';
+import { MailingService } from '../mailing/mailing.service';
 import LoginErrorEnum from './enums/login-error.enum';
 import { ConfigService } from '@nestjs/config';
-import { IFrontendConfig, IJwtConfig } from '../config/configuration';
+import { IFrontendConfig, IJwtConfig } from '../../config/configuration';
 import { ITokens } from './interfaces/interfaces';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Equal, LessThan, Repository } from 'typeorm';
 import { RefreshTokenEntity } from './entities/refresh-token.entity';
 import { LoginException } from './exceptions/login.exception';
-import { ConfirmEmail } from '../modules/mailing/emails/confirm.email';
+import { ConfirmEmail } from '../mailing/emails/confirm.email';
 
 @Injectable()
 export class AuthService {

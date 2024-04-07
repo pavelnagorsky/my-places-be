@@ -14,9 +14,9 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { LikesService } from './likes.service';
-import { Auth } from '../../auth/decorators/auth.decorator';
-import { TokenPayload } from '../../auth/decorators/token-payload.decorator';
-import { AccessTokenPayloadDto } from '../../auth/dto/access-token-payload.dto';
+import { Auth } from '../auth/decorators/auth.decorator';
+import { TokenPayload } from '../auth/decorators/token-payload.decorator';
+import { AccessTokenPayloadDto } from '../auth/dto/access-token-payload.dto';
 import { IsLikedDto } from './dto/is-liked.dto';
 
 @ApiTags('Likes')

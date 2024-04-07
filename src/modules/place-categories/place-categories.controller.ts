@@ -25,7 +25,7 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { PlaceCategoryDto } from './dto/place-category.dto';
-import { Auth } from '../../auth/decorators/auth.decorator';
+import { Auth } from '../auth/decorators/auth.decorator';
 import { RoleNamesEnum } from '../roles/enums/role-names.enum';
 import { PlaceCategoryAdminDto } from './dto/place-category-admin.dto';
 import { UpdatePlaceCategoryDto } from './dto/update-place-category.dto';

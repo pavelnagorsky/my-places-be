@@ -21,10 +21,10 @@ import {
   ApiTags,
   PickType,
 } from '@nestjs/swagger';
-import { Auth } from '../../auth/decorators/auth.decorator';
+import { Auth } from '../auth/decorators/auth.decorator';
 import { FavouriteDto } from './dto/favourite.dto';
-import { TokenPayload } from '../../auth/decorators/token-payload.decorator';
-import { AccessTokenPayloadDto } from '../../auth/dto/access-token-payload.dto';
+import { TokenPayload } from '../auth/decorators/token-payload.decorator';
+import { AccessTokenPayloadDto } from '../auth/dto/access-token-payload.dto';
 import { FavouritesRequestDto } from './dto/favourites-request.dto';
 
 @ApiTags('Favourites')

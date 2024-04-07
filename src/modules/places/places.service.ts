@@ -25,11 +25,11 @@ import { PlaceType } from '../place-types/entities/place-type.entity';
 import { PlaceCategory } from '../place-categories/entities/place-category.entity';
 import { ImagesService } from '../images/images.service';
 import { User } from '../users/entities/user.entity';
-import { AccessTokenPayloadDto } from '../../auth/dto/access-token-payload.dto';
+import { AccessTokenPayloadDto } from '../auth/dto/access-token-payload.dto';
 import { UpdatePlaceDto } from './dto/update-place.dto';
 import { SearchRequestDto } from './dto/search-request.dto';
 import { PlaceStatusesEnum } from './enums/place-statuses.enum';
-import { CreateSlugDto } from './dto/create-slug.dto';
+import { ValidateSlugDto } from './dto/validate-slug.dto';
 import { PlaceTranslation } from './entities/place-translation.entity';
 import { MyPlacesOrderByEnum } from './enums/my-places-order-by.enum';
 import { MyPlacesRequestDto } from './dto/my-places-request.dto';
@@ -198,20 +198,41 @@ export class PlacesService {
     return placeCategories ?? [];
   }
 
-  private async validateSlugExists(slug: string) {
-    return this.placesRepository.exist({
+  async validateSlugExists(slug: string, placeId?: number) {
+    return this.placesRepository.exists({
       where: {
         slug: Equal(slug),
+        id: placeId ? Not(placeId) : undefined,
       },
     });
   }
 
-  async create(langId: number, author: User, createPlaceDto: CreatePlaceDto) {
-    const slugExists = await this.validateSlugExists(createPlaceDto.slug);
-    if (slugExists)
+  private async createValidSlug(text: string, placeId?: number) {
+    let validatedSlug = this.translationsService.parseToSlug(text);
+    let success = false;
+    let i = 0;
+    while (!success && i < 10) {
+      i += 1;
+      const slugExists = await this.validateSlugExists(validatedSlug, placeId);
+      if (!slugExists) {
+        success = true;
+      } else {
+        if (i > 1) {
+          validatedSlug = validatedSlug.slice(0, -1) + i;
+        } else {
+          validatedSlug = `${validatedSlug}-${i}`;
+        }
+      }
+    }
+    if (!success) {
       throw new BadRequestException({
-        message: `Slug ${createPlaceDto.slug} already exists!`,
+        message: 'Invalid slug',
       });
+    }
+    return validatedSlug;
+  }
+
+  async create(langId: number, author: User, createPlaceDto: CreatePlaceDto) {
     const placeType = await this.validatePlaceType(createPlaceDto);
     const placeCategories = await this.validatePlaceCategories(createPlaceDto);
 
@@ -220,12 +241,16 @@ export class PlacesService {
     );
 
     const translations = await this.createTranslations(langId, createPlaceDto);
+    const titleTranslationRu =
+      translations.find((tr) => tr.language.id === LanguageIdEnum.RU)?.title ||
+      createPlaceDto.title;
+    const parsedSlug = await this.createValidSlug(titleTranslationRu);
 
     const place = this.placesRepository.create({
       originalLanguage: {
         id: langId,
       },
-      slug: createPlaceDto.slug,
+      slug: parsedSlug,
       translations: translations,
       type: placeType,
       coordinates: createPlaceDto.coordinates,
@@ -238,6 +263,17 @@ export class PlacesService {
 
     const { id } = await this.placesRepository.save(place);
     return { id: id };
+  }
+
+  async updatePlaceSlug(placeId: number, slug: string) {
+    const placeExists = await this.checkExist(placeId);
+    if (!placeExists) {
+      throw new NotFoundException({ message: 'Place not exists' });
+    }
+    await this.placesRepository.save({
+      id: placeId,
+      slug: slug,
+    });
   }
 
   // private filterByCoordinates(
@@ -413,18 +449,17 @@ export class PlacesService {
   }
 
   private readonly geolocationSQLQuery = `
-    geography::Point(
-      LEFT(place.coordinates, PATINDEX('%;%', place.coordinates) - 1), 
-      RIGHT(place.coordinates, LEN(place.coordinates) - PATINDEX('%;%', place.coordinates)), 
+    ST_Distance_Sphere(
+      Point(
+        SUBSTRING_INDEX(place.coordinates, ';', 1),
+        SUBSTRING_INDEX(place.coordinates, ';', -1)
+      ),
+      Point(
+        SUBSTRING_INDEX(:searchCoordinates, ';', 1),
+        SUBSTRING_INDEX(:searchCoordinates, ';', -1)
+      ), 
       4326
-    ).STDistance(
-      geography::Point(
-        LEFT(:searchCoordinates, PATINDEX('%;%', :searchCoordinates) - 1), 
-        RIGHT(:searchCoordinates, LEN(:searchCoordinates) - PATINDEX('%;%', :searchCoordinates)), 
-        4326
-      )
-    ) 
-    <= :radius    
+    ) <= :radius
   `;
 
   async search(langId: number, searchDto: SearchRequestDto) {
@@ -476,7 +511,7 @@ export class PlacesService {
       if (searchDto.searchCoordinates) {
         resultQuery = resultQuery.andWhere(this.geolocationSQLQuery, {
           searchCoordinates: searchDto.searchCoordinates,
-          radius: searchDto.radius * 1000, // km to meters
+          radius: searchDto.radius,
         });
       }
       // console.log(resultQuery.getSql());
@@ -503,7 +538,7 @@ export class PlacesService {
   }
 
   async checkExist(placeId: number): Promise<boolean> {
-    return this.placesRepository.exist({
+    return this.placesRepository.exists({
       where: {
         id: Equal(placeId),
       },
@@ -561,7 +596,7 @@ export class PlacesService {
   }
 
   async checkUserRelation(userId: number, placeId: number) {
-    return await this.placesRepository.exist({
+    return await this.placesRepository.exists({
       where: {
         author: {
           id: Equal(userId),
@@ -579,15 +614,6 @@ export class PlacesService {
       })
       .select(['place.id', 'place.slug'])
       .getMany();
-  }
-
-  async validateSlug(createSlugDto: CreateSlugDto) {
-    return await this.placesRepository.exist({
-      where: {
-        slug: Equal(createSlugDto.slug),
-        id: createSlugDto.id ? Not(createSlugDto.id) : undefined,
-      },
-    });
   }
 
   async updatePlace(
@@ -625,10 +651,17 @@ export class PlacesService {
         updatePlaceDto,
         updatePlaceDto.shouldTranslate,
       );
+      const titleTranslationRu =
+        translations.find((tr) => tr.language.id === LanguageIdEnum.RU)
+          ?.title || updatePlaceDto.title;
+      const parsedSlug = await this.createValidSlug(
+        titleTranslationRu,
+        placeId,
+      );
 
       const updatedPlace = this.placesRepository.create({
         id: placeId,
-        slug: updatePlaceDto.slug,
+        slug: parsedSlug,
         originalLanguage: {
           id: langId,
         },
@@ -1002,6 +1035,7 @@ export class PlacesService {
     const place = await this.placesRepository.findOne({ where: { id: id } });
     if (!place) throw new NotFoundException({ message: 'Place not found' });
     const statusChanged = place.status !== dto.status;
+    const isCommercialChanged = place.advertisement !== dto.advertisement;
 
     // update status
     place.status = dto.status;
@@ -1030,7 +1064,12 @@ export class PlacesService {
             comment: dto.message,
             status: dto.status,
           }
-        : { comment: dto.message, advertisement: dto.advertisement },
+        : isCommercialChanged
+        ? { comment: dto.message, advertisement: dto.advertisement }
+        : {
+            advDateChangedOnly: true,
+            comment: dto.message,
+          },
       new PlaceForEmailDto(placeForEmail),
     );
     await this.mailingService.sendEmail(email);

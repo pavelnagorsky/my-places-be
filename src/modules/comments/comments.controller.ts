@@ -23,12 +23,12 @@ import {
 } from '@nestjs/common';
 import { CommentsService } from './comments.service';
 import { CommentDto } from './dto/comment.dto';
-import { Token } from '../../auth/decorators/token.decorator';
-import { PayloadFromTokenPipe } from '../../auth/pipes/payload-from-token.pipe';
-import { AccessTokenPayloadDto } from '../../auth/dto/access-token-payload.dto';
+import { Token } from '../auth/decorators/token.decorator';
+import { PayloadFromTokenPipe } from '../auth/pipes/payload-from-token.pipe';
+import { AccessTokenPayloadDto } from '../auth/dto/access-token-payload.dto';
 import { ValidationExceptionDto } from '../../shared/validation/validation-exception.dto';
-import { Auth } from '../../auth/decorators/auth.decorator';
-import { TokenPayload } from '../../auth/decorators/token-payload.decorator';
+import { Auth } from '../auth/decorators/auth.decorator';
+import { TokenPayload } from '../auth/decorators/token-payload.decorator';
 import { CreateCommentDto } from './dto/create-comment.dto';
 import { UpdateCommentDto } from './dto/update-comment.dto';
 import { RoleNamesEnum } from '../roles/enums/role-names.enum';

@@ -28,11 +28,11 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { memoryStorage } from 'multer';
 import { StorageService } from '../storage/storage.service';
 import { ImageDto } from './dto/image.dto';
-import { Auth } from '../../auth/decorators/auth.decorator';
-import { TokenPayload } from '../../auth/decorators/token-payload.decorator';
-import { AccessTokenPayloadDto } from '../../auth/dto/access-token-payload.dto';
+import { Auth } from '../auth/decorators/auth.decorator';
+import { TokenPayload } from '../auth/decorators/token-payload.decorator';
+import { AccessTokenPayloadDto } from '../auth/dto/access-token-payload.dto';
 import { DeleteImageGuard } from './guards/delete-image.guard';
-import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 
 @ApiTags('Images')
 @Controller('images')

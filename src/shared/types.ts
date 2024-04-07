@@ -1,5 +1,5 @@
 import { Request } from 'express';
-import { AccessTokenPayloadDto } from '../auth/dto/access-token-payload.dto';
+import { AccessTokenPayloadDto } from '../modules/auth/dto/access-token-payload.dto';
 
 export type RequestWithTokenPayload = Request & {
   user?: AccessTokenPayloadDto;

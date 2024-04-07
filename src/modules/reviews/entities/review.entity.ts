@@ -2,6 +2,7 @@ import {
   Column,
   CreateDateColumn,
   Entity,
+  JoinColumn,
   ManyToOne,
   OneToMany,
   PrimaryGeneratedColumn,
@@ -18,19 +19,25 @@ export class Review {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @OneToMany(() => ReviewTranslation, (translation) => translation.review, {
-    cascade: true,
-  })
-  translations: ReviewTranslation[];
-
-  @ManyToOne(() => Place, (place) => place.reviews)
-  place: Place;
-
   @Column({ default: 0 })
   viewsCount: number;
 
   @Column({ default: ReviewStatusesEnum.MODERATION })
   status: ReviewStatusesEnum;
+
+  @Column({ type: 'varchar', nullable: true, default: null })
+  moderationMessage: string | null;
+
+  @CreateDateColumn()
+  createdAt: Date;
+
+  @UpdateDateColumn()
+  updatedAt: Date;
+
+  @ManyToOne(() => Place, (place) => place.reviews, {
+    onDelete: 'SET NULL',
+  })
+  place: Place;
 
   @OneToMany(() => Image, (image) => image.review, { cascade: true })
   images: Image[];
@@ -41,12 +48,8 @@ export class Review {
   @ManyToOne(() => User, (user) => user.reviewsModeration)
   moderator: User;
 
-  @Column({ type: 'varchar', nullable: true, default: null })
-  moderationMessage: string | null;
-
-  @CreateDateColumn()
-  createdAt: Date;
-
-  @UpdateDateColumn()
-  updatedAt: Date;
+  @OneToMany(() => ReviewTranslation, (translation) => translation.review, {
+    cascade: true,
+  })
+  translations: ReviewTranslation[];
 }

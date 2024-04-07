@@ -3,7 +3,7 @@ import {
   ExecutionContext,
   UnauthorizedException,
 } from '@nestjs/common';
-import { RequestWithTokenPayload } from '../../shared/types';
+import { RequestWithTokenPayload } from '../../../shared/types';
 
 export const TokenPayload = createParamDecorator(
   (data: unknown, ctx: ExecutionContext) => {

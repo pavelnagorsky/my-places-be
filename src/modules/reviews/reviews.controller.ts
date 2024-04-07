@@ -28,15 +28,15 @@ import {
   PickType,
 } from '@nestjs/swagger';
 import { ValidationExceptionDto } from '../../shared/validation/validation-exception.dto';
-import { Auth } from '../../auth/decorators/auth.decorator';
+import { Auth } from '../auth/decorators/auth.decorator';
 import { Review } from './entities/review.entity';
-import { TokenPayload } from '../../auth/decorators/token-payload.decorator';
-import { UserFromTokenPipe } from '../../auth/pipes/user-from-token.pipe';
+import { TokenPayload } from '../auth/decorators/token-payload.decorator';
+import { UserFromTokenPipe } from '../auth/pipes/user-from-token.pipe';
 import { User } from '../users/entities/user.entity';
 import { ReviewDto } from './dto/review.dto';
 import { ReviewsSearchResponseDto } from './dto/reviews-search-response.dto';
 import { Place } from '../places/entities/place.entity';
-import { AccessTokenPayloadDto } from '../../auth/dto/access-token-payload.dto';
+import { AccessTokenPayloadDto } from '../auth/dto/access-token-payload.dto';
 import { MyReviewsRequestDto } from './dto/my-reviews-request.dto';
 import { MyReviewsResponseDto } from './dto/my-reviews-response.dto';
 import { ReviewEditDto } from './dto/review-edit.dto';
@@ -409,6 +409,7 @@ export class ReviewsController {
   @ApiBody({
     type: ModerationDto,
   })
+  @UseInterceptors(ClassSerializerInterceptor)
   @Auth(RoleNamesEnum.MODERATOR, RoleNamesEnum.ADMIN)
   @Post(':id/moderation')
   async moderateReview(

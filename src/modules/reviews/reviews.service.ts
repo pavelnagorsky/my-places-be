@@ -21,7 +21,7 @@ import {
 } from 'typeorm';
 import { Place } from '../places/entities/place.entity';
 import { ReviewTranslation } from './entities/review-translation.entity';
-import { AccessTokenPayloadDto } from '../../auth/dto/access-token-payload.dto';
+import { AccessTokenPayloadDto } from '../auth/dto/access-token-payload.dto';
 import { MyReviewsRequestDto } from './dto/my-reviews-request.dto';
 import { MyReviewsOrderByEnum } from './enums/my-reviews-order-by.enum';
 import { ReviewStatusesEnum } from './enums/review-statuses.enum';
@@ -29,6 +29,10 @@ import { ModerationReviewsRequestDto } from './dto/moderation-reviews-request.dt
 import { ModerationReviewsOrderByEnum } from './enums/moderation-reviews-order-by';
 import { ModerationDto } from '../places/dto/moderation.dto';
 import { AdministrationReviewsRequestDto } from './dto/administration-reviews-request.dto';
+import { LanguageIdEnum } from '../languages/enums/language-id.enum';
+import { ReviewEmail } from '../mailing/emails/review.email';
+import { ReviewForEmailDto } from './dto/review-for-email.dto';
+import { MailingService } from '../mailing/mailing.service';
 
 @Injectable()
 export class ReviewsService {
@@ -41,6 +45,7 @@ export class ReviewsService {
     private reviewTranslationsRepository: Repository<ReviewTranslation>,
     private imagesService: ImagesService,
     private translationsService: TranslationsService,
+    private mailingService: MailingService,
   ) {}
 
   // create translations for review
@@ -317,8 +322,37 @@ export class ReviewsService {
     return { id };
   }
 
+  private async getReviewForEmail(id: number) {
+    const review = await this.reviewsRepository.findOne({
+      relations: {
+        translations: true,
+        author: true,
+      },
+      select: {
+        id: true,
+        createdAt: true,
+        status: true,
+        author: {
+          email: true,
+          firstName: true,
+          lastName: true,
+          receiveEmails: true,
+        },
+      },
+      where: {
+        id: id,
+        translations: {
+          language: {
+            id: LanguageIdEnum.RU,
+          },
+        },
+      },
+    });
+    return review;
+  }
+
   async checkUserRelation(userId: number, reviewId: number) {
-    return await this.reviewsRepository.exist({
+    return await this.reviewsRepository.exists({
       where: {
         author: {
           id: Equal(userId),
@@ -664,14 +698,29 @@ export class ReviewsService {
         message: 'Review not found',
       });
 
+    const updatedStatus = dto.accept
+      ? ReviewStatusesEnum.APPROVED
+      : ReviewStatusesEnum.REJECTED;
+
     await this.reviewsRepository.save({
       id: review.id,
       moderator: moderator,
-      status: dto.accept
-        ? ReviewStatusesEnum.APPROVED
-        : ReviewStatusesEnum.REJECTED,
+      status: updatedStatus,
       moderationMessage: dto.feedback || null,
     });
+
+    const reviewForEmail = await this.getReviewForEmail(review.id);
+    if (!reviewForEmail || !reviewForEmail.author.receiveEmails) return;
+
+    const email = new ReviewEmail(
+      {
+        comment: dto.feedback,
+        status: updatedStatus,
+      },
+      new ReviewForEmailDto(reviewForEmail),
+    );
+    await this.mailingService.sendEmail(email);
+
     return;
   }
 }

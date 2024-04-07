@@ -15,7 +15,7 @@ export class ReviewTranslation
   @Column({ type: 'text', nullable: true })
   description: string;
 
-  @ManyToOne(() => Language, (language) => language.id)
+  @ManyToOne(() => Language, (language) => language.reviewTranslations)
   language: Language;
 
   @ManyToOne(() => Review, (review) => review.translations, {

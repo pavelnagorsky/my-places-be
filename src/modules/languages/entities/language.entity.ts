@@ -15,7 +15,7 @@ import { LanguageIdEnum } from '../enums/language-id.enum';
 
 @Entity()
 export class Language {
-  @PrimaryColumn({ type: 'int' })
+  @PrimaryColumn()
   id: LanguageIdEnum;
 
   @Column({ type: 'varchar', length: 25 })
@@ -25,23 +25,23 @@ export class Language {
   code: string;
 
   @OneToMany(() => PlaceTypeTranslation, (translation) => translation.language)
-  placeTypeTitleTranslation: PlaceTypeTranslation;
+  placeTypeTranslations: PlaceTypeTranslation[];
 
   @OneToMany(
     () => PlaceCategoryTranslation,
     (translation) => translation.language,
   )
-  placeCategoryTitleTranslation: PlaceCategoryTranslation;
+  placeCategoryTranslations: PlaceCategoryTranslation[];
 
   @OneToMany(() => PlaceTranslation, (translation) => translation.language)
-  placeTranslation: PlaceTranslation;
+  placeTranslations: PlaceTranslation[];
 
   @OneToMany(() => ReviewTranslation, (translation) => translation.language)
-  reviewTranslation: ReviewTranslation;
+  reviewTranslations: ReviewTranslation[];
 
   @OneToMany(() => User, (user) => user.preferredLanguage)
-  user: User;
+  users: User[];
 
   @OneToMany(() => Place, (place) => place.originalLanguage)
-  place: Place;
+  places: Place[];
 }

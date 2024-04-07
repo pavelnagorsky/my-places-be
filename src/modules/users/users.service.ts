@@ -26,9 +26,11 @@ import { Moderator } from './entities/moderator.entity';
 import { LanguagesService } from '../languages/languages.service';
 import { SaveModeratorDto } from './dto/save-moderator.dto';
 import { BlockUserDto } from './dto/block-user.dto';
-import { RefreshTokenEntity } from '../../auth/entities/refresh-token.entity';
+import { RefreshTokenEntity } from '../auth/entities/refresh-token.entity';
 import { MailingService } from '../mailing/mailing.service';
 import { ConfirmEmail } from '../mailing/emails/confirm.email';
+import { EmailDto } from './dto/email.dto';
+import { CustomEmail } from '../mailing/emails/custom.email';
 
 @Injectable()
 export class UsersService {
@@ -263,13 +265,8 @@ export class UsersService {
     return;
   }
 
-  async sendEmail(to: string, dto: any) {
-    // const user = await this.getUserByEmail(to);
-    // if (!user) throw new NotFoundException({ message: 'User was not found' });
-    const email = new ConfirmEmail(
-      { firstName: 'Павел', email: to, lastName: 'Нагорский' } as any,
-      'http://localhost:3001/auth/confirm',
-    );
+  async sendEmail(dto: EmailDto) {
+    const email = new CustomEmail(dto);
     await this.mailingService.sendEmail(email);
     return;
   }

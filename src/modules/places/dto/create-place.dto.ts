@@ -9,10 +9,6 @@ import {
 } from 'class-validator';
 
 export class CreatePlaceDto {
-  @ApiProperty({ type: String, description: 'Place url path' })
-  @IsString()
-  slug: string;
-
   @ApiProperty({ type: String, description: 'Place title' })
   @IsString()
   @MaxLength(300)

@@ -17,7 +17,13 @@
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
-    "test:e2e": "jest --config ./test/jest-e2e.json"
+    "test:e2e": "jest --config ./test/jest-e2e.json",
+    "typeorm": "npm run build && ts-node ./node_modules/typeorm/cli",
+    "migration:create": "npm run typeorm -- migration:create",
+    "migration:generate": "npm run typeorm -- migration:generate -d dist/database/typeorm.config.js",
+    "migration:run": "npm run typeorm -- migration:run -d dist/database/typeorm.config.js",
+    "migration:run-fake": "npm run typeorm -- migration:run --fake -d dist/database/typeorm.config.js",
+    "migration:revert": "npm run typeorm -- migration:revert -d dist/database/typeorm.config.js"
   },
   "dependencies": {
     "@google-cloud/storage": "^6.10.0",
@@ -36,13 +42,14 @@
     "class-validator": "^0.14.0",
     "cookie-parser": "^1.4.6",
     "handlebars": "^4.7.8",
-    "mysql": "^2.18.1",
+    "mysql2": "^3.9.3",
     "nodemailer": "^6.9.2",
     "passport": "^0.7.0",
     "passport-jwt": "^4.0.1",
     "reflect-metadata": "^0.1.13",
     "rxjs": "^7.2.0",
-    "typeorm": "^0.3.15"
+    "slugify": "^1.6.6",
+    "typeorm": "^0.3.20"
   },
   "devDependencies": {
     "@appnest/readme": "^1.2.7",

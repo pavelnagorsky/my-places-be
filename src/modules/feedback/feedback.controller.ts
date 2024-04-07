@@ -21,7 +21,7 @@ import {
 } from '@nestjs/swagger';
 import { ValidationExceptionDto } from '../../shared/validation/validation-exception.dto';
 import { CreateFeedbackDto } from './dto/create-feedback.dto';
-import { Auth } from '../../auth/decorators/auth.decorator';
+import { Auth } from '../auth/decorators/auth.decorator';
 import { RoleNamesEnum } from '../roles/enums/role-names.enum';
 import { FeedbackListResponseDto } from './dto/feedback-list-response.dto';
 import { FeedbackListRequestDto } from './dto/feedback-list-request.dto';

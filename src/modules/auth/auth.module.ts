@@ -1,10 +1,10 @@
 import { Global, Module } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
-import { UsersModule } from '../modules/users/users.module';
+import { UsersModule } from '../users/users.module';
 import { JwtModule } from '@nestjs/jwt';
 import { UserFromTokenPipe } from './pipes/user-from-token.pipe';
-import { MailingModule } from '../modules/mailing/mailing.module';
+import { MailingModule } from '../mailing/mailing.module';
 import { PayloadFromTokenPipe } from './pipes/payload-from-token.pipe';
 import { JwtRefreshTokenStrategy } from './strategy/jwt-refresh-token.strategy';
 import { JwtAccessTokenStrategy } from './strategy/jwt-access-token.strategy';

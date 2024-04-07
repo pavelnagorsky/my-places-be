@@ -9,6 +9,7 @@ import {
   Index,
   CreateDateColumn,
   UpdateDateColumn,
+  JoinColumn,
 } from 'typeorm';
 import { User } from '../../users/entities/user.entity';
 import { PlaceType } from '../../place-types/entities/place-type.entity';
@@ -40,9 +41,6 @@ export class Place {
   @OneToMany(() => Image, (image) => image.place, { cascade: true })
   images: Image[];
 
-  @OneToMany(() => Review, (review) => review.place, { cascade: true })
-  reviews: Review[];
-
   @OneToMany(() => Comment, (comment) => comment.place, { cascade: true })
   comments: Comment[];
 
@@ -68,7 +66,7 @@ export class Place {
   @Column({ type: 'datetime', nullable: true })
   advEndDate: Date | null;
 
-  @ManyToOne(() => Language, (language) => language.id)
+  @ManyToOne(() => Language, (language) => language.places)
   originalLanguage: Language;
 
   @ManyToOne(() => User, (user) => user.places)
@@ -100,4 +98,9 @@ export class Place {
 
   @OneToMany(() => Favourite, (favourite) => favourite.place, { cascade: true })
   favourites: Favourite[];
+
+  @OneToMany(() => Review, (review) => review.place, {
+    cascade: true,
+  })
+  reviews: Review[];
 }

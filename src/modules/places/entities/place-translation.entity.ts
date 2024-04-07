@@ -19,7 +19,7 @@ export class PlaceTranslation
   @Column({ type: 'varchar', length: 300, nullable: true })
   address: string;
 
-  @ManyToOne(() => Language, (language) => language.id)
+  @ManyToOne(() => Language, (language) => language.placeTranslations)
   language: Language;
 
   @ManyToOne(() => Place, (place) => place.translations, {

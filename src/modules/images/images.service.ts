@@ -4,7 +4,7 @@ import { In, Repository, Equal } from 'typeorm';
 import { Image } from './entities/image.entity';
 import { StorageService } from '../storage/storage.service';
 import { User } from '../users/entities/user.entity';
-import { AccessTokenPayloadDto } from '../../auth/dto/access-token-payload.dto';
+import { AccessTokenPayloadDto } from '../auth/dto/access-token-payload.dto';
 
 @Injectable()
 export class ImagesService {

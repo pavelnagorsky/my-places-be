@@ -19,7 +19,7 @@ import {
 } from '@nestjs/swagger';
 import { RoleDto } from './dto/role.dto';
 import { RoleNamesEnum } from './enums/role-names.enum';
-import { Auth } from '../../auth/decorators/auth.decorator';
+import { Auth } from '../auth/decorators/auth.decorator';
 
 @ApiTags('Roles')
 @Controller('roles')

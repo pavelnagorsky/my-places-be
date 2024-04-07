@@ -9,7 +9,7 @@ import { LanguagesModule } from './modules/languages/languages.module';
 import { TranslationsModule } from './modules/translations/translations.module';
 import { StorageModule } from './modules/storage/storage.module';
 import { ImagesModule } from './modules/images/images.module';
-import { AuthModule } from './auth/auth.module';
+import { AuthModule } from './modules/auth/auth.module';
 import { UsersModule } from './modules/users/users.module';
 import { RolesModule } from './modules/roles/roles.module';
 import { MailingModule } from './modules/mailing/mailing.module';
@@ -26,6 +26,7 @@ import { FavouritesModule } from './modules/favourites/favourites.module';
     ConfigModule.forRoot({
       load: [configuration],
       isGlobal: true,
+      cache: true,
     }),
     DatabaseModule,
     PlacesModule,

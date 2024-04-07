@@ -6,7 +6,7 @@ import { User } from './entities/user.entity';
 import { RolesModule } from '../roles/roles.module';
 import { Moderator } from './entities/moderator.entity';
 import { LanguagesModule } from '../languages/languages.module';
-import { RefreshTokenEntity } from '../../auth/entities/refresh-token.entity';
+import { RefreshTokenEntity } from '../auth/entities/refresh-token.entity';
 import { MailingModule } from '../mailing/mailing.module';
 
 @Module({

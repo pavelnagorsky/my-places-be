@@ -20,7 +20,7 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { LanguageDto } from './dto/language.dto';
-import { Auth } from '../../auth/decorators/auth.decorator';
+import { Auth } from '../auth/decorators/auth.decorator';
 import { RoleNamesEnum } from '../roles/enums/role-names.enum';
 
 @ApiTags('Languages')

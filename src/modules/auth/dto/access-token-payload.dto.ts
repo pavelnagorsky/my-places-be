@@ -1,4 +1,4 @@
-import { Role } from '../../modules/roles/entities/role.entity';
+import { Role } from '../../roles/entities/role.entity';
 
 export class AccessTokenPayloadDto {
   id: number;

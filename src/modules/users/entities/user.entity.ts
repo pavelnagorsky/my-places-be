@@ -22,7 +22,7 @@ import { Review } from '../../reviews/entities/review.entity';
 import { Report } from '../../reports/entities/report.entity';
 import { Language } from '../../languages/entities/language.entity';
 import { Favourite } from '../../favourites/entities/favourite.entity';
-import { RefreshTokenEntity } from '../../../auth/entities/refresh-token.entity';
+import { RefreshTokenEntity } from '../../auth/entities/refresh-token.entity';
 
 @Entity()
 export class User {
@@ -35,7 +35,7 @@ export class User {
   @Column({ type: 'varchar', length: 30 })
   lastName: string;
 
-  @Column({ type: 'varchar', length: 30 })
+  @Column({ type: 'varchar', length: 60 })
   email: string;
 
   @Column({ default: false })
@@ -92,7 +92,7 @@ export class User {
   @OneToMany(() => Report, (report) => report.moderator)
   reportsModeration: Report;
 
-  @ManyToOne(() => Language, (language) => language.id, { nullable: true })
+  @ManyToOne(() => Language, (language) => language.users, { nullable: true })
   preferredLanguage: Language | null;
 
   @CreateDateColumn()

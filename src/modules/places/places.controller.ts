@@ -27,19 +27,19 @@ import {
   PickType,
 } from '@nestjs/swagger';
 import { CreatePlaceDto } from './dto/create-place.dto';
-import { UserFromTokenPipe } from '../../auth/pipes/user-from-token.pipe';
+import { UserFromTokenPipe } from '../auth/pipes/user-from-token.pipe';
 import { User } from '../users/entities/user.entity';
-import { TokenPayload } from '../../auth/decorators/token-payload.decorator';
-import { Auth } from '../../auth/decorators/auth.decorator';
+import { TokenPayload } from '../auth/decorators/token-payload.decorator';
+import { Auth } from '../auth/decorators/auth.decorator';
 import { PlaceDto } from './dto/place.dto';
-import { AccessTokenPayloadDto } from '../../auth/dto/access-token-payload.dto';
+import { AccessTokenPayloadDto } from '../auth/dto/access-token-payload.dto';
 import { Place } from './entities/place.entity';
 import { UpdatePlaceDto } from './dto/update-place.dto';
 import { PlaceSlugDto } from './dto/place-slug.dto';
 import { SearchRequestDto } from './dto/search-request.dto';
 import { ValidationExceptionDto } from '../../shared/validation/validation-exception.dto';
 import { SelectPlaceDto } from './dto/select-place.dto';
-import { CreateSlugDto } from './dto/create-slug.dto';
+import { ValidateSlugDto } from './dto/validate-slug.dto';
 import { MyPlacesResponseDto } from './dto/my-places-response.dto';
 import { MyPlacesRequestDto } from './dto/my-places-request.dto';
 import { PlaceEditDto } from './dto/place-edit.dto';
@@ -50,6 +50,7 @@ import { ModerationDto } from './dto/moderation.dto';
 import { PlacesSearchResponseDto } from './dto/places-search-response.dto';
 import { MyPlaceDto } from './dto/my-place.dto';
 import { ChangePlaceStatusDto } from './dto/change-place-status.dto';
+import { UpdateSlugDto } from './dto/update-slug.dto';
 
 @ApiTags('Places')
 @Controller('/places')
@@ -104,17 +105,46 @@ export class PlacesController {
     type: ValidationExceptionDto,
   })
   @ApiBody({
-    type: CreateSlugDto,
+    type: ValidateSlugDto,
   })
-  @Auth()
+  @Auth(RoleNamesEnum.ADMIN)
   @Post('slugs/validate')
-  async checkSlugValidity(@Body() createSlugDto: CreateSlugDto) {
-    const slugExists = await this.placesService.validateSlug(createSlugDto);
+  async checkSlugValidity(@Body() createSlugDto: ValidateSlugDto) {
+    const slugExists = await this.placesService.validateSlugExists(
+      createSlugDto.slug,
+      createSlugDto.id,
+    );
     const existsMessage = 'SLUG_EXISTS';
     if (slugExists)
       throw new BadRequestException({
         message: existsMessage,
       });
+    return;
+  }
+
+  @ApiOperation({ summary: 'Update place slug' })
+  @ApiOkResponse({
+    description: 'OK',
+  })
+  @ApiBadRequestResponse({
+    description: 'Validation failed',
+    type: ValidationExceptionDto,
+  })
+  @ApiParam({
+    name: 'id',
+    type: Number,
+    description: 'The id of the place',
+  })
+  @ApiBody({
+    type: UpdateSlugDto,
+  })
+  @Auth(RoleNamesEnum.ADMIN)
+  @Put(':id/slug')
+  async updatePlaceSlug(
+    @Param('id', ParseIntPipe) placeId: number,
+    @Body() dto: UpdateSlugDto,
+  ) {
+    await this.placesService.updatePlaceSlug(placeId, dto.slug);
     return;
   }
 

@@ -115,6 +115,11 @@ export class PlaceCategoriesService {
         image2: true,
         titles: true,
       },
+      order: {
+        titles: {
+          text: 'asc',
+        },
+      },
       where: {
         titles: {
           language: {

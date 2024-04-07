@@ -4,7 +4,7 @@ import {
   PipeTransform,
   UnauthorizedException,
 } from '@nestjs/common';
-import { UsersService } from '../../modules/users/users.service';
+import { UsersService } from '../../users/users.service';
 import { AccessTokenPayloadDto } from '../dto/access-token-payload.dto';
 
 @Injectable()

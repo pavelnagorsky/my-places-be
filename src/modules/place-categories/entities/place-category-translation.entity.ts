@@ -9,7 +9,7 @@ export class PlaceCategoryTranslation
   extends TranslationBaseEntity
   implements ITranslation
 {
-  @ManyToOne(() => Language, (language) => language.id)
+  @ManyToOne(() => Language, (language) => language.placeCategoryTranslations)
   language: Language;
 
   @Column({ type: 'varchar', length: 300, nullable: true })
