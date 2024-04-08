@@ -15,7 +15,7 @@ export class CreateUserDto {
 
   @ApiProperty({ title: 'Email', type: String, default: 'johndoe@gmail.com' })
   @IsEmail()
-  @MaxLength(30)
+  @MaxLength(60)
   email: string;
 
   @ApiProperty({ title: 'Password', type: String, default: 'password' })

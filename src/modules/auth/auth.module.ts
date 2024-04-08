@@ -11,6 +11,7 @@ import { JwtAccessTokenStrategy } from './strategy/jwt-access-token.strategy';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { RefreshTokenEntity } from './entities/refresh-token.entity';
 import { JwtEmailTokenStrategy } from './strategy/jwt-email-token.strategy';
+import { JwtResetPasswordStrategy } from './strategy/jwt-reset-password.strategy';
 
 @Global()
 @Module({
@@ -28,6 +29,7 @@ import { JwtEmailTokenStrategy } from './strategy/jwt-email-token.strategy';
     JwtRefreshTokenStrategy,
     JwtAccessTokenStrategy,
     JwtEmailTokenStrategy,
+    JwtResetPasswordStrategy,
   ],
   exports: [AuthService, JwtModule, UserFromTokenPipe, UsersModule],
 })

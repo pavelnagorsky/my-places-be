@@ -18,6 +18,9 @@ export default () => {
       accessTokenExpiration: process.env['ACCESS_TOKEN_EXPIRATION'],
       emailTokenSecret: process.env['EMAIL_TOKEN_SECRET'],
       emailTokenExpiration: process.env['EMAIL_TOKEN_EXPIRATION'],
+      resetPasswordTokenSecret: process.env['RESET_PASSWORD_TOKEN_SECRET'],
+      resetPasswordTokenExpiration:
+        process.env['RESET_PASSWORD_TOKEN_EXPIRATION'],
       refreshTokenSecret: process.env['REFRESH_TOKEN_SECRET'],
       refreshTokenExpiration: process.env['REFRESH_TOKEN_EXPIRATION'],
     },
@@ -50,6 +53,8 @@ export interface IJwtConfig {
   accessTokenExpiration: string;
   emailTokenSecret: string;
   emailTokenExpiration: string;
+  resetPasswordTokenSecret: string;
+  resetPasswordTokenExpiration: string;
   refreshTokenSecret: string;
   refreshTokenExpiration: string;
 }

@@ -31,6 +31,8 @@ import { MailingService } from '../mailing/mailing.service';
 import { ConfirmEmail } from '../mailing/emails/confirm.email';
 import { EmailDto } from './dto/email.dto';
 import { CustomEmail } from '../mailing/emails/custom.email';
+import { BlockUserEmail } from '../mailing/emails/block-user.email';
+import { Cron, CronExpression } from '@nestjs/schedule';
 
 @Injectable()
 export class UsersService {
@@ -164,6 +166,10 @@ export class UsersService {
     await this.refreshTokensRepository.remove(user.refreshTokens);
     user.refreshTokens = [];
     await this.usersRepository.save(user);
+    if (!user.receiveEmails) return;
+    this.mailingService.sendEmail(
+      new BlockUserEmail({ blocked: true, comment: dto.reason }, user),
+    );
     return;
   }
 
@@ -174,20 +180,6 @@ export class UsersService {
     user.blockReason = null;
     await this.usersRepository.save(user);
     return;
-  }
-
-  async unblockUsersAutomatic() {
-    const users = await this.usersRepository.find({
-      where: {
-        blockedUntil: And(Not(IsNull()), LessThanOrEqual(new Date())),
-      },
-    });
-    const updatedUsers = users.map((u) => {
-      u.blockedUntil = null;
-      u.blockReason = null;
-      return u;
-    });
-    await this.usersRepository.save(updatedUsers);
   }
 
   async saveModerator(userId: number, dto: SaveModeratorDto) {
@@ -265,9 +257,35 @@ export class UsersService {
     return;
   }
 
+  async updateUserPassword(password: string, user: User) {
+    user.password = password;
+    await this.usersRepository.save(user);
+    return;
+  }
+
   async sendEmail(dto: EmailDto) {
     const email = new CustomEmail(dto);
     await this.mailingService.sendEmail(email);
     return;
+  }
+
+  // Cron job for unblocking users
+  @Cron(CronExpression.EVERY_12_HOURS)
+  private async unblockUsersAutomatic() {
+    const users = await this.usersRepository.find({
+      where: {
+        blockedUntil: And(Not(IsNull()), LessThanOrEqual(new Date())),
+      },
+    });
+    const updatedUsers = users.map((u) => {
+      u.blockedUntil = null;
+      u.blockReason = null;
+      return u;
+    });
+    await this.usersRepository.save(updatedUsers);
+    updatedUsers.forEach((u) => {
+      if (!u.receiveEmails) return;
+      this.mailingService.sendEmail(new BlockUserEmail({ blocked: false }, u));
+    });
   }
 }

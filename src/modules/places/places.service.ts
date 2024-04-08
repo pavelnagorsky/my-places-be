@@ -7,11 +7,13 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Place } from './entities/place.entity';
 import {
+  And,
   Between,
   Equal,
   FindManyOptions,
   ILike,
   In,
+  IsNull,
   LessThanOrEqual,
   Like as LikeOperator,
   MoreThanOrEqual,
@@ -29,7 +31,6 @@ import { AccessTokenPayloadDto } from '../auth/dto/access-token-payload.dto';
 import { UpdatePlaceDto } from './dto/update-place.dto';
 import { SearchRequestDto } from './dto/search-request.dto';
 import { PlaceStatusesEnum } from './enums/place-statuses.enum';
-import { ValidateSlugDto } from './dto/validate-slug.dto';
 import { PlaceTranslation } from './entities/place-translation.entity';
 import { MyPlacesOrderByEnum } from './enums/my-places-order-by.enum';
 import { MyPlacesRequestDto } from './dto/my-places-request.dto';
@@ -42,6 +43,7 @@ import { PlaceEmail } from '../mailing/emails/place.email';
 import { PlaceForEmailDto } from './dto/place-for-email.dto';
 import { ChangePlaceStatusDto } from './dto/change-place-status.dto';
 import { Review } from '../reviews/entities/review.entity';
+import { Cron, CronExpression } from '@nestjs/schedule';
 
 @Injectable()
 export class PlacesService {
@@ -1127,5 +1129,102 @@ export class PlacesService {
       );
     }
     await this.removePlace(id);
+  }
+
+  // Cron job for moving commercial places with outdated adv end date into waiting for payment status
+  @Cron(CronExpression.EVERY_12_HOURS)
+  private async handleCommercialOutdatedPlaces() {
+    const places = await this.placesRepository.find({
+      relations: {
+        translations: true,
+        author: true,
+      },
+      select: {
+        id: true,
+        createdAt: true,
+        advertisement: true,
+        status: true,
+        author: {
+          email: true,
+          firstName: true,
+          lastName: true,
+          receiveEmails: true,
+        },
+        advEndDate: true,
+      },
+      where: {
+        translations: {
+          language: {
+            id: LanguageIdEnum.RU,
+          },
+        },
+        advertisement: true,
+        advEndDate: And(Not(IsNull()), LessThanOrEqual(new Date())),
+      },
+    });
+    places.forEach(async (p) => {
+      try {
+        p.status = PlaceStatusesEnum.NEEDS_PAYMENT;
+        p.advEndDate = null;
+        await this.placesRepository.save(p);
+        if (!p.author.receiveEmails) return;
+        const email = new PlaceEmail(
+          { status: PlaceStatusesEnum.NEEDS_PAYMENT },
+          new PlaceForEmailDto(p),
+        );
+        this.mailingService.sendEmail(email);
+      } catch (e) {
+        this.logger.error(
+          'Cron job: Failed to handleCommercialOutdatedPlaces',
+          e,
+        );
+      }
+    });
+  }
+
+  // Cron job for sending notification emails with info that commercial ends in a week
+  @Cron(CronExpression.EVERY_12_HOURS)
+  private async handleCommercialNotifications() {
+    const currentDate = new Date();
+    const oneWeekFromNow = new Date(
+      currentDate.getTime() + 7 * 24 * 60 * 60 * 1000,
+    );
+
+    const places = await this.placesRepository.find({
+      relations: {
+        translations: true,
+        author: true,
+      },
+      select: {
+        id: true,
+        createdAt: true,
+        advertisement: true,
+        status: true,
+        author: {
+          email: true,
+          firstName: true,
+          lastName: true,
+          receiveEmails: true,
+        },
+        advEndDate: true,
+      },
+      where: {
+        translations: {
+          language: {
+            id: LanguageIdEnum.RU,
+          },
+        },
+        advertisement: true,
+        advEndDate: And(Not(IsNull()), LessThanOrEqual(oneWeekFromNow)),
+      },
+    });
+    places.forEach((p) => {
+      if (!p.author.receiveEmails) return;
+      const email = new PlaceEmail(
+        { commercialExpires: true },
+        new PlaceForEmailDto(p),
+      );
+      this.mailingService.sendEmail(email);
+    });
   }
 }

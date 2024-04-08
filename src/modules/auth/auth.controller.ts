@@ -34,6 +34,9 @@ import { User } from '../users/entities/user.entity';
 import { JwtEmailGuard } from './guards/jwt-email.guard';
 import { LoginException } from './exceptions/login.exception';
 import { LoginFailureDto } from './dto/login-failure.dto';
+import { JwtResetPasswordGuard } from './guards/jwt-reset-password.guard';
+import { ResetPasswordDto } from './dto/reset-password.dto';
+import { ResetPasswordRequestDto } from './dto/reset-password-request.dto';
 
 @ApiTags('Authentication')
 @Controller('auth')
@@ -89,6 +92,32 @@ export class AuthController {
   @Post('/confirm-email')
   async confirmEmail(@TokenPayload() tokenPayload: AccessTokenPayloadDto) {
     await this.authService.confirmEmail(tokenPayload.id);
+    return;
+  }
+
+  @ApiOperation({ summary: 'Reset user password' })
+  @ApiOkResponse({
+    description: 'OK',
+  })
+  @ApiBody({ type: ResetPasswordDto })
+  @UseGuards(JwtResetPasswordGuard)
+  @Post('/reset-password')
+  async resetPassword(
+    @Body() dto: ResetPasswordDto,
+    @TokenPayload(UserFromTokenPipe) user: User,
+  ) {
+    await this.authService.resetPassword(dto, user);
+    return;
+  }
+
+  @ApiOperation({ summary: 'Reset user password request' })
+  @ApiOkResponse({
+    description: 'OK',
+  })
+  @ApiBody({ type: ResetPasswordRequestDto })
+  @Post('/reset-password-request')
+  async resetPasswordRequest(@Body() dto: ResetPasswordRequestDto) {
+    await this.authService.resetPasswordRequest(dto);
     return;
   }
 

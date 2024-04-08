@@ -20,6 +20,7 @@ import { LikesModule } from './modules/likes/likes.module';
 import { ReportsModule } from './modules/reports/reports.module';
 import { FeedbackModule } from './modules/feedback/feedback.module';
 import { FavouritesModule } from './modules/favourites/favourites.module';
+import { ScheduleModule } from '@nestjs/schedule';
 
 @Module({
   imports: [
@@ -28,6 +29,7 @@ import { FavouritesModule } from './modules/favourites/favourites.module';
       isGlobal: true,
       cache: true,
     }),
+    ScheduleModule.forRoot(),
     DatabaseModule,
     PlacesModule,
     PlaceTypesModule,

@@ -21,6 +21,9 @@ import { Equal, LessThan, Repository } from 'typeorm';
 import { RefreshTokenEntity } from './entities/refresh-token.entity';
 import { LoginException } from './exceptions/login.exception';
 import { ConfirmEmail } from '../mailing/emails/confirm.email';
+import { ResetPasswordDto } from './dto/reset-password.dto';
+import { ResetPasswordRequestDto } from './dto/reset-password-request.dto';
+import { ResetPasswordEmail } from '../mailing/emails/reset-password.email';
 
 @Injectable()
 export class AuthService {
@@ -144,6 +147,35 @@ export class AuthService {
     return tokens;
   }
 
+  // reset password request logic:
+  // 1) check if user with requested email exists
+  // 2) generate token
+  // 3) send confirmation email with token link
+  async resetPasswordRequest(dto: ResetPasswordRequestDto) {
+    const user = await this.usersService.getUserByEmail(dto.email);
+    if (!user) return;
+    // generate token
+    const token = await this.generateRefreshPasswordToken(user);
+    const domain = this.config.get<IFrontendConfig>('frontend')
+      ?.domain as string;
+    const confirmLink = `${domain}/auth/reset-password/${token}`;
+    // send confirmation email
+    const email = new ResetPasswordEmail(user, confirmLink);
+    await this.mailingService.sendEmail(email);
+    return;
+  }
+
+  // reset password logic:
+  // 2) hash new password
+  // 3) update user in db
+  async resetPassword(dto: ResetPasswordDto, user: User) {
+    // hash password
+    const hashedPassword = await hash(dto.password, 8);
+    // update user
+    await this.usersService.updateUserPassword(hashedPassword, user);
+    return;
+  }
+
   // confirm user email
   async confirmEmail(userId: number) {
     await this.usersService.confirmEmail(userId);
@@ -263,6 +295,20 @@ export class AuthService {
       expiresIn: this.config.get<IJwtConfig>('jwt')
         ?.emailTokenExpiration as string,
       secret: this.config.get<IJwtConfig>('jwt')?.emailTokenSecret as string,
+    });
+  }
+
+  private async generateRefreshPasswordToken(user: User) {
+    const payload: AccessTokenPayloadDto = {
+      email: user.email,
+      id: user.id,
+      roles: user.roles,
+    };
+    return this.jwtService.signAsync(payload, {
+      expiresIn: this.config.get<IJwtConfig>('jwt')
+        ?.resetPasswordTokenExpiration as string,
+      secret: this.config.get<IJwtConfig>('jwt')
+        ?.resetPasswordTokenSecret as string,
     });
   }
 
