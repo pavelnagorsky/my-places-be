@@ -1,10 +1,10 @@
 {
   "name": "places-be",
   "version": "0.0.1",
-  "description": "",
-  "author": "",
+  "description": "Backend application for my-places.by",
+  "author": "Pavel Nagorsky",
   "private": true,
-  "license": "UNLICENSED",
+  "license": "ISC",
   "scripts": {
     "build": "nest build",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
