@@ -51,6 +51,7 @@ import { PlacesSearchResponseDto } from './dto/places-search-response.dto';
 import { MyPlaceDto } from './dto/my-place.dto';
 import { ChangePlaceStatusDto } from './dto/change-place-status.dto';
 import { UpdateSlugDto } from './dto/update-slug.dto';
+import { CacheInterceptor } from '@nestjs/cache-manager';
 
 @ApiTags('Places')
 @Controller('/places')
@@ -90,6 +91,7 @@ export class PlacesController {
     type: PlaceSlugDto,
     isArray: true,
   })
+  @UseInterceptors(CacheInterceptor)
   @Get('slugs')
   async getPlacesSlugs() {
     const slugs = await this.placesService.getPlacesSlugs();
@@ -239,7 +241,7 @@ export class PlacesController {
     type: Number,
     description: 'The ID of the language',
   })
-  @UseInterceptors(ClassSerializerInterceptor)
+  @UseInterceptors(ClassSerializerInterceptor, CacheInterceptor)
   @Get('slug/:slug')
   async getById(
     @Param('slug') slug: string,

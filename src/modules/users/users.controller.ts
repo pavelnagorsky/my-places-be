@@ -217,7 +217,7 @@ export class UsersController {
     return;
   }
 
-  @ApiOperation({ description: 'send email to user' })
+  @ApiOperation({ summary: 'Send email to user' })
   @ApiBody({ type: EmailDto })
   @ApiOkResponse({
     description: 'OK',

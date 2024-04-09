@@ -30,6 +30,7 @@ import { RoleNamesEnum } from '../roles/enums/role-names.enum';
 import { PlaceCategoryAdminDto } from './dto/place-category-admin.dto';
 import { UpdatePlaceCategoryDto } from './dto/update-place-category.dto';
 import { ValidationExceptionDto } from '../../shared/validation/validation-exception.dto';
+import { CacheInterceptor } from '@nestjs/cache-manager';
 
 @ApiTags('Place categories')
 @Controller('placeCategories')
@@ -49,7 +50,7 @@ export class PlaceCategoriesController {
   @ApiBody({
     type: CreatePlaceCategoryDto,
   })
-  //@Auth(RoleNamesEnum.ADMIN)
+  @Auth(RoleNamesEnum.ADMIN)
   @Post('administration')
   async create(@Body() createPlaceCategoryDto: CreatePlaceCategoryDto) {
     const category = await this.placeCategoriesService.create(
@@ -77,8 +78,8 @@ export class PlaceCategoriesController {
   @ApiBody({
     type: UpdatePlaceCategoryDto,
   })
-  //@Auth(RoleNamesEnum.ADMIN)
-  @Put('administration/:id')
+  @Auth(RoleNamesEnum.ADMIN)
+  @Put(':id/administration')
   async update(
     @Param('id', ParseIntPipe) id: number,
     @Body() updatePlaceCategoryDto: UpdatePlaceCategoryDto,
@@ -101,9 +102,32 @@ export class PlaceCategoriesController {
     type: Number,
     description: 'The ID of the language',
   })
-  @UseInterceptors(ClassSerializerInterceptor)
+  @UseInterceptors(ClassSerializerInterceptor, CacheInterceptor)
   @Get()
   async findAll(
+    @Query('lang', ParseIntPipe) langId: number,
+  ): Promise<PlaceCategoryDto[]> {
+    const placeCategories = await this.placeCategoriesService.findAll(langId);
+    return placeCategories.map((pc) => new PlaceCategoryDto(pc));
+  }
+
+  @ApiOperation({
+    summary: 'ADMIN: Get all place categories by language id',
+  })
+  @ApiOkResponse({
+    description: 'OK',
+    type: PlaceCategoryDto,
+    isArray: true,
+  })
+  @ApiQuery({
+    name: 'lang',
+    type: Number,
+    description: 'The ID of the language',
+  })
+  @UseInterceptors(ClassSerializerInterceptor)
+  @Auth(RoleNamesEnum.ADMIN)
+  @Get('administration')
+  async findAllAdmin(
     @Query('lang', ParseIntPipe) langId: number,
   ): Promise<PlaceCategoryDto[]> {
     const placeCategories = await this.placeCategoriesService.findAll(langId);
@@ -123,9 +147,9 @@ export class PlaceCategoriesController {
     type: Number,
     description: 'The ID of Place Category',
   })
-  //@Auth(RoleNamesEnum.ADMIN)
+  @Auth(RoleNamesEnum.ADMIN)
   @UseInterceptors(ClassSerializerInterceptor)
-  @Get('administration/:id')
+  @Get(':id/administration')
   async findByIdAdmin(@Param('id', ParseIntPipe) id: number) {
     const placeCategory =
       await this.placeCategoriesService.findOneAdministration(id);
@@ -144,8 +168,8 @@ export class PlaceCategoriesController {
     type: Number,
     description: 'The ID of Place Category',
   })
-  //@Auth(RoleNamesEnum.ADMIN)
-  @Delete('administration/:id')
+  @Auth(RoleNamesEnum.ADMIN)
+  @Delete(':id/administration')
   async remove(@Param('id', ParseIntPipe) id: number) {
     return await this.placeCategoriesService.remove(id);
   }

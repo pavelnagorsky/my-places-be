@@ -21,10 +21,6 @@ export class RolesService {
     }
   }
 
-  findAll() {
-    return `This action returns all roles`;
-  }
-
   async getRoleByName(roleName: RoleNamesEnum) {
     return this.rolesRepository.findOne({
       where: {

@@ -28,6 +28,9 @@ import { PlaceTypeDto } from './dto/place-type.dto';
 import { ValidationExceptionDto } from '../../shared/validation/validation-exception.dto';
 import { UpdatePlaceTypeDto } from './dto/update-place-type.dto';
 import { PlaceTypeAdminDto } from './dto/place-type-admin.dto';
+import { Auth } from '../auth/decorators/auth.decorator';
+import { RoleNamesEnum } from '../roles/enums/role-names.enum';
+import { CacheInterceptor } from '@nestjs/cache-manager';
 
 @ApiTags('Place types')
 @Controller('placeTypes')
@@ -45,7 +48,7 @@ export class PlaceTypesController {
   @ApiBody({
     type: CreatePlaceTypeDto,
   })
-  //@Auth(RoleNamesEnum.ADMIN)
+  @Auth(RoleNamesEnum.ADMIN)
   @Post('administration')
   async create(@Body() createPlaceTypeDto: CreatePlaceTypeDto) {
     const placeType = await this.placeTypesService.create(createPlaceTypeDto);
@@ -71,8 +74,8 @@ export class PlaceTypesController {
   @ApiBody({
     type: UpdatePlaceTypeDto,
   })
-  //@Auth(RoleNamesEnum.ADMIN)
-  @Put('administration/:id')
+  @Auth(RoleNamesEnum.ADMIN)
+  @Put(':id/administration')
   async update(
     @Param('id', ParseIntPipe) id: number,
     @Body() updatePlaceTypeDto: UpdatePlaceTypeDto,
@@ -92,9 +95,29 @@ export class PlaceTypesController {
     type: Number,
     description: 'The ID of the language',
   })
-  @UseInterceptors(ClassSerializerInterceptor)
+  @UseInterceptors(ClassSerializerInterceptor, CacheInterceptor)
   @Get()
   async findAll(
+    @Query('lang', ParseIntPipe) langId: number,
+  ): Promise<PlaceTypeDto[]> {
+    const types = await this.placeTypesService.findAll(langId);
+    return types.map((t) => new PlaceTypeDto(t));
+  }
+
+  @ApiOperation({ summary: 'ADMIN: Get all place types by language id' })
+  @ApiOkResponse({
+    description: 'OK',
+    type: PlaceTypeDto,
+    isArray: true,
+  })
+  @ApiQuery({
+    name: 'lang',
+    type: Number,
+    description: 'The ID of the language',
+  })
+  @UseInterceptors(ClassSerializerInterceptor)
+  @Get('administration')
+  async findAllAdmin(
     @Query('lang', ParseIntPipe) langId: number,
   ): Promise<PlaceTypeDto[]> {
     const types = await this.placeTypesService.findAll(langId);
@@ -114,9 +137,9 @@ export class PlaceTypesController {
     type: Number,
     description: 'The ID of Place type',
   })
-  //@Auth(RoleNamesEnum.ADMIN)
+  @Auth(RoleNamesEnum.ADMIN)
   @UseInterceptors(ClassSerializerInterceptor)
-  @Get('administration/:id')
+  @Get(':id/administration')
   async findByIdAdmin(@Param('id', ParseIntPipe) id: number) {
     const placeType = await this.placeTypesService.findOneAdministration(id);
     return new PlaceTypeAdminDto(placeType);
@@ -134,8 +157,8 @@ export class PlaceTypesController {
     type: Number,
     description: 'The ID of Place type',
   })
-  //@Auth(RoleNamesEnum.ADMIN)
-  @Delete('administration/:id')
+  @Auth(RoleNamesEnum.ADMIN)
+  @Delete(':id/administration')
   async remove(@Param('id', ParseIntPipe) id: number) {
     return await this.placeTypesService.remove(id);
   }

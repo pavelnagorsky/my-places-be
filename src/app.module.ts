@@ -21,6 +21,7 @@ import { ReportsModule } from './modules/reports/reports.module';
 import { FeedbackModule } from './modules/feedback/feedback.module';
 import { FavouritesModule } from './modules/favourites/favourites.module';
 import { ScheduleModule } from '@nestjs/schedule';
+import { CacheModule } from '@nestjs/cache-manager';
 
 @Module({
   imports: [
@@ -28,6 +29,10 @@ import { ScheduleModule } from '@nestjs/schedule';
       load: [configuration],
       isGlobal: true,
       cache: true,
+    }),
+    CacheModule.register({
+      isGlobal: true,
+      ttl: 3 * 60 * 60 * 1000, // 3h
     }),
     ScheduleModule.forRoot(),
     DatabaseModule,

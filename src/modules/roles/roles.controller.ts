@@ -39,11 +39,6 @@ export class RolesController {
     return this.rolesService.create(createRoleDto);
   }
 
-  @Get()
-  findAll() {
-    return this.rolesService.findAll();
-  }
-
   @ApiOperation({ summary: 'Get role by name' })
   @ApiOkResponse({
     description: 'OK',
@@ -57,6 +52,7 @@ export class RolesController {
     enum: RoleNamesEnum,
     description: 'Name of the role',
   })
+  @Auth(RoleNamesEnum.ADMIN)
   @Get(':name')
   async getRoleByName(@Param('name') name: RoleNamesEnum) {
     const role = await this.rolesService.getRoleByName(name);
