@@ -15,7 +15,7 @@ import { HandlebarsAdapter } from '@nestjs-modules/mailer/dist/adapters/handleba
           configService.get<IMailerConfig>('emailConfig')?.email
         }:${
           configService.get<IMailerConfig>('emailConfig')?.emailPw
-        }@smtp.gmail.com`,
+        }@mailbe06.hoster.by`,
         template: {
           dir: join(__dirname, 'public/templates'),
           adapter: new HandlebarsAdapter(),
