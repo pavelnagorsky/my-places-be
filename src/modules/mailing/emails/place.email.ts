@@ -38,7 +38,7 @@ type PlaceEmailPayload =
 
 export class PlaceEmail extends AbstractEmail {
   constructor(config: PlaceEmailPayload, place: PlaceForEmailDto) {
-    super(true, 'place');
+    super('place');
     this.to = place.email;
 
     const textContent = this.prepareTextContent(config, place);

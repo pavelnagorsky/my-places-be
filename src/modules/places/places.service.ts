@@ -653,17 +653,9 @@ export class PlacesService {
         updatePlaceDto,
         updatePlaceDto.shouldTranslate,
       );
-      const titleTranslationRu =
-        translations.find((tr) => tr.language.id === LanguageIdEnum.RU)
-          ?.title || updatePlaceDto.title;
-      const parsedSlug = await this.createValidSlug(
-        titleTranslationRu,
-        placeId,
-      );
 
       const updatedPlace = this.placesRepository.create({
         id: placeId,
-        slug: parsedSlug,
         originalLanguage: {
           id: langId,
         },

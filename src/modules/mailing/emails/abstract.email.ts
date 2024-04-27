@@ -9,7 +9,7 @@ export const getFullTemplatePath = (templatePath: string): string => {
 };
 
 export abstract class AbstractEmail implements ISendMailOptions {
-  constructor(templateMode: boolean, data: string) {
+  constructor(data: string, templateMode = true) {
     if (templateMode) {
       this.template = getFullTemplatePath(data);
     } else {

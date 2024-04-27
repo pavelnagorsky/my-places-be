@@ -9,7 +9,7 @@ interface IReviewEmailPayload {
 
 export class ReviewEmail extends AbstractEmail {
   constructor(config: IReviewEmailPayload, review: ReviewForEmailDto) {
-    super(true, 'review');
+    super('review');
     this.to = review.email;
 
     const textContent = this.prepareTextContent(config, review);

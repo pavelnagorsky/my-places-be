@@ -10,7 +10,7 @@ interface IBlockUserEmailPayload {
 
 export class BlockUserEmail extends AbstractEmail {
   constructor(config: IBlockUserEmailPayload, user: User) {
-    super(true, 'block-user');
+    super('block-user');
     this.to = user.email;
 
     const textContent = this.prepareTextContent(config, user);

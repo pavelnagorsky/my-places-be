@@ -3,7 +3,7 @@ import { CreateUserDto } from '../../users/dto/create-user.dto';
 
 export class ConfirmEmail extends AbstractEmail {
   constructor(user: CreateUserDto, confirmLink: string) {
-    super(true, 'confirm-email');
+    super('confirm-email');
     this.to = user.email;
     this.context = {
       firstName: user.firstName,
