@@ -243,7 +243,7 @@ export class PlacesController {
   })
   @UseInterceptors(ClassSerializerInterceptor, CacheInterceptor)
   @Get('slug/:slug')
-  async getById(
+  async getBySlug(
     @Param('slug') slug: string,
     @Query('lang', ParseIntPipe) langId: number,
   ) {

@@ -4,9 +4,11 @@ import {
   IsBoolean,
   IsNumber,
   IsString,
+  Matches,
   MaxLength,
   ValidateIf,
 } from 'class-validator';
+import { regularExpressions } from '../../../shared/regular-expressions';
 
 export class CreatePlaceDto {
   @ApiProperty({ type: String, description: 'Place title' })
@@ -55,7 +57,7 @@ export class CreatePlaceDto {
   isCommercial: boolean;
 
   @ApiProperty({ type: String, description: 'Place coordinates [lat;lng]' })
-  @IsString()
+  @Matches(regularExpressions.coordinates)
   coordinates: string;
 
   @ApiProperty({
