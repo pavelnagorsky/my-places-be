@@ -1207,7 +1207,16 @@ export class PlacesService {
           },
         },
         advertisement: true,
-        advEndDate: And(Not(IsNull()), LessThanOrEqual(oneWeekFromNow)),
+        advEndDate: And(
+          Not(IsNull()),
+          Equal(
+            new Date(
+              oneWeekFromNow.getFullYear(),
+              oneWeekFromNow.getMonth(),
+              oneWeekFromNow.getDate(),
+            ),
+          ),
+        ),
       },
     });
     places.forEach((p) => {

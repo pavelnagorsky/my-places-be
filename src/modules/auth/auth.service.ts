@@ -1,7 +1,9 @@
 import {
+  BadRequestException,
   ForbiddenException,
   Injectable,
   Logger,
+  NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
 import { CreateUserDto } from '../users/dto/create-user.dto';
@@ -153,7 +155,10 @@ export class AuthService {
   // 3) send confirmation email with token link
   async resetPasswordRequest(dto: ResetPasswordRequestDto) {
     const user = await this.usersService.getUserByEmail(dto.email);
-    if (!user) return;
+    if (!user)
+      throw new BadRequestException({
+        message: 'User with this email not found',
+      });
     // generate token
     const token = await this.generateRefreshPasswordToken(user);
     const domain = this.config.get<IFrontendConfig>('frontend')
