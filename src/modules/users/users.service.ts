@@ -179,6 +179,8 @@ export class UsersService {
     user.blockedUntil = null;
     user.blockReason = null;
     await this.usersRepository.save(user);
+    if (!user.receiveEmails) return;
+    this.mailingService.sendEmail(new BlockUserEmail({ blocked: false }, user));
     return;
   }
 
