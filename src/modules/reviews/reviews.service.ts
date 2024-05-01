@@ -568,6 +568,13 @@ export class ReviewsService {
             id: langId,
           },
         },
+        place: {
+          translations: {
+            language: {
+              id: langId,
+            },
+          },
+        },
       },
       order: {
         images: {

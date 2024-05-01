@@ -86,12 +86,21 @@ export class AuthService {
       userAgent,
     );
     // if count of refresh tokens in db > 10 delete previous tokens
-    const totalUserTokens = await this.refreshTokensRepository.count();
+    const totalUserTokens = await this.refreshTokensRepository.count({
+      where: {
+        user: {
+          id: user.id,
+        },
+      },
+    });
     if (totalUserTokens > 10) {
       this.logger.warn(
         `LOGIN warning! User has more than 10 refresh tokens (${totalUserTokens}). ID: ${user.id}, Refresh token: ${tokens.refreshToken}`,
       );
       await this.refreshTokensRepository.delete({
+        user: {
+          id: user.id,
+        },
         id: LessThan(savedToken.id),
       });
     }
