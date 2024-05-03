@@ -13,6 +13,7 @@ import { IDatabaseConfig } from '../config/configuration';
         username: configService.get<IDatabaseConfig>('database')?.user,
         password: configService.get<IDatabaseConfig>('database')?.password,
         database: configService.get<IDatabaseConfig>('database')?.name,
+        port: configService.get<IDatabaseConfig>('database')?.port,
         entities: [__dirname + '/../**/*.entity{.ts,.js}'],
         //synchronize: true,
         // dropSchema: true,

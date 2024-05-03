@@ -12,6 +12,7 @@ export default () => {
       name: process.env['DATABASE_NAME'],
       user: process.env['DATABASE_USER'],
       password: process.env['DATABASE_PASSWORD'],
+      port: parseInt(process.env['DATABASE_PORT'] ?? '', 10) || 3306,
     },
     jwt: {
       accessTokenSecret: process.env['ACCESS_TOKEN_SECRET'],
@@ -46,6 +47,7 @@ export interface IDatabaseConfig {
   name: string;
   user: string;
   password: string;
+  port: number
 }
 
 export interface IJwtConfig {
