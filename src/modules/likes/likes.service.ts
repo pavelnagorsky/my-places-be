@@ -21,7 +21,7 @@ export class LikesService {
   }
 
   async checkPlaceLikedByUser(userId: number, placeId: number) {
-    const likeExists = await this.placesRepository.exist({
+    const likeExists = await this.placesRepository.exists({
       relations: ['likes'],
       where: {
         id: Equal(placeId),
@@ -48,7 +48,7 @@ export class LikesService {
       },
     });
     if (!place) throw new NotFoundException({ message: 'Place not found' });
-    const likeExists = await this.likesRepository.exist({
+    const likeExists = await this.likesRepository.exists({
       where: {
         user: {
           id: Equal(userId),
@@ -60,7 +60,6 @@ export class LikesService {
     });
     if (likeExists) {
       place.likesCount = --place.likesCount;
-      await this.placesRepository.save(place);
       await this.likesRepository.delete({
         place: {
           id: Equal(placeId),
