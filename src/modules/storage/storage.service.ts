@@ -54,12 +54,12 @@ export class StorageService {
       await file.save(uploadedFile.buffer, {
         contentType: uploadedFile.mimetype,
       });
+      return {
+        publicUrl: `https://storage.googleapis.com/${this.bucket.name}/${file.name}`,
+      };
     } catch (error) {
       throw new BadRequestException(error?.message);
     }
-    return {
-      publicUrl: `https://storage.googleapis.com/${this.bucket.name}/${file.name}`,
-    };
   }
 
   async removeFile(fileName: string): Promise<void> {

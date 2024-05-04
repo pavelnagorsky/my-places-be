@@ -578,13 +578,13 @@ export class PlacesService {
             },
           },
         },
-        // categories: {
-        //   titles: {
-        //     language: {
-        //       id: langId,
-        //     },
-        //   },
-        // },
+        categories: {
+          titles: {
+            language: {
+              id: langId,
+            },
+          },
+        },
       },
       order: {
         images: {
