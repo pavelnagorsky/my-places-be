@@ -1175,7 +1175,7 @@ export class PlacesService {
   }
 
   // Cron job for sending notification emails with info that commercial ends in a week
-  @Cron(CronExpression.EVERY_12_HOURS)
+  @Cron(CronExpression.EVERY_DAY_AT_1PM)
   private async handleCommercialNotifications() {
     const currentDate = new Date();
     const oneWeekFromNow = new Date(
