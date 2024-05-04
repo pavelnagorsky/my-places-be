@@ -241,7 +241,7 @@ export class PlacesController {
     type: Number,
     description: 'The ID of the language',
   })
-  @UseInterceptors(ClassSerializerInterceptor, CacheInterceptor)
+  @UseInterceptors(ClassSerializerInterceptor)
   @Get('slug/:slug')
   async getBySlug(
     @Param('slug') slug: string,
