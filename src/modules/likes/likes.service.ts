@@ -21,14 +21,13 @@ export class LikesService {
   }
 
   async checkPlaceLikedByUser(userId: number, placeId: number) {
-    const likeExists = await this.placesRepository.exists({
-      relations: ['likes'],
+    const likeExists = await this.likesRepository.exists({
       where: {
-        id: Equal(placeId),
-        likes: {
-          user: {
-            id: Equal(userId),
-          },
+        place: {
+          id: placeId,
+        },
+        user: {
+          id: Equal(userId),
         },
       },
     });
@@ -38,12 +37,8 @@ export class LikesService {
   async changePlaceLike(userId: number, placeId: number) {
     const place = await this.placesRepository.findOne({
       where: { id: Equal(placeId) },
-      relations: {
-        likes: true,
-      },
       select: {
         id: true,
-        likes: true,
         likesCount: true,
       },
     });
@@ -75,8 +70,8 @@ export class LikesService {
       const like = this.createPlaceLike();
       like.place.id = placeId;
       like.user.id = userId;
-      const savedLike = await this.likesRepository.save(like);
-      place.likes.push(savedLike);
+      await this.likesRepository.save(like);
+      // place.likes.push(savedLike);
       await this.placesRepository.save(place);
       return;
     }
