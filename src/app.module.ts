@@ -22,6 +22,7 @@ import { FeedbackModule } from './modules/feedback/feedback.module';
 import { FavouritesModule } from './modules/favourites/favourites.module';
 import { ScheduleModule } from '@nestjs/schedule';
 import { CacheModule } from '@nestjs/cache-manager';
+import { SearchModule } from './modules/search/search.module';
 
 @Module({
   imports: [
@@ -53,6 +54,7 @@ import { CacheModule } from '@nestjs/cache-manager';
     ReportsModule,
     FeedbackModule,
     FavouritesModule,
+    SearchModule,
   ],
   controllers: [AppController],
 })

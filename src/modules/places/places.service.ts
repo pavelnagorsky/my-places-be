@@ -278,36 +278,6 @@ export class PlacesService {
     });
   }
 
-  // private filterByCoordinates(
-  //   placeCoordinates: string,
-  //   searchCoordinates: string,
-  //   radius: number,
-  // ): boolean {
-  //   const origin = this.getLatLng(placeCoordinates);
-  //   const search = this.getLatLng(searchCoordinates);
-  //
-  //   const EarthRadius = 6371; // km
-  //   const originLatRadian = (origin.lat * Math.PI) / 180; // origin latitude in radians
-  //   const searchLatRadian = (search.lat * Math.PI) / 180; // search latitude in radians
-  //   const deltaLatRadian = ((search.lat - origin.lat) * Math.PI) / 180; // delta between latitudes radians
-  //   const deltaLngRadian = ((search.lng - origin.lng) * Math.PI) / 180; // delta between longitude radians
-  //
-  //   const a =
-  //     Math.sin(deltaLatRadian / 2) * Math.sin(deltaLatRadian / 2) +
-  //     Math.cos(originLatRadian) *
-  //       Math.cos(searchLatRadian) *
-  //       Math.sin(deltaLngRadian / 2) *
-  //       Math.sin(deltaLngRadian / 2);
-  //   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  //
-  //   const distance = EarthRadius * c; // in metres
-  //   this.logger.debug(
-  //     `distance in km between search radius: ${distance - radius}`,
-  //   );
-  //
-  //   return distance <= radius;
-  // }
-
   private selectPlacesForSearchQuery(
     qb: SelectQueryBuilder<Place>,
     langId: number,
