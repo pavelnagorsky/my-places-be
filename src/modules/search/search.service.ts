@@ -3,6 +3,7 @@ import {
   Inject,
   Injectable,
   Logger,
+  OnModuleInit,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Place } from '../places/entities/place.entity';
@@ -12,9 +13,10 @@ import { PlaceStatusesEnum } from '../places/enums/place-statuses.enum';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
 import { SearchRequestDto } from './dto/search-request.dto';
+import { Interval } from '@nestjs/schedule';
 
 @Injectable()
-export class SearchService {
+export class SearchService implements OnModuleInit {
   private readonly logger = new Logger('Search service');
   private readonly placesSearchCacheKey = 'placesSearch';
 
@@ -25,6 +27,11 @@ export class SearchService {
     @InjectRepository(PlaceTranslation)
     private placeTranslationsRepository: Repository<PlaceTranslation>,
   ) {}
+
+  onModuleInit(): any {
+    // fulfill search cache after the app start
+    this.handleCreateCacheCron();
+  }
 
   private getLatLng(coordinates: string) {
     const latLng = coordinates.split(';');
@@ -44,7 +51,6 @@ export class SearchService {
   ): boolean {
     const origin = this.getLatLng(placeCoordinates);
     const search = this.getLatLng(searchCoordinates);
-    const radiusInMeters = radius * 1000;
 
     const EarthRadius = 6371; // km
     const originLatRadian = (origin.lat * Math.PI) / 180; // origin latitude in radians
@@ -61,11 +67,13 @@ export class SearchService {
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 
     const distance = EarthRadius * c; // in metres
-    this.logger.debug(
-      `distance in km between search radius: ${distance - radiusInMeters}`,
-    );
+    // this.logger.debug(
+    //   `distance and radius in km : ${distance}, ${radius}. Accept: ${
+    //     distance <= radius
+    //   }`,
+    // );
 
-    return distance <= radiusInMeters;
+    return distance <= radius;
   }
 
   private readonly geolocationSQLQuery = `
@@ -119,6 +127,12 @@ export class SearchService {
         'categories.image = categories_image.id',
       )
       .leftJoinAndSelect('place.translations', 'placeTranslations')
+      .leftJoinAndMapOne(
+        'placeTranslations.language',
+        'placeTranslations.language',
+        'place_translations_language',
+        'placeTranslations.language = place_translations_language.id',
+      )
       .orderBy({
         'place.createdAt': 'DESC',
         'place.likesCount': 'DESC',
@@ -137,7 +151,7 @@ export class SearchService {
       const qb = this.selectPlacesForSearchQuery(initialQb);
       // if search is by place titles
       if (isSearchByTitle) {
-        const resultQueryTitle = qb.where(
+        const resultQueryTitle = qb.andWhere(
           'placeTranslations.title LIKE :title AND placeTranslations.language = :langId',
           {
             title: `%${searchDto.title}%`,
@@ -216,13 +230,13 @@ export class SearchService {
     langId: number,
     places: Place[],
   ): [Place[], number] {
-    let resultPlaces: Place[] = [];
+    let resultPlaces = places;
     const isSearchByTitle = dto.title?.length > 0;
 
     // if search is by place titles
     if (isSearchByTitle) {
       const filteredPlaces = this.filterPlacesByTitle(
-        places,
+        resultPlaces,
         dto.title,
         langId,
       );
@@ -270,5 +284,35 @@ export class SearchService {
       return await this.searchFromDb(dto, langId);
     }
     return this.searchFromCache(dto, langId, cachedPlaces);
+  }
+
+  private async createSearchCache() {
+    const initialQb = this.placesRepository.createQueryBuilder('place');
+    const places = await this.selectPlacesForSearchQuery(initialQb).getMany();
+    // Cache TTL 12 hours
+    await this.cacheManager.set(
+      this.placesSearchCacheKey,
+      places,
+      12 * 60 * 60 * 1000,
+    );
+  }
+
+  private async selectPlaceSearchItem(placeId: number) {
+    const initialQb = this.placesRepository.createQueryBuilder('place');
+    const place = await this.selectPlacesForSearchQuery(initialQb)
+      .where('place.id = :id', { id: placeId })
+      .getOne();
+    return place;
+  }
+
+  // Cron job to recreate search cache every 4 hours
+  @Interval(4 * 60 * 60 * 10000)
+  private async handleCreateCacheCron() {
+    try {
+      this.logger.log('Search cache creation CRON JOB runs');
+      await this.createSearchCache();
+    } catch (e) {
+      this.logger.error('Cache creation CRON JOB failed:', e?.message);
+    }
   }
 }

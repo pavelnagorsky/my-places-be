@@ -5,10 +5,10 @@ import { PlaceType } from '../../place-types/entities/place-type.entity';
 import { PlaceCategoryDto } from '../../place-categories/dto/place-category.dto';
 import { PlaceCategory } from '../../place-categories/entities/place-category.entity';
 import { Image } from '../../images/entities/image.entity';
-import {PlaceTranslation} from "../../places/entities/place-translation.entity";
-import {CoordinatesDto} from "../../places/dto/coordinates.dto";
-import {PlaceStatusesEnum} from "../../places/enums/place-statuses.enum";
-import {Place} from "../../places/entities/place.entity";
+import { PlaceTranslation } from '../../places/entities/place-translation.entity';
+import { CoordinatesDto } from '../../places/dto/coordinates.dto';
+import { PlaceStatusesEnum } from '../../places/enums/place-statuses.enum';
+import { Place } from '../../places/entities/place.entity';
 
 export class SearchPlaceDto {
   @ApiProperty({ title: 'Place id', type: Number })
@@ -18,19 +18,13 @@ export class SearchPlaceDto {
   slug: string;
 
   @ApiProperty({ type: String, description: 'Place title' })
-  @Expose()
-  get title(): string {
-    return this.translations[0]?.title || '';
-  }
+  title: string;
 
   @Exclude()
   translations: PlaceTranslation[];
 
   @ApiProperty({ type: String, description: 'Place description' })
-  @Expose()
-  get description(): string {
-    return this.translations[0]?.description || '';
-  }
+  description: string;
 
   @ApiProperty({ type: Number, description: 'Likes count' })
   likesCount: number;
@@ -39,10 +33,7 @@ export class SearchPlaceDto {
   viewsCount: number;
 
   @ApiProperty({ type: String, description: 'Place address' })
-  @Expose()
-  get address(): string {
-    return this.translations[0]?.address || '';
-  }
+  address: string;
 
   @ApiProperty({ type: PlaceTypeDto, description: 'Place type' })
   @Transform(
@@ -104,7 +95,13 @@ export class SearchPlaceDto {
   })
   createdAt: Date;
 
-  constructor(partial: Partial<Place>) {
+  constructor(partial: Partial<Place>, languageId: number) {
     Object.assign(this, partial);
+    const translation = (partial.translations ?? []).find(
+      (translation) => translation.language?.id === languageId,
+    );
+    this.title = translation?.title || '';
+    this.description = translation?.description || '';
+    this.address = translation?.address || '';
   }
 }

@@ -9,6 +9,7 @@ export class SearchResponseDto extends PaginationResponseDto {
 
   constructor(
     data: Place[],
+    languageId: number,
     pagination: {
       requestedPage: number;
       pageSize: number;
@@ -16,6 +17,6 @@ export class SearchResponseDto extends PaginationResponseDto {
     },
   ) {
     super(pagination.requestedPage, pagination.pageSize, pagination.totalItems);
-    this.items = data.map((place) => new SearchPlaceDto(place));
+    this.items = data.map((place) => new SearchPlaceDto(place, languageId));
   }
 }
