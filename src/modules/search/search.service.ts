@@ -1,50 +1,72 @@
-import { BadRequestException, Injectable, Logger } from '@nestjs/common';
-import { SearchRequestDto } from '../places/dto/search-request.dto';
+import {
+  BadRequestException,
+  Inject,
+  Injectable,
+  Logger,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Place } from '../places/entities/place.entity';
 import { Repository, SelectQueryBuilder } from 'typeorm';
 import { PlaceTranslation } from '../places/entities/place-translation.entity';
 import { PlaceStatusesEnum } from '../places/enums/place-statuses.enum';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import { Cache } from 'cache-manager';
+import { SearchRequestDto } from './dto/search-request.dto';
 
 @Injectable()
 export class SearchService {
   private readonly logger = new Logger('Search service');
+  private readonly placesSearchCacheKey = 'placesSearch';
+
   constructor(
+    @Inject(CACHE_MANAGER) private cacheManager: Cache,
     @InjectRepository(Place)
     private placesRepository: Repository<Place>,
     @InjectRepository(PlaceTranslation)
     private placeTranslationsRepository: Repository<PlaceTranslation>,
   ) {}
 
-  // private filterByCoordinates(
-  //   placeCoordinates: string,
-  //   searchCoordinates: string,
-  //   radius: number,
-  // ): boolean {
-  //   const origin = this.getLatLng(placeCoordinates);
-  //   const search = this.getLatLng(searchCoordinates);
-  //
-  //   const EarthRadius = 6371; // km
-  //   const originLatRadian = (origin.lat * Math.PI) / 180; // origin latitude in radians
-  //   const searchLatRadian = (search.lat * Math.PI) / 180; // search latitude in radians
-  //   const deltaLatRadian = ((search.lat - origin.lat) * Math.PI) / 180; // delta between latitudes radians
-  //   const deltaLngRadian = ((search.lng - origin.lng) * Math.PI) / 180; // delta between longitude radians
-  //
-  //   const a =
-  //     Math.sin(deltaLatRadian / 2) * Math.sin(deltaLatRadian / 2) +
-  //     Math.cos(originLatRadian) *
-  //       Math.cos(searchLatRadian) *
-  //       Math.sin(deltaLngRadian / 2) *
-  //       Math.sin(deltaLngRadian / 2);
-  //   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  //
-  //   const distance = EarthRadius * c; // in metres
-  //   this.logger.debug(
-  //     `distance in km between search radius: ${distance - radius}`,
-  //   );
-  //
-  //   return distance <= radius;
-  // }
+  private getLatLng(coordinates: string) {
+    const latLng = coordinates.split(';');
+    const lat = latLng[0] ? +latLng[0] : 1;
+    const lng = latLng[1] ? +latLng[1] : 1;
+    return {
+      lat,
+      lng,
+    };
+  }
+
+  private filterByCoordinates(
+    placeCoordinates: string,
+    searchCoordinates: string,
+    // radius of search in KM
+    radius: number,
+  ): boolean {
+    const origin = this.getLatLng(placeCoordinates);
+    const search = this.getLatLng(searchCoordinates);
+    const radiusInMeters = radius * 1000;
+
+    const EarthRadius = 6371; // km
+    const originLatRadian = (origin.lat * Math.PI) / 180; // origin latitude in radians
+    const searchLatRadian = (search.lat * Math.PI) / 180; // search latitude in radians
+    const deltaLatRadian = ((search.lat - origin.lat) * Math.PI) / 180; // delta between latitudes radians
+    const deltaLngRadian = ((search.lng - origin.lng) * Math.PI) / 180; // delta between longitude radians
+
+    const a =
+      Math.sin(deltaLatRadian / 2) * Math.sin(deltaLatRadian / 2) +
+      Math.cos(originLatRadian) *
+        Math.cos(searchLatRadian) *
+        Math.sin(deltaLngRadian / 2) *
+        Math.sin(deltaLngRadian / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+    const distance = EarthRadius * c; // in metres
+    this.logger.debug(
+      `distance in km between search radius: ${distance - radiusInMeters}`,
+    );
+
+    return distance <= radiusInMeters;
+  }
 
   private readonly geolocationSQLQuery = `
     ST_Distance_Sphere(
@@ -104,10 +126,8 @@ export class SearchService {
       });
   }
 
-  async search(langId: number, searchDto: SearchRequestDto) {
+  private async searchFromDb(searchDto: SearchRequestDto, langId: number) {
     try {
-      // let totalResults = 0;
-      // let totalPages = 0;
       const isSearchByTitle = searchDto.title?.length > 0;
       // initial query builder to provide base sql request with all joins and mappings
       const initialQb = this.placesRepository
@@ -118,13 +138,13 @@ export class SearchService {
       // if search is by place titles
       if (isSearchByTitle) {
         const resultQueryTitle = qb.where(
-          'placeTranslations.title LIKE :title',
+          'placeTranslations.title LIKE :title AND placeTranslations.language = :langId',
           {
             title: `%${searchDto.title}%`,
+            langId,
           },
         );
-        const result = await resultQueryTitle.getManyAndCount();
-        return result;
+        return await resultQueryTitle.getManyAndCount();
       }
       let resultQuery = qb;
       // if there is place type filter with > 0 items
@@ -156,11 +176,99 @@ export class SearchService {
           radius: searchDto.radius,
         });
       }
-      const result = await resultQuery.getManyAndCount();
-      return result;
+      return await resultQuery.getManyAndCount();
     } catch (e) {
       this.logger.error('Error occured while search request', e);
       throw new BadRequestException({ message: 'Error occured' });
     }
+  }
+
+  // filters & helpers
+
+  private applyPagination(places: Place[], dto: SearchRequestDto) {
+    // Calculate the start index
+    const startIndex = dto.pageSize * dto.page;
+
+    // Calculate the end index
+    const endIndex = startIndex + dto.pageSize;
+
+    // Return the slice of data
+    return places.slice(startIndex, endIndex);
+  }
+
+  private filterPlacesByTitle(
+    places: Place[],
+    searchText: string,
+    langId: number,
+  ): Place[] {
+    const lowerSearchText = searchText.toLowerCase();
+    return places.filter((place) => {
+      const placeTranslation = place.translations.find(
+        (tr) => tr.language.id === langId,
+      );
+      if (!placeTranslation) return false;
+      return placeTranslation.title.toLowerCase().includes(lowerSearchText);
+    });
+  }
+
+  private searchFromCache(
+    dto: SearchRequestDto,
+    langId: number,
+    places: Place[],
+  ): [Place[], number] {
+    let resultPlaces: Place[] = [];
+    const isSearchByTitle = dto.title?.length > 0;
+
+    // if search is by place titles
+    if (isSearchByTitle) {
+      const filteredPlaces = this.filterPlacesByTitle(
+        places,
+        dto.title,
+        langId,
+      );
+      const paginationResult = this.applyPagination(filteredPlaces, dto);
+      return [paginationResult, filteredPlaces.length];
+    }
+
+    // if there is place type filter with > 0 items
+    if (dto.typesIds && dto.typesIds.length > 0) {
+      resultPlaces = resultPlaces.filter((place) =>
+        dto.typesIds.includes(place.type.id),
+      );
+    }
+    // if there is place categories filter - check if at least one of them matches filter
+    if (dto.categoriesIds && dto.categoriesIds.length > 0) {
+      resultPlaces = resultPlaces.filter((place) => {
+        return place.categories.some((category) =>
+          dto.categoriesIds.includes(category.id),
+        );
+      });
+    }
+    // if there is search circle
+    if (dto.searchCoordinates) {
+      resultPlaces = resultPlaces.filter((place) =>
+        this.filterByCoordinates(
+          place.coordinates,
+          dto.searchCoordinates as string,
+          dto.radius,
+        ),
+      );
+    }
+    const paginationResult = this.applyPagination(resultPlaces, dto);
+    return [paginationResult, resultPlaces.length];
+  }
+
+  public async search(
+    dto: SearchRequestDto,
+    langId: number,
+  ): Promise<[Place[], number]> {
+    const cachedPlaces = await this.cacheManager.get<Place[]>(
+      this.placesSearchCacheKey,
+    );
+    if (!cachedPlaces) {
+      // fallback to db search
+      return await this.searchFromDb(dto, langId);
+    }
+    return this.searchFromCache(dto, langId, cachedPlaces);
   }
 }

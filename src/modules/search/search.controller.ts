@@ -15,9 +15,9 @@ import {
   ApiOperation,
   ApiQuery,
 } from '@nestjs/swagger';
-import { PlacesSearchResponseDto } from '../places/dto/places-search-response.dto';
 import { ValidationExceptionDto } from '../../shared/validation/validation-exception.dto';
-import { SearchRequestDto } from '../places/dto/search-request.dto';
+import { SearchResponseDto } from './dto/search-response.dto';
+import { SearchRequestDto } from './dto/search-request.dto';
 
 @Controller('search')
 export class SearchController {
@@ -26,7 +26,7 @@ export class SearchController {
   @ApiOperation({ summary: 'Search places' })
   @ApiOkResponse({
     description: 'OK',
-    type: PlacesSearchResponseDto,
+    type: SearchResponseDto,
   })
   @ApiBadRequestResponse({
     description: 'Validation failed',
@@ -46,8 +46,8 @@ export class SearchController {
     @Query('lang', ParseIntPipe) langId: number,
     @Body() searchDto: SearchRequestDto,
   ) {
-    const [places, total] = await this.searchService.search(langId, searchDto);
-    return new PlacesSearchResponseDto(places, {
+    const [places, total] = await this.searchService.search( searchDto, langId);
+    return new SearchResponseDto(places, {
       requestedPage: searchDto.page,
       pageSize: searchDto.pageSize,
       totalItems: total,
