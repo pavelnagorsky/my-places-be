@@ -9,5 +9,6 @@ import { PlaceTranslation } from '../places/entities/place-translation.entity';
   imports: [TypeOrmModule.forFeature([Place, PlaceTranslation])],
   controllers: [SearchController],
   providers: [SearchService],
+  exports: [SearchService],
 })
 export class SearchModule {}

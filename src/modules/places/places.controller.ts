@@ -36,7 +36,6 @@ import { AccessTokenPayloadDto } from '../auth/dto/access-token-payload.dto';
 import { Place } from './entities/place.entity';
 import { UpdatePlaceDto } from './dto/update-place.dto';
 import { PlaceSlugDto } from './dto/place-slug.dto';
-import { SearchRequestDto } from './dto/search-request.dto';
 import { ValidationExceptionDto } from '../../shared/validation/validation-exception.dto';
 import { SelectPlaceDto } from './dto/select-place.dto';
 import { ValidateSlugDto } from './dto/validate-slug.dto';
@@ -47,7 +46,6 @@ import { ModerationPlacesResponseDto } from './dto/moderation-places-response.dt
 import { ModerationPlacesRequestDto } from './dto/moderation-places-request.dto';
 import { RoleNamesEnum } from '../roles/enums/role-names.enum';
 import { ModerationDto } from './dto/moderation.dto';
-import { PlacesSearchResponseDto } from './dto/places-search-response.dto';
 import { MyPlaceDto } from './dto/my-place.dto';
 import { ChangePlaceStatusDto } from './dto/change-place-status.dto';
 import { UpdateSlugDto } from './dto/update-slug.dto';
@@ -190,37 +188,6 @@ export class PlacesController {
       parsedPlaceId,
     );
     return places.map((p) => new SelectPlaceDto(p));
-  }
-
-  @ApiOperation({ summary: 'Search places' })
-  @ApiOkResponse({
-    description: 'OK',
-    type: PlacesSearchResponseDto,
-  })
-  @ApiBadRequestResponse({
-    description: 'Validation failed',
-    type: ValidationExceptionDto,
-  })
-  @ApiBody({
-    type: SearchRequestDto,
-  })
-  @ApiQuery({
-    name: 'lang',
-    type: Number,
-    description: 'The ID of the language',
-  })
-  @UseInterceptors(ClassSerializerInterceptor)
-  @Post('search')
-  async search(
-    @Query('lang', ParseIntPipe) langId: number,
-    @Body() searchDto: SearchRequestDto,
-  ) {
-    const [places, total] = await this.placesService.search(langId, searchDto);
-    return new PlacesSearchResponseDto(places, {
-      requestedPage: searchDto.page,
-      pageSize: searchDto.pageSize,
-      totalItems: total,
-    });
   }
 
   @ApiOperation({ summary: 'Get place by slug and language id' })

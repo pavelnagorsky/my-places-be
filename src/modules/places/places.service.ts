@@ -29,7 +29,6 @@ import { ImagesService } from '../images/images.service';
 import { User } from '../users/entities/user.entity';
 import { AccessTokenPayloadDto } from '../auth/dto/access-token-payload.dto';
 import { UpdatePlaceDto } from './dto/update-place.dto';
-import { SearchRequestDto } from './dto/search-request.dto';
 import { PlaceStatusesEnum } from './enums/place-statuses.enum';
 import { PlaceTranslation } from './entities/place-translation.entity';
 import { MyPlacesOrderByEnum } from './enums/my-places-order-by.enum';
@@ -44,6 +43,7 @@ import { PlaceForEmailDto } from './dto/place-for-email.dto';
 import { ChangePlaceStatusDto } from './dto/change-place-status.dto';
 import { Review } from '../reviews/entities/review.entity';
 import { Cron, CronExpression } from '@nestjs/schedule';
+import { SearchService } from '../search/search.service';
 
 @Injectable()
 export class PlacesService {
@@ -62,6 +62,7 @@ export class PlacesService {
     private imagesService: ImagesService,
     private translationsService: TranslationsService,
     private mailingService: MailingService,
+    private searchService: SearchService,
   ) {}
 
   // create translations for place
@@ -276,66 +277,7 @@ export class PlacesService {
       id: placeId,
       slug: slug,
     });
-  }
-
-  private selectPlacesForSearchQuery(
-    qb: SelectQueryBuilder<Place>,
-    langId: number,
-  ): SelectQueryBuilder<Place> {
-    return qb
-      .where('place.status = :approvedStatus', {
-        approvedStatus: PlaceStatusesEnum.APPROVED,
-      })
-      .leftJoinAndSelect('place.categories', 'categories')
-      .leftJoinAndSelect(
-        'categories.titles',
-        'categoriesTitles',
-        'categoriesTitles.language = :langId',
-        { langId },
-      )
-      .leftJoinAndSelect('place.type', 'type')
-      .leftJoinAndSelect(
-        'type.titles',
-        'typeTitles',
-        'typeTitles.language = :langId',
-        { langId },
-      )
-      .leftJoinAndMapOne(
-        'place.images',
-        'image',
-        'place_image',
-        'place_image.place = place.id AND place_image.position = :position',
-        { position: 0 },
-      )
-      .leftJoinAndMapOne(
-        'type.image',
-        'image',
-        'type_image',
-        'type.image = type_image.id',
-      )
-      .leftJoinAndMapOne(
-        'type.image2',
-        'image',
-        'type_image2',
-        'type.image2 = type_image2.id',
-      )
-      .leftJoinAndMapOne(
-        'categories.image',
-        'image',
-        'categories_image',
-        'categories.image = categories_image.id',
-      )
-      .leftJoinAndSelect(
-        'place.translations',
-        'placeTranslations',
-        'placeTranslations.language = :langId',
-        { langId },
-      )
-      .orderBy({
-        'place.createdAt': 'DESC',
-        'place.likesCount': 'DESC',
-        'place.viewsCount': 'DESC',
-      });
+    this.searchService.updatePlaceInCache(placeId);
   }
 
   private getPlacesSelectFindOptions(
@@ -418,86 +360,6 @@ export class PlacesService {
     const totalPlaces = filteredUserPlaces.concat(filteredSearchPlaces);
 
     return totalPlaces;
-  }
-
-  private readonly geolocationSQLQuery = `
-    ST_Distance_Sphere(
-      Point(
-        SUBSTRING_INDEX(place.coordinates, ';', 1),
-        SUBSTRING_INDEX(place.coordinates, ';', -1)
-      ),
-      Point(
-        SUBSTRING_INDEX(:searchCoordinates, ';', 1),
-        SUBSTRING_INDEX(:searchCoordinates, ';', -1)
-      ), 
-      4326
-    ) <= :radius
-  `;
-
-  async search(langId: number, searchDto: SearchRequestDto) {
-    try {
-      // let totalResults = 0;
-      // let totalPages = 0;
-      const isSearchByTitle = searchDto.title?.length > 0;
-      // initial query builder to provide base sql request with all joins and mappings
-      const initialQb = this.placesRepository
-        .createQueryBuilder('place')
-        .skip(searchDto.pageSize * searchDto.page)
-        .take(searchDto.pageSize);
-      const qb = this.selectPlacesForSearchQuery(initialQb, langId);
-      // if search is by place titles
-      if (isSearchByTitle) {
-        const resultQueryTitle = qb.where(
-          'placeTranslations.title LIKE :title',
-          {
-            title: `%${searchDto.title}%`,
-          },
-        );
-        const result = await resultQueryTitle.getManyAndCount();
-        return result;
-      }
-      let resultQuery = qb;
-      // if there is place type filter with > 0 items
-      if (searchDto.typesIds && searchDto.typesIds.length > 0) {
-        resultQuery = resultQuery.andWhere('type.id IN (:...typeIds)', {
-          typeIds: searchDto.typesIds,
-        });
-      }
-      // if there is place categories filter - check if at least one of them matches filter
-      if (searchDto.categoriesIds && searchDto.categoriesIds.length > 0) {
-        resultQuery = resultQuery.andWhere(
-          (qb) => `(${qb
-            .createQueryBuilder()
-            .select('COUNT(*)')
-            .from('place_categories_place_category', 'relationCategories')
-            .where('relationCategories.placeId = place.id')
-            .andWhere('relationCategories.placeCategoryId IN (:...categoryIds)')
-            .getSql()})
-            > 0`,
-          {
-            categoryIds: searchDto.categoriesIds,
-          },
-        );
-      }
-      // if there is search circle
-      if (searchDto.searchCoordinates) {
-        resultQuery = resultQuery.andWhere(this.geolocationSQLQuery, {
-          searchCoordinates: searchDto.searchCoordinates,
-          radius: searchDto.radius,
-        });
-      }
-      // console.log(resultQuery.getSql());
-      // console.log(
-      //   searchDto.searchCoordinates,
-      //   places[0]?.coordinates,
-      //   searchDto.radius * 1000,
-      // );
-      const result = await resultQuery.getManyAndCount();
-      return result;
-    } catch (e) {
-      this.logger.error('Error occured while search request', e);
-      throw new BadRequestException({ message: 'Error occured' });
-    }
   }
 
   private async addView(placeId: number) {
@@ -646,6 +508,7 @@ export class PlacesService {
       }
 
       await this.placesRepository.save(updatedPlace);
+      this.searchService.updatePlaceInCache(placeId);
 
       return {
         id: placeId,
@@ -663,6 +526,7 @@ export class PlacesService {
     const deleted = await this.placesRepository.remove(
       this.placesRepository.create({ id }),
     );
+    this.searchService.updatePlaceInCache(id);
     return { id };
   }
 
@@ -1018,6 +882,7 @@ export class PlacesService {
       place.advEndDate = null;
     }
     await this.placesRepository.save(place);
+    this.searchService.updatePlaceInCache(id);
 
     const placeForEmail = await this.getPlaceForEmail(id);
     if (!placeForEmail || !placeForEmail.author.receiveEmails) return;
@@ -1069,6 +934,7 @@ export class PlacesService {
       status: updatedStatus,
       moderationMessage: dto.feedback || null,
     });
+    this.searchService.updatePlaceInCache(placeId);
 
     // send email
     const placeForEmail = await this.getPlaceForEmail(place.id);
@@ -1091,6 +957,7 @@ export class PlacesService {
       );
     }
     await this.removePlace(id);
+    this.searchService.updatePlaceInCache(id);
   }
 
   // Cron job for moving commercial places with outdated adv end date into waiting for payment status
@@ -1129,6 +996,8 @@ export class PlacesService {
         p.status = PlaceStatusesEnum.NEEDS_PAYMENT;
         p.advEndDate = null;
         await this.placesRepository.save(p);
+        this.searchService.updatePlaceInCache(p.id);
+
         if (!p.author.receiveEmails) return;
         const email = new PlaceEmail(
           { status: PlaceStatusesEnum.NEEDS_PAYMENT },

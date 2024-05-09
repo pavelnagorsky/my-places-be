@@ -10,6 +10,7 @@ import { ImagesModule } from '../images/images.module';
 import { PlaceTranslation } from './entities/place-translation.entity';
 import { MailingModule } from '../mailing/mailing.module';
 import { Review } from '../reviews/entities/review.entity';
+import { SearchModule } from '../search/search.module';
 
 @Module({
   imports: [
@@ -23,6 +24,7 @@ import { Review } from '../reviews/entities/review.entity';
     ImagesModule,
     TranslationsModule,
     MailingModule,
+    SearchModule,
   ],
   controllers: [PlacesController],
   providers: [PlacesService],

@@ -19,6 +19,8 @@ import { Interval } from '@nestjs/schedule';
 export class SearchService implements OnModuleInit {
   private readonly logger = new Logger('Search service');
   private readonly placesSearchCacheKey = 'placesSearch';
+  // 12 hours TTL
+  private readonly placesCacheTTL = 12 * 60 * 60 * 1000;
 
   constructor(
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
@@ -293,16 +295,70 @@ export class SearchService implements OnModuleInit {
     await this.cacheManager.set(
       this.placesSearchCacheKey,
       places,
-      12 * 60 * 60 * 1000,
+      this.placesCacheTTL,
     );
   }
 
   private async selectPlaceSearchItem(placeId: number) {
     const initialQb = this.placesRepository.createQueryBuilder('place');
     const place = await this.selectPlacesForSearchQuery(initialQb)
-      .where('place.id = :id', { id: placeId })
+      .andWhere('place.id = :id', { id: placeId })
       .getOne();
     return place;
+  }
+
+  public async updatePlaceInCache(placeId: number) {
+    this.logger.log(`Modify search cache by place id: ${placeId}`);
+    try {
+      // select cached places
+      const cachedPlaces = await this.cacheManager.get<Place[]>(
+        this.placesSearchCacheKey,
+      );
+      // if no cache -> create cache
+      if (!cachedPlaces) return this.createSearchCache();
+      // select place data
+      const place = await this.selectPlaceSearchItem(placeId);
+      // if no place -> filter it from cached places
+      if (!place) {
+        await this.cacheManager.set(
+          this.placesSearchCacheKey,
+          cachedPlaces.filter((p) => p.id !== placeId),
+          this.placesCacheTTL,
+        );
+        return;
+      }
+      // check if place exists in cache
+      const placeExists = cachedPlaces.findIndex((p) => p.id === placeId) > -1;
+      if (placeExists) {
+        // update cached place
+        await this.cacheManager.set(
+          this.placesSearchCacheKey,
+          cachedPlaces.map((p) => {
+            if (p.id === placeId) {
+              return place;
+            }
+            return p;
+          }),
+          this.placesCacheTTL,
+        );
+        return;
+      } else {
+        // add place to cache
+        cachedPlaces.push(place);
+        // apply order by createdAt date
+        const orderedCache = cachedPlaces.sort(
+          (a, b) => b.createdAt.getTime() - a.createdAt.getTime(),
+        );
+        await this.cacheManager.set(
+          this.placesSearchCacheKey,
+          orderedCache,
+          this.placesCacheTTL,
+        );
+        return;
+      }
+    } catch (e) {
+      this.logger.error('Failed to modify search cache:', e?.message);
+    }
   }
 
   // Cron job to recreate search cache every 4 hours
