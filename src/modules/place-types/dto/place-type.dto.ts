@@ -36,7 +36,10 @@ export class PlaceTypeDto {
   )
   image2: string;
 
-  constructor(partial: Partial<PlaceType>) {
+  constructor(partial: Partial<PlaceType>, languageId?: number) {
     Object.assign(this, partial);
+    if (languageId) {
+      this.titles = this.titles.filter((t) => t.language?.id === languageId);
+    }
   }
 }

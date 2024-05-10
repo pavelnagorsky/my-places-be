@@ -101,8 +101,20 @@ export class SearchService implements OnModuleInit {
       })
       .leftJoinAndSelect('place.categories', 'categories')
       .leftJoinAndSelect('categories.titles', 'categoriesTitles')
+      .leftJoinAndMapOne(
+        'categoriesTitles.language',
+        'categoriesTitles.language',
+        'categories_titles_language',
+        'categoriesTitles.language = categories_titles_language.id',
+      )
       .leftJoinAndSelect('place.type', 'type')
       .leftJoinAndSelect('type.titles', 'typeTitles')
+      .leftJoinAndMapOne(
+        'typeTitles.language',
+        'typeTitles.language',
+        'type_titles_language',
+        'typeTitles.language = type_titles_language.id',
+      )
       .leftJoinAndMapOne(
         'place.images',
         'image',

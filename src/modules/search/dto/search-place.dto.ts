@@ -1,5 +1,10 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Exclude, Expose, Transform } from 'class-transformer';
+import {
+  Exclude,
+  Expose,
+  Transform,
+  TransformFnParams,
+} from 'class-transformer';
 import { PlaceTypeDto } from '../../place-types/dto/place-type.dto';
 import { PlaceType } from '../../place-types/entities/place-type.entity';
 import { PlaceCategoryDto } from '../../place-categories/dto/place-category.dto';
@@ -37,7 +42,12 @@ export class SearchPlaceDto {
 
   @ApiProperty({ type: PlaceTypeDto, description: 'Place type' })
   @Transform(
-    ({ value }: { value: Partial<PlaceType> }) => new PlaceTypeDto(value),
+    ({
+      value,
+      obj,
+    }: { value: Partial<PlaceType> } & Omit<TransformFnParams, 'value'>) => {
+      return new PlaceTypeDto(value, obj._languageId);
+    },
   )
   type: PlaceTypeDto;
 
@@ -46,8 +56,15 @@ export class SearchPlaceDto {
     description: 'Place categories',
     isArray: true,
   })
-  @Transform(({ value }: { value: Partial<PlaceCategory>[] }) =>
-    value.map((category) => new PlaceCategoryDto(category)),
+  @Transform(
+    ({
+      value,
+      obj,
+    }: { value: Partial<PlaceCategory>[] } & Omit<
+      TransformFnParams,
+      'value'
+    >) =>
+      value.map((category) => new PlaceCategoryDto(category, obj._languageId)),
   )
   categories: PlaceCategoryDto[];
 
@@ -95,8 +112,12 @@ export class SearchPlaceDto {
   })
   createdAt: Date;
 
+  @Exclude()
+  _languageId: number;
+
   constructor(partial: Partial<Place>, languageId: number) {
     Object.assign(this, partial);
+    this._languageId = languageId;
     const translation = (partial.translations ?? []).find(
       (translation) => translation.language?.id === languageId,
     );

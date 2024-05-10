@@ -29,7 +29,10 @@ export class PlaceCategoryDto {
   )
   image2: string;
 
-  constructor(partial: Partial<PlaceCategory>) {
+  constructor(partial: Partial<PlaceCategory>, languageId?: number) {
     Object.assign(this, partial);
+    if (languageId) {
+      this.titles = this.titles.filter((t) => t.language?.id === languageId);
+    }
   }
 }
