@@ -298,7 +298,7 @@ export class PlacesService {
       },
       where: {
         translations: {
-          title: shouldApplySearch ? LikeOperator(`${search}%`) : undefined,
+          title: shouldApplySearch ? LikeOperator(`%${search}%`) : undefined,
           language: {
             id: langId,
           },
@@ -344,6 +344,11 @@ export class PlacesService {
         ...defaultFindOptions,
         where: {
           id: placeId,
+          translations: {
+            language: {
+              id: langId,
+            },
+          },
         },
       });
     }
