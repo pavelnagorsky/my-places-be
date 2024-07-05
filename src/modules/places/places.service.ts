@@ -551,6 +551,7 @@ export class PlacesService {
         type: {
           titles: true,
         },
+        author: true,
       },
       select: {
         id: true,
@@ -606,12 +607,16 @@ export class PlacesService {
       return undefined;
     };
 
+    const authorWhereStatement =
+      tokenPayload?.id ?? (!!dto.userIds?.length ? In(dto.userIds) : undefined);
+
     const res = await this.placesRepository.findAndCount({
       relations: {
         translations: true,
         type: {
           titles: true,
         },
+        author: true,
       },
       skip: dto.page * dto.pageSize,
       take: dto.pageSize,
@@ -664,7 +669,7 @@ export class PlacesService {
       },
       where: {
         author: {
-          id: tokenPayload?.id,
+          id: authorWhereStatement,
         },
         type: {
           titles: {

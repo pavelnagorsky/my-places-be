@@ -476,6 +476,7 @@ export class ReviewsService {
     const res = await this.reviewsRepository.findAndCount({
       relations: {
         translations: true,
+        author: true,
         place: { translations: true },
       },
       skip: dto.page * dto.pageSize,

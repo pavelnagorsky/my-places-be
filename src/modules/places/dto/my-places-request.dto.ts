@@ -25,4 +25,12 @@ export class MyPlacesRequestDto extends PaginationRequestDto<MyPlacesOrderByEnum
   @IsNumber({}, { each: true })
   @ValidateIf((object, value) => Boolean(value))
   statuses?: PlaceStatusesEnum[];
+  @ApiProperty({
+    type: Number,
+    isArray: true,
+    description: 'User ids',
+  })
+  @IsNumber({}, { each: true })
+  @ValidateIf((object, value) => Boolean(value))
+  userIds?: number[];
 }

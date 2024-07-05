@@ -4,6 +4,7 @@ import { PlaceStatusesEnum } from '../enums/place-statuses.enum';
 import { PlaceType } from '../../place-types/entities/place-type.entity';
 import { Place } from '../entities/place.entity';
 import { PlaceTranslation } from '../entities/place-translation.entity';
+import { User } from '../../users/entities/user.entity';
 
 export class MyPlaceDto {
   @ApiProperty({ title: 'Place id', type: Number })
@@ -88,6 +89,16 @@ export class MyPlaceDto {
     description: 'updated at',
   })
   updatedAt: Date;
+
+  @ApiProperty({
+    type: String,
+    description: 'author username',
+    nullable: true,
+  })
+  @Transform(({ value }: { value: Partial<User> | null }) => {
+    return value ? `${value.firstName} ${value.lastName}` : null;
+  })
+  author: string;
 
   constructor(partial: Partial<Place>) {
     Object.assign(this, partial);
