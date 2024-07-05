@@ -73,6 +73,24 @@ export class TranslationsService {
     return this.translate(text, targetLanguageCode, originalLanguage?.code);
   }
 
+  // detect language code of text with Google service
+  private async detectLanguage(text: string) {
+    try {
+      const result = await this.translateClient.detect(text);
+      return result[0]?.language ?? null;
+    } catch (e) {
+      this.logger.error('language detection failed', e.message);
+      return null;
+    }
+  }
+
+  async getLanguageIdOfText(text: string) {
+    const languageCode = await this.detectLanguage(text);
+    if (!languageCode) return null;
+    const language = await this.languagesService.findOneByCode(languageCode);
+    return language?.id || null;
+  }
+
   // delete translation by id
   async deleteTranslation(id: number) {
     await this.translationsRepository.delete(id);

@@ -243,7 +243,12 @@ export class PlacesService {
       createPlaceDto.imagesIds,
     );
 
-    const translations = await this.createTranslations(langId, createPlaceDto);
+    const detectedLanguageId =
+      await this.translationsService.getLanguageIdOfText(createPlaceDto.title);
+    const translations = await this.createTranslations(
+      detectedLanguageId || langId,
+      createPlaceDto,
+    );
     const titleTranslationRu =
       translations.find((tr) => tr.language.id === LanguageIdEnum.RU)?.title ||
       createPlaceDto.title;
@@ -484,8 +489,12 @@ export class PlacesService {
         updatePlaceDto.imagesIds,
       );
 
+      const detectedLanguageId =
+        await this.translationsService.getLanguageIdOfText(
+          updatePlaceDto.title,
+        );
       const translations = await this.updateTranslations(
-        langId,
+        detectedLanguageId || langId,
         oldPlace,
         updatePlaceDto,
         updatePlaceDto.shouldTranslate,
@@ -672,7 +681,7 @@ export class PlacesService {
         translations: {
           title:
             !!dto.search && dto.search.length > 0
-              ? ILike(`${dto.search}%`)
+              ? ILike(`%${dto.search}%`)
               : undefined,
           language: {
             id: langId,

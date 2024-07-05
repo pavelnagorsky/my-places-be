@@ -160,7 +160,12 @@ export class ReviewsService {
     const reviewImages = await this.imagesService.updatePositions(
       createReviewDto.imagesIds,
     );
-    const translations = await this.createTranslations(langId, createReviewDto);
+    const detectedLanguageId =
+      await this.translationsService.getLanguageIdOfText(createReviewDto.title);
+    const translations = await this.createTranslations(
+      detectedLanguageId || langId,
+      createReviewDto,
+    );
     const review = this.reviewsRepository.create();
     review.translations = translations;
     review.images = reviewImages;
@@ -287,8 +292,12 @@ export class ReviewsService {
         updateReviewDto.imagesIds,
       );
 
+      const detectedLanguageId =
+        await this.translationsService.getLanguageIdOfText(
+          updateReviewDto.title,
+        );
       const translations = await this.updateTranslations(
-        langId,
+        detectedLanguageId || langId,
         oldReview,
         updateReviewDto,
         updateReviewDto.shouldTranslate,
