@@ -256,7 +256,7 @@ export class PlacesService {
 
     const place = this.placesRepository.create({
       originalLanguage: {
-        id: langId,
+        id: detectedLanguageId || langId,
       },
       slug: parsedSlug,
       translations: translations,
@@ -503,7 +503,7 @@ export class PlacesService {
       const updatedPlace = this.placesRepository.create({
         id: placeId,
         originalLanguage: {
-          id: langId,
+          id: detectedLanguageId || langId,
         },
         images: placeImages,
         translations: translations,
