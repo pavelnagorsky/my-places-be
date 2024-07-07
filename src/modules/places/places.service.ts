@@ -244,7 +244,9 @@ export class PlacesService {
     );
 
     const detectedLanguageId =
-      await this.translationsService.getLanguageIdOfText(createPlaceDto.title);
+      await this.translationsService.getLanguageIdOfText(
+        createPlaceDto.description,
+      );
     const translations = await this.createTranslations(
       detectedLanguageId || langId,
       createPlaceDto,
@@ -491,7 +493,7 @@ export class PlacesService {
 
       const detectedLanguageId =
         await this.translationsService.getLanguageIdOfText(
-          updatePlaceDto.title,
+          updatePlaceDto.description,
         );
       const translations = await this.updateTranslations(
         detectedLanguageId || langId,

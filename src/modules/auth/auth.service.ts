@@ -48,7 +48,7 @@ export class AuthService {
   // 5) send confirmation email
   async register(dto: CreateUserDto) {
     // validate user email
-    const alreadyExists = await this.usersService.getUserByEmail(dto.email);
+    const alreadyExists = await this.usersService.findUserByEmail(dto.email);
     if (alreadyExists)
       throw new UnauthorizedException({
         message: 'User with this email already exists',
@@ -163,7 +163,7 @@ export class AuthService {
   // 2) generate token
   // 3) send confirmation email with token link
   async resetPasswordRequest(dto: ResetPasswordRequestDto) {
-    const user = await this.usersService.getUserByEmail(dto.email);
+    const user = await this.usersService.findUserByEmail(dto.email);
     if (!user)
       throw new BadRequestException({
         message: 'User with this email not found',
@@ -198,7 +198,7 @@ export class AuthService {
 
   // login validation
   private async validateUser(loginDto: LoginDto) {
-    const user = await this.usersService.getUserByEmail(loginDto.email);
+    const user = await this.usersService.findUserByEmail(loginDto.email);
     if (!user)
       throw new LoginException({
         message: 'No users with this email found',

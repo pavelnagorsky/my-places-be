@@ -161,7 +161,9 @@ export class ReviewsService {
       createReviewDto.imagesIds,
     );
     const detectedLanguageId =
-      await this.translationsService.getLanguageIdOfText(createReviewDto.title);
+      await this.translationsService.getLanguageIdOfText(
+        createReviewDto.description,
+      );
     const translations = await this.createTranslations(
       detectedLanguageId || langId,
       createReviewDto,
@@ -294,7 +296,7 @@ export class ReviewsService {
 
       const detectedLanguageId =
         await this.translationsService.getLanguageIdOfText(
-          updateReviewDto.title,
+          updateReviewDto.description,
         );
       const translations = await this.updateTranslations(
         detectedLanguageId || langId,

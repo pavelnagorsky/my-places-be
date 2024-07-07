@@ -38,13 +38,14 @@ import { ModeratorDto } from './dto/moderator.dto';
 import { SaveModeratorDto } from './dto/save-moderator.dto';
 import { BlockUserDto } from './dto/block-user.dto';
 import { EmailDto } from './dto/email.dto';
+import { UserSelectDto } from './dto/user-select.dto';
 
 @ApiTags('Users')
 @Controller('users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
-  @ApiOperation({ summary: 'Get all users' })
+  @ApiOperation({ summary: 'Find users' })
   @ApiOkResponse({
     description: 'users',
     type: UserShortInfoDto,
@@ -60,13 +61,27 @@ export class UsersController {
   @UseInterceptors(ClassSerializerInterceptor)
   @Auth(RoleNamesEnum.ADMIN)
   @Post('List')
-  async findAll(@Body() dto: UsersRequestDto) {
-    const [users, total] = await this.usersService.findAll(dto);
+  async findUsers(@Body() dto: UsersRequestDto) {
+    const [users, total] = await this.usersService.findUsers(dto);
     return new UsersResponseDto(users, {
       requestedPage: dto.page,
       pageSize: dto.pageSize,
       totalItems: total,
     });
+  }
+
+  @ApiOperation({ summary: 'Get all users' })
+  @ApiOkResponse({
+    description: 'users',
+    type: UserSelectDto,
+    isArray: true,
+  })
+  @UseInterceptors(ClassSerializerInterceptor)
+  @Auth(RoleNamesEnum.ADMIN)
+  @Get('All')
+  async findAll() {
+    const users = await this.usersService.getAllUsers();
+    return users.map((u) => new UserSelectDto(u));
   }
 
   @ApiOperation({ summary: 'Get user data by token' })
