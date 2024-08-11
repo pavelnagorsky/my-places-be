@@ -14,6 +14,7 @@ import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
 import { SearchRequestDto } from './dto/search-request.dto';
 import { Interval } from '@nestjs/schedule';
+import { SearchPlacesOrderByEnum } from './enums/search-places-order-by.enum';
 
 @Injectable()
 export class SearchService implements OnModuleInit {
@@ -175,6 +176,18 @@ export class SearchService implements OnModuleInit {
         return await resultQueryTitle.getManyAndCount();
       }
       let resultQuery = qb;
+      // apply custom order by
+      if (searchDto.orderBy === SearchPlacesOrderByEnum.CreatedAt) {
+        resultQuery.orderBy({
+          'place.createdAt': 'DESC',
+        });
+      }
+      if (searchDto.orderBy === SearchPlacesOrderByEnum.Rating) {
+        resultQuery.orderBy({
+          'place.likesCount': 'DESC',
+          'place.viewsCount': 'DESC',
+        });
+      }
       // if there is place type filter with > 0 items
       if (searchDto.typesIds && searchDto.typesIds.length > 0) {
         resultQuery = resultQuery.andWhere('type.id IN (:...typeIds)', {
@@ -212,6 +225,25 @@ export class SearchService implements OnModuleInit {
   }
 
   // filters & helpers
+
+  private applyOrderBy(places: Place[], orderBy?: SearchPlacesOrderByEnum) {
+    let sortedPlaces = places;
+    if (orderBy === SearchPlacesOrderByEnum.CreatedAt) {
+      sortedPlaces = places.sort(
+        (a, b) =>
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+      );
+    }
+    if (orderBy === SearchPlacesOrderByEnum.Rating) {
+      sortedPlaces = places.sort((a, b) => {
+        if (a.likesCount === b.likesCount) {
+          return b.viewsCount - a.viewsCount; // If likes are equal, sort vy views
+        }
+        return b.likesCount - a.likesCount; // Else sort by likes
+      });
+    }
+    return sortedPlaces;
+  }
 
   private applyPagination(places: Place[], dto: SearchRequestDto) {
     // Calculate the start index
@@ -254,7 +286,8 @@ export class SearchService implements OnModuleInit {
         dto.title,
         langId,
       );
-      const paginationResult = this.applyPagination(filteredPlaces, dto);
+      const orderedResult = this.applyOrderBy(filteredPlaces, dto.orderBy);
+      const paginationResult = this.applyPagination(orderedResult, dto);
       return [paginationResult, filteredPlaces.length];
     }
 
@@ -282,7 +315,8 @@ export class SearchService implements OnModuleInit {
         ),
       );
     }
-    const paginationResult = this.applyPagination(resultPlaces, dto);
+    const orderedResult = this.applyOrderBy(resultPlaces, dto.orderBy);
+    const paginationResult = this.applyPagination(orderedResult, dto);
     return [paginationResult, resultPlaces.length];
   }
 

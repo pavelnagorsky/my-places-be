@@ -26,7 +26,7 @@ import { MyReviewsRequestDto } from './dto/my-reviews-request.dto';
 import { MyReviewsOrderByEnum } from './enums/my-reviews-order-by.enum';
 import { ReviewStatusesEnum } from './enums/review-statuses.enum';
 import { ModerationReviewsRequestDto } from './dto/moderation-reviews-request.dto';
-import { ModerationReviewsOrderByEnum } from './enums/moderation-reviews-order-by';
+import { ModerationReviewsOrderByEnum } from './enums/moderation-reviews-order-by.enum';
 import { ModerationDto } from '../places/dto/moderation.dto';
 import { AdministrationReviewsRequestDto } from './dto/administration-reviews-request.dto';
 import { LanguageIdEnum } from '../languages/enums/language-id.enum';

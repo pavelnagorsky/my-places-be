@@ -1,8 +1,9 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNumber, IsString, Min } from 'class-validator';
+import { IsNumber, IsString } from 'class-validator';
 import { PaginationRequestDto } from '../../../shared/dto/pagination-request.dto';
+import { SearchPlacesOrderByEnum } from '../enums/search-places-order-by.enum';
 
-export class SearchRequestDto extends PaginationRequestDto {
+export class SearchRequestDto extends PaginationRequestDto<SearchPlacesOrderByEnum> {
   @ApiProperty({ description: 'place types ids', isArray: true, type: Number })
   @IsNumber({}, { each: true })
   typesIds: number[];
