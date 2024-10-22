@@ -64,7 +64,7 @@ export class ReviewsService {
           title:
             lang.id === sourceLangId
               ? dto.title
-              : await this.translationsService.createGoogleTranslation(
+              : await this.translationsService.createTranslation(
                   dto.title,
                   lang.code,
                   sourceLangId,
@@ -72,7 +72,7 @@ export class ReviewsService {
           description:
             lang.id === sourceLangId
               ? dto.description
-              : await this.translationsService.createGoogleTranslation(
+              : await this.translationsService.createTranslation(
                   dto.description,
                   lang.code,
                   sourceLangId,
@@ -113,7 +113,7 @@ export class ReviewsService {
           translation.language.id === sourceLangId
             ? dto.title
             : translateAll
-            ? await this.translationsService.createGoogleTranslation(
+            ? await this.translationsService.createTranslation(
                 dto.title,
                 translation.language.code,
                 sourceLangId,
@@ -123,7 +123,7 @@ export class ReviewsService {
           translation.language.id === sourceLangId
             ? dto.description
             : translateAll
-            ? await this.translationsService.createGoogleTranslation(
+            ? await this.translationsService.createTranslation(
                 dto.description,
                 translation.language.code,
                 sourceLangId,

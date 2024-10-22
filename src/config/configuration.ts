@@ -7,6 +7,9 @@ export default () => {
       bucketName: process.env['GOOGLE_BUCKET_NAME'],
       keyFilename: process.env['GOOGLE_CLOUD_KEY_NAME'],
     },
+    yandexCloud: {
+      apiKey: process.env['YANDEX_API_KEY']
+    },
     database: {
       host: process.env['DATABASE_HOST'],
       name: process.env['DATABASE_NAME'],
@@ -39,6 +42,10 @@ export interface IGoogleCloudConfig {
   keyFilename: string;
   bucketName: string;
   projectId: string;
+  apiKey: string;
+}
+
+export interface IYandexCloudConfig {
   apiKey: string;
 }
 

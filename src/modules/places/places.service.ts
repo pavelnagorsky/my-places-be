@@ -81,7 +81,7 @@ export class PlacesService {
           title:
             lang.id === sourceLangId
               ? dto.title
-              : await this.translationsService.createGoogleTranslation(
+              : await this.translationsService.createTranslation(
                   dto.title,
                   lang.code,
                   sourceLangId,
@@ -89,7 +89,7 @@ export class PlacesService {
           description:
             lang.id === sourceLangId
               ? dto.description
-              : await this.translationsService.createGoogleTranslation(
+              : await this.translationsService.createTranslation(
                   dto.description,
                   lang.code,
                   sourceLangId,
@@ -97,7 +97,7 @@ export class PlacesService {
           address:
             lang.id === sourceLangId
               ? dto.address
-              : await this.translationsService.createGoogleTranslation(
+              : await this.translationsService.createTranslation(
                   dto.address,
                   lang.code,
                   sourceLangId,
@@ -138,7 +138,7 @@ export class PlacesService {
           translation.language.id === sourceLangId
             ? dto.title
             : translateAll
-            ? await this.translationsService.createGoogleTranslation(
+            ? await this.translationsService.createTranslation(
                 dto.title,
                 translation.language.code,
                 sourceLangId,
@@ -148,7 +148,7 @@ export class PlacesService {
           translation.language.id === sourceLangId
             ? dto.description
             : translateAll
-            ? await this.translationsService.createGoogleTranslation(
+            ? await this.translationsService.createTranslation(
                 dto.description,
                 translation.language.code,
                 sourceLangId,
@@ -158,7 +158,7 @@ export class PlacesService {
           translation.language.id === sourceLangId
             ? dto.address
             : translateAll
-            ? await this.translationsService.createGoogleTranslation(
+            ? await this.translationsService.createTranslation(
                 dto.address,
                 translation.language.code,
                 sourceLangId,

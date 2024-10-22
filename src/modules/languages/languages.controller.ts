@@ -52,7 +52,8 @@ export class LanguagesController {
   @ApiOperation({ summary: 'Get all languages' })
   @Get()
   async findAll() {
-    return await this.languagesService.findAll();
+    const languages = await this.languagesService.findAll();
+    return languages
   }
 
   @ApiOkResponse({
