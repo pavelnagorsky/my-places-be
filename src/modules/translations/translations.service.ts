@@ -9,9 +9,7 @@ import { TranslationBaseEntity } from './entities/translation-base.entity';
 import { Repository } from 'typeorm';
 import { Language } from '../languages/entities/language.entity';
 import { ConfigService } from '@nestjs/config';
-import {
-  IYandexCloudConfig,
-} from '../../config/configuration';
+import { IYandexCloudConfig } from '../../config/configuration';
 import { LanguagesService } from '../languages/languages.service';
 import slugify from 'slugify';
 import { HttpService } from '@nestjs/axios';
@@ -34,11 +32,9 @@ export class TranslationsService implements OnModuleInit {
     private readonly httpService: HttpService,
     private configService: ConfigService,
     private languagesService: LanguagesService,
-  ) {
-  }
+  ) {}
 
   private setupInterceptors() {
-    console.log('setted up interceptors')
     const axiosRef = this.httpService.axiosRef;
     const apiKey =
       this.configService.get<IYandexCloudConfig>('yandexCloud')?.apiKey;
@@ -46,8 +42,7 @@ export class TranslationsService implements OnModuleInit {
       async (reqConfig) => {
         reqConfig.baseURL =
           'https://translate.api.cloud.yandex.net/translate/v2';
-        reqConfig.headers['Authorization'] = `Bearer ${apiKey}`;
-        console.log( reqConfig.headers['Authorization'])
+        reqConfig.headers['Authorization'] = `Api-Key ${apiKey}`;
         return reqConfig;
       },
       (error) => {
@@ -117,7 +112,7 @@ export class TranslationsService implements OnModuleInit {
     try {
       const requestBody: IYandexDetectLanguageRequest = {
         languageCodeHints,
-        text,
+        text: text.slice(0, 1000),
       };
       const { data } = await firstValueFrom(
         this.httpService.post<IYandexDetectLanguageResponse>(

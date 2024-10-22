@@ -21,17 +21,18 @@ export interface IYandexTranslateResponse {
 }
 
 interface IYandexTranslateResponseTranslationItem {
+  // max 1000 symbols
   text: string;
   detectedLanguageCode: string;
 }
 
-export const languageCodeHints = ['ru', 'be', 'en']
+export const languageCodeHints = ['ru', 'be', 'en'];
 
 export interface IYandexDetectLanguageRequest {
-  text: string,
-  languageCodeHints: typeof languageCodeHints
+  text: string;
+  languageCodeHints: typeof languageCodeHints;
 }
 
 export interface IYandexDetectLanguageResponse {
-  languageCode: string
+  languageCode: string;
 }
