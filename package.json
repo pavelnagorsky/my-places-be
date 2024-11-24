@@ -54,6 +54,9 @@
     "slugify": "^1.6.6",
     "typeorm": "^0.3.20"
   },
+  "optionalDependencies" : {
+    "@css-inline/css-inline-linux-x64-gnu" : "0.14.1"
+  },
   "devDependencies": {
     "@appnest/readme": "^1.2.7",
     "@compodoc/compodoc": "^1.1.21",

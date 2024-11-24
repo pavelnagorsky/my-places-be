@@ -75,7 +75,7 @@ export class Place {
   @ManyToOne(() => User, (user) => user.placesModeration)
   moderator: User;
 
-  @Column({ type: 'varchar', nullable: true, default: null })
+  @Column({ type: 'varchar', length: 1500,  nullable: true, default: null })
   moderationMessage: string | null;
 
   @Column({ default: 0 })

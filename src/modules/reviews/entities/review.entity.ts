@@ -25,7 +25,7 @@ export class Review {
   @Column({ default: ReviewStatusesEnum.MODERATION })
   status: ReviewStatusesEnum;
 
-  @Column({ type: 'varchar', nullable: true, default: null })
+  @Column({ type: 'varchar', length: 1500, nullable: true, default: null })
   moderationMessage: string | null;
 
   @CreateDateColumn()

@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNumber, IsString, Min } from 'class-validator';
+import { IsNumber, IsString } from 'class-validator';
 import { PaginationRequestDto } from '../../../shared/dto/pagination-request.dto';
 
 export class SearchRequestDto extends PaginationRequestDto {
@@ -23,6 +23,9 @@ export class SearchRequestDto extends PaginationRequestDto {
   @IsNumber()
   radius: number;
 
-  @ApiProperty({ description: 'search coordinates', type: String })
-  searchCoordinates: string | null;
+  @ApiProperty({ description: 'search start coordinates', type: String, nullable: true })
+  searchStartCoordinates: string | null;
+
+  @ApiProperty({ description: 'search end coordinates', type: String, nullable: true })
+  searchEndCoordinates: string | null;
 }

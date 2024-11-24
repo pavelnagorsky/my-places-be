@@ -3,6 +3,7 @@ import {
   Inject,
   Injectable,
   Logger,
+  NotFoundException,
   OnModuleInit,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -78,19 +79,57 @@ export class SearchService implements OnModuleInit {
     return distance <= radius;
   }
 
-  private readonly geolocationSQLQuery = `
-    ST_Distance_Sphere(
-      Point(
-        SUBSTRING_INDEX(place.coordinates, ';', 1),
-        SUBSTRING_INDEX(place.coordinates, ';', -1)
-      ),
-      Point(
-        SUBSTRING_INDEX(:searchCoordinates, ';', 1),
-        SUBSTRING_INDEX(:searchCoordinates, ';', -1)
-      ), 
-      4326
-    ) <= :radius
-  `;
+  private getRouteBounds(
+    startCoordinates: string,
+    endCoordinates: string,
+    // radius of search in KM
+    radius: number,
+  ) {
+    const startLatLng = this.getLatLng(startCoordinates);
+    const endLatLng = this.getLatLng(endCoordinates);
+
+    const dX = endLatLng.lat - startLatLng.lat;
+    const dY = endLatLng.lng - startLatLng.lng;
+
+    const Lx = dY / Math.sqrt(Math.pow(dX, 2) + Math.pow(dY, 2));
+    const Ly = -dX / Math.sqrt(Math.pow(dX, 2) + Math.pow(dY, 2));
+    const R = radius / 111.32;
+    const bound1 = {
+      lat: startLatLng.lat + R * Lx,
+      lng: startLatLng.lng + R * Ly,
+    };
+    const bound2 = {
+      lat: startLatLng.lat - R * Lx,
+      lng: startLatLng.lng - R * Ly,
+    };
+    const bound3 = { lat: bound1.lat + dX, lng: bound1.lng + dY };
+    const bound4 = { lat: bound2.lat + dX, lng: bound2.lng + dY };
+
+    const bounds = [bound1, bound2, bound3, bound4];
+
+    return bounds;
+  }
+
+  private isPointInBounds(
+    placeCoordinates: string,
+    bounds: { lat: number; lng: number }[],
+  ) {
+    const point = this.getLatLng(placeCoordinates);
+    const latitudes = bounds.map((latLng) => latLng.lat);
+    const longitudes = bounds.map((latLng) => latLng.lng);
+
+    const minLat = Math.min(...latitudes);
+    const maxLat = Math.max(...latitudes);
+    const minLng = Math.min(...longitudes);
+    const maxLng = Math.max(...longitudes);
+
+    return (
+      point.lat >= minLat &&
+      point.lat <= maxLat &&
+      point.lng >= minLng &&
+      point.lng <= maxLng
+    );
+  }
 
   private selectPlacesForSearchQuery(
     qb: SelectQueryBuilder<Place>,
@@ -152,63 +191,6 @@ export class SearchService implements OnModuleInit {
         'place.likesCount': 'DESC',
         'place.viewsCount': 'DESC',
       });
-  }
-
-  private async searchFromDb(searchDto: SearchRequestDto, langId: number) {
-    try {
-      const isSearchByTitle = searchDto.title?.length > 0;
-      // initial query builder to provide base sql request with all joins and mappings
-      const initialQb = this.placesRepository
-        .createQueryBuilder('place')
-        .skip(searchDto.pageSize * searchDto.page)
-        .take(searchDto.pageSize);
-      const qb = this.selectPlacesForSearchQuery(initialQb);
-      // if search is by place titles
-      if (isSearchByTitle) {
-        const resultQueryTitle = qb.andWhere(
-          'placeTranslations.title LIKE :title AND placeTranslations.language = :langId',
-          {
-            title: `%${searchDto.title}%`,
-            langId,
-          },
-        );
-        return await resultQueryTitle.getManyAndCount();
-      }
-      let resultQuery = qb;
-      // if there is place type filter with > 0 items
-      if (searchDto.typesIds && searchDto.typesIds.length > 0) {
-        resultQuery = resultQuery.andWhere('type.id IN (:...typeIds)', {
-          typeIds: searchDto.typesIds,
-        });
-      }
-      // if there is place categories filter - check if at least one of them matches filter
-      if (searchDto.categoriesIds && searchDto.categoriesIds.length > 0) {
-        resultQuery = resultQuery.andWhere(
-          (qb) => `(${qb
-            .createQueryBuilder()
-            .select('COUNT(*)')
-            .from('place_categories_place_category', 'relationCategories')
-            .where('relationCategories.placeId = place.id')
-            .andWhere('relationCategories.placeCategoryId IN (:...categoryIds)')
-            .getSql()})
-            > 0`,
-          {
-            categoryIds: searchDto.categoriesIds,
-          },
-        );
-      }
-      // if there is search circle
-      if (searchDto.searchCoordinates) {
-        resultQuery = resultQuery.andWhere(this.geolocationSQLQuery, {
-          searchCoordinates: searchDto.searchCoordinates,
-          radius: searchDto.radius,
-        });
-      }
-      return await resultQuery.getManyAndCount();
-    } catch (e) {
-      this.logger.error('Error occured while search request', e);
-      throw new BadRequestException({ message: 'Error occured' });
-    }
   }
 
   // filters & helpers
@@ -273,13 +255,24 @@ export class SearchService implements OnModuleInit {
       });
     }
     // if there is search circle
-    if (dto.searchCoordinates) {
+    if (!!dto.searchStartCoordinates && !dto.searchEndCoordinates) {
       resultPlaces = resultPlaces.filter((place) =>
         this.filterByCoordinates(
           place.coordinates,
-          dto.searchCoordinates as string,
+          dto.searchStartCoordinates as string,
           dto.radius,
         ),
+      );
+    }
+    // if there is search route
+    if (!!dto.searchStartCoordinates && !!dto.searchEndCoordinates) {
+      const searchBounds = this.getRouteBounds(
+        dto.searchStartCoordinates,
+        dto.searchEndCoordinates,
+        dto.radius,
+      );
+      resultPlaces = resultPlaces.filter((place) =>
+        this.isPointInBounds(place.coordinates, searchBounds),
       );
     }
     const paginationResult = this.applyPagination(resultPlaces, dto);
@@ -295,7 +288,7 @@ export class SearchService implements OnModuleInit {
     );
     if (!cachedPlaces) {
       // fallback to db search
-      return await this.searchFromDb(dto, langId);
+      throw new NotFoundException();
     }
     return this.searchFromCache(dto, langId, cachedPlaces);
   }

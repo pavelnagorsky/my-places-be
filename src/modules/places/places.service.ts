@@ -19,7 +19,6 @@ import {
   MoreThanOrEqual,
   Not,
   Repository,
-  SelectQueryBuilder,
 } from 'typeorm';
 import { CreatePlaceDto } from './dto/create-place.dto';
 import { TranslationsService } from '../translations/translations.service';
