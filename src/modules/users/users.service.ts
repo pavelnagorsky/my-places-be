@@ -67,7 +67,7 @@ export class UsersService {
     return;
   }
 
-  async getUserByEmail(email: string) {
+  async findUserByEmail(email: string) {
     return await this.usersRepository.findOne({
       relations: {
         roles: true,
@@ -78,7 +78,7 @@ export class UsersService {
     });
   }
 
-  async findAll(dto: UsersRequestDto) {
+  async findUsers(dto: UsersRequestDto) {
     const getDateWhereOption = () => {
       if (!!dto.dateFrom && !!dto.dateTo)
         return Between(new Date(dto.dateFrom), new Date(dto.dateTo));
@@ -257,6 +257,17 @@ export class UsersService {
     user.receiveEmails = updateUserDto.receiveEmails;
     await this.usersRepository.save(user);
     return;
+  }
+
+  async getAllUsers() {
+    const users = await this.usersRepository.find({
+      select: {
+        firstName: true,
+        lastName: true,
+        id: true,
+      },
+    });
+    return users;
   }
 
   async updateUserPassword(password: string, user: User) {

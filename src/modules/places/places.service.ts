@@ -80,7 +80,7 @@ export class PlacesService {
           title:
             lang.id === sourceLangId
               ? dto.title
-              : await this.translationsService.createGoogleTranslation(
+              : await this.translationsService.createTranslation(
                   dto.title,
                   lang.code,
                   sourceLangId,
@@ -88,7 +88,7 @@ export class PlacesService {
           description:
             lang.id === sourceLangId
               ? dto.description
-              : await this.translationsService.createGoogleTranslation(
+              : await this.translationsService.createTranslation(
                   dto.description,
                   lang.code,
                   sourceLangId,
@@ -96,7 +96,7 @@ export class PlacesService {
           address:
             lang.id === sourceLangId
               ? dto.address
-              : await this.translationsService.createGoogleTranslation(
+              : await this.translationsService.createTranslation(
                   dto.address,
                   lang.code,
                   sourceLangId,
@@ -137,7 +137,7 @@ export class PlacesService {
           translation.language.id === sourceLangId
             ? dto.title
             : translateAll
-            ? await this.translationsService.createGoogleTranslation(
+            ? await this.translationsService.createTranslation(
                 dto.title,
                 translation.language.code,
                 sourceLangId,
@@ -147,7 +147,7 @@ export class PlacesService {
           translation.language.id === sourceLangId
             ? dto.description
             : translateAll
-            ? await this.translationsService.createGoogleTranslation(
+            ? await this.translationsService.createTranslation(
                 dto.description,
                 translation.language.code,
                 sourceLangId,
@@ -157,7 +157,7 @@ export class PlacesService {
           translation.language.id === sourceLangId
             ? dto.address
             : translateAll
-            ? await this.translationsService.createGoogleTranslation(
+            ? await this.translationsService.createTranslation(
                 dto.address,
                 translation.language.code,
                 sourceLangId,
@@ -242,7 +242,14 @@ export class PlacesService {
       createPlaceDto.imagesIds,
     );
 
-    const translations = await this.createTranslations(langId, createPlaceDto);
+    const detectedLanguageId =
+      await this.translationsService.getLanguageIdOfText(
+        createPlaceDto.description,
+      );
+    const translations = await this.createTranslations(
+      detectedLanguageId || langId,
+      createPlaceDto,
+    );
     const titleTranslationRu =
       translations.find((tr) => tr.language.id === LanguageIdEnum.RU)?.title ||
       createPlaceDto.title;
@@ -250,7 +257,7 @@ export class PlacesService {
 
     const place = this.placesRepository.create({
       originalLanguage: {
-        id: langId,
+        id: detectedLanguageId || langId,
       },
       slug: parsedSlug,
       translations: translations,
@@ -483,8 +490,12 @@ export class PlacesService {
         updatePlaceDto.imagesIds,
       );
 
+      const detectedLanguageId =
+        await this.translationsService.getLanguageIdOfText(
+          updatePlaceDto.description,
+        );
       const translations = await this.updateTranslations(
-        langId,
+        detectedLanguageId || langId,
         oldPlace,
         updatePlaceDto,
         updatePlaceDto.shouldTranslate,
@@ -493,7 +504,7 @@ export class PlacesService {
       const updatedPlace = this.placesRepository.create({
         id: placeId,
         originalLanguage: {
-          id: langId,
+          id: detectedLanguageId || langId,
         },
         images: placeImages,
         translations: translations,
@@ -541,6 +552,7 @@ export class PlacesService {
         type: {
           titles: true,
         },
+        author: true,
       },
       select: {
         id: true,
@@ -596,12 +608,16 @@ export class PlacesService {
       return undefined;
     };
 
+    const authorWhereStatement =
+      tokenPayload?.id ?? (!!dto.userIds?.length ? In(dto.userIds) : undefined);
+
     const res = await this.placesRepository.findAndCount({
       relations: {
         translations: true,
         type: {
           titles: true,
         },
+        author: true,
       },
       skip: dto.page * dto.pageSize,
       take: dto.pageSize,
@@ -654,7 +670,7 @@ export class PlacesService {
       },
       where: {
         author: {
-          id: tokenPayload?.id,
+          id: authorWhereStatement,
         },
         type: {
           titles: {
@@ -671,7 +687,7 @@ export class PlacesService {
         translations: {
           title:
             !!dto.search && dto.search.length > 0
-              ? ILike(`${dto.search}%`)
+              ? ILike(`%${dto.search}%`)
               : undefined,
           language: {
             id: langId,

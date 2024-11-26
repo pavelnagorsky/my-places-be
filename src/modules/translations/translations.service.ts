@@ -1,32 +1,59 @@
-import { BadRequestException, Injectable, Logger } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  Logger,
+  OnModuleInit,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { TranslationBaseEntity } from './entities/translation-base.entity';
 import { Repository } from 'typeorm';
 import { Language } from '../languages/entities/language.entity';
-import { v2 } from '@google-cloud/translate';
 import { ConfigService } from '@nestjs/config';
-import { IGoogleCloudConfig } from '../../config/configuration';
+import { IYandexCloudConfig } from '../../config/configuration';
 import { LanguagesService } from '../languages/languages.service';
 import slugify from 'slugify';
+import { HttpService } from '@nestjs/axios';
+import {
+  IYandexDetectLanguageRequest,
+  IYandexDetectLanguageResponse,
+  IYandexTranslateRequest,
+  IYandexTranslateResponse,
+  languageCodeHints,
+} from './interfaces/translation.interface';
+import { firstValueFrom } from 'rxjs';
 
 @Injectable()
-export class TranslationsService {
+export class TranslationsService implements OnModuleInit {
   private readonly logger = new Logger('Translation service');
 
   constructor(
     @InjectRepository(TranslationBaseEntity)
     private translationsRepository: Repository<TranslationBaseEntity>,
+    private readonly httpService: HttpService,
     private configService: ConfigService,
     private languagesService: LanguagesService,
-  ) {
-    this.translateClient = new v2.Translate({
-      key: this.configService.get<IGoogleCloudConfig>('googleCloud')?.apiKey,
-      projectId:
-        this.configService.get<IGoogleCloudConfig>('googleCloud')?.projectId,
-    });
+  ) {}
+
+  private setupInterceptors() {
+    const axiosRef = this.httpService.axiosRef;
+    const apiKey =
+      this.configService.get<IYandexCloudConfig>('yandexCloud')?.apiKey;
+    axiosRef.interceptors.request.use(
+      async (reqConfig) => {
+        reqConfig.baseURL =
+          'https://translate.api.cloud.yandex.net/translate/v2';
+        reqConfig.headers['Authorization'] = `Api-Key ${apiKey}`;
+        return reqConfig;
+      },
+      (error) => {
+        return Promise.reject(error);
+      },
+    );
   }
 
-  private translateClient: v2.Translate;
+  async onModuleInit(): Promise<void> {
+    this.setupInterceptors();
+  }
 
   async getAllLanguages(): Promise<Language[]> {
     return await this.languagesService.findAll();
@@ -47,19 +74,26 @@ export class TranslationsService {
     sourceLanguageCode?: string,
   ): Promise<string> {
     try {
-      const [translation] = await this.translateClient.translate(text, {
-        from: sourceLanguageCode,
-        to: targetLanguageCode,
-      });
-
-      return translation;
+      const requestBody: IYandexTranslateRequest = {
+        format: 'HTML',
+        sourceLanguageCode: sourceLanguageCode,
+        targetLanguageCode: targetLanguageCode,
+        texts: [text],
+      };
+      const { data } = await firstValueFrom(
+        this.httpService.post<IYandexTranslateResponse>(
+          '/translate',
+          requestBody,
+        ),
+      );
+      return data.translations[0]?.text || '';
     } catch (e) {
       this.logger.error('Translation failed', e.message);
       return text;
     }
   }
 
-  async createGoogleTranslation(
+  async createTranslation(
     text: string,
     targetLanguageCode: string,
     sourceLanguageId?: number,
@@ -71,6 +105,33 @@ export class TranslationsService {
       );
     }
     return this.translate(text, targetLanguageCode, originalLanguage?.code);
+  }
+
+  // detect language code of text with Google service
+  private async detectLanguage(text: string) {
+    try {
+      const requestBody: IYandexDetectLanguageRequest = {
+        languageCodeHints,
+        text: text.slice(0, 1000),
+      };
+      const { data } = await firstValueFrom(
+        this.httpService.post<IYandexDetectLanguageResponse>(
+          '/detect',
+          requestBody,
+        ),
+      );
+      return data.languageCode ?? null;
+    } catch (e) {
+      this.logger.error('language detection failed', e.message);
+      return null;
+    }
+  }
+
+  async getLanguageIdOfText(text: string) {
+    const languageCode = await this.detectLanguage(text);
+    if (!languageCode) return null;
+    const language = await this.languagesService.findOneByCode(languageCode);
+    return language?.id || null;
   }
 
   // delete translation by id

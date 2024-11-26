@@ -9,19 +9,23 @@ import {
   ValidateIf,
 } from 'class-validator';
 import { regularExpressions } from '../../../shared/regular-expressions';
+import { Transform } from 'class-transformer';
 
 export class CreatePlaceDto {
   @ApiProperty({ type: String, description: 'Place title' })
+  @Transform(({ value }) => value.trim())
   @IsString()
   @MaxLength(300)
   title: string;
 
   @ApiProperty({ type: String, description: 'Place description' })
+  @Transform(({ value }) => value.trim())
   @IsString()
   @MaxLength(1000)
   description: string;
 
   @ApiProperty({ type: String, description: 'Place address' })
+  @Transform(({ value }) => value.trim())
   @IsString()
   @MaxLength(300)
   address: string;

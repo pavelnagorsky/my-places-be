@@ -1,9 +1,10 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Exclude, Expose } from 'class-transformer';
+import { Exclude, Expose, Transform } from 'class-transformer';
 import { ReviewStatusesEnum } from '../enums/review-statuses.enum';
 import { Review } from '../entities/review.entity';
 import { ReviewTranslation } from '../entities/review-translation.entity';
 import { Place } from '../../places/entities/place.entity';
+import { User } from '../../users/entities/user.entity';
 
 export class MyReviewDto {
   @ApiProperty({ title: 'Review id', type: Number })
@@ -63,6 +64,16 @@ export class MyReviewDto {
 
   @Exclude()
   place: Place;
+
+  @ApiProperty({
+    type: String,
+    description: 'author username',
+    nullable: true,
+  })
+  @Transform(({ value }: { value: Partial<User> | null }) => {
+    return value ? `${value.firstName} ${value.lastName}` : null;
+  })
+  author: string;
 
   constructor(partial: Partial<Review>) {
     Object.assign(this, partial);

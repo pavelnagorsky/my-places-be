@@ -26,7 +26,7 @@ import { MyReviewsRequestDto } from './dto/my-reviews-request.dto';
 import { MyReviewsOrderByEnum } from './enums/my-reviews-order-by.enum';
 import { ReviewStatusesEnum } from './enums/review-statuses.enum';
 import { ModerationReviewsRequestDto } from './dto/moderation-reviews-request.dto';
-import { ModerationReviewsOrderByEnum } from './enums/moderation-reviews-order-by';
+import { ModerationReviewsOrderByEnum } from './enums/moderation-reviews-order-by.enum';
 import { ModerationDto } from '../places/dto/moderation.dto';
 import { AdministrationReviewsRequestDto } from './dto/administration-reviews-request.dto';
 import { LanguageIdEnum } from '../languages/enums/language-id.enum';
@@ -64,7 +64,7 @@ export class ReviewsService {
           title:
             lang.id === sourceLangId
               ? dto.title
-              : await this.translationsService.createGoogleTranslation(
+              : await this.translationsService.createTranslation(
                   dto.title,
                   lang.code,
                   sourceLangId,
@@ -72,7 +72,7 @@ export class ReviewsService {
           description:
             lang.id === sourceLangId
               ? dto.description
-              : await this.translationsService.createGoogleTranslation(
+              : await this.translationsService.createTranslation(
                   dto.description,
                   lang.code,
                   sourceLangId,
@@ -113,7 +113,7 @@ export class ReviewsService {
           translation.language.id === sourceLangId
             ? dto.title
             : translateAll
-            ? await this.translationsService.createGoogleTranslation(
+            ? await this.translationsService.createTranslation(
                 dto.title,
                 translation.language.code,
                 sourceLangId,
@@ -123,7 +123,7 @@ export class ReviewsService {
           translation.language.id === sourceLangId
             ? dto.description
             : translateAll
-            ? await this.translationsService.createGoogleTranslation(
+            ? await this.translationsService.createTranslation(
                 dto.description,
                 translation.language.code,
                 sourceLangId,
@@ -160,7 +160,14 @@ export class ReviewsService {
     const reviewImages = await this.imagesService.updatePositions(
       createReviewDto.imagesIds,
     );
-    const translations = await this.createTranslations(langId, createReviewDto);
+    const detectedLanguageId =
+      await this.translationsService.getLanguageIdOfText(
+        createReviewDto.description,
+      );
+    const translations = await this.createTranslations(
+      detectedLanguageId || langId,
+      createReviewDto,
+    );
     const review = this.reviewsRepository.create();
     review.translations = translations;
     review.images = reviewImages;
@@ -287,8 +294,12 @@ export class ReviewsService {
         updateReviewDto.imagesIds,
       );
 
+      const detectedLanguageId =
+        await this.translationsService.getLanguageIdOfText(
+          updateReviewDto.description,
+        );
       const translations = await this.updateTranslations(
-        langId,
+        detectedLanguageId || langId,
         oldReview,
         updateReviewDto,
         updateReviewDto.shouldTranslate,
@@ -467,6 +478,7 @@ export class ReviewsService {
     const res = await this.reviewsRepository.findAndCount({
       relations: {
         translations: true,
+        author: true,
         place: { translations: true },
       },
       skip: dto.page * dto.pageSize,

@@ -13,7 +13,7 @@ export class PaginationRequestDto<OrderByType = number> {
 
   @ApiProperty({ type: Number, description: 'Order by' })
   @IsNumber()
-  @ValidateIf((object, value) => Boolean(value))
+  @ValidateIf((object, value) => typeof value === 'number')
   orderBy?: OrderByType;
 
   @ApiProperty({ type: Boolean, description: 'Is order direction ASC' })

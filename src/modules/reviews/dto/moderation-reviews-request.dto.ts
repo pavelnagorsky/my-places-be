@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsDateString, IsString, ValidateIf } from 'class-validator';
-import { ModerationReviewsOrderByEnum } from '../enums/moderation-reviews-order-by';
+import { ModerationReviewsOrderByEnum } from '../enums/moderation-reviews-order-by.enum';
 import { PaginationRequestDto } from '../../../shared/dto/pagination-request.dto';
 
 export class ModerationReviewsRequestDto extends PaginationRequestDto<ModerationReviewsOrderByEnum> {

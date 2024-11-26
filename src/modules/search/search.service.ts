@@ -1,5 +1,4 @@
 import {
-  BadRequestException,
   Inject,
   Injectable,
   Logger,
@@ -9,12 +8,13 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Place } from '../places/entities/place.entity';
 import { Repository, SelectQueryBuilder } from 'typeorm';
-import { PlaceTranslation } from '../places/entities/place-translation.entity';
 import { PlaceStatusesEnum } from '../places/enums/place-statuses.enum';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
 import { SearchRequestDto } from './dto/search-request.dto';
 import { Interval } from '@nestjs/schedule';
+import { SearchPlacesOrderByEnum } from './enums/search-places-order-by.enum';
+import { regularExpressions } from '../../shared/regular-expressions';
 
 @Injectable()
 export class SearchService implements OnModuleInit {
@@ -27,8 +27,6 @@ export class SearchService implements OnModuleInit {
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
     @InjectRepository(Place)
     private placesRepository: Repository<Place>,
-    @InjectRepository(PlaceTranslation)
-    private placeTranslationsRepository: Repository<PlaceTranslation>,
   ) {}
 
   onModuleInit(): any {
@@ -110,25 +108,20 @@ export class SearchService implements OnModuleInit {
     return bounds;
   }
 
-  private isPointInBounds(
-    placeCoordinates: string,
-    bounds: { lat: number; lng: number }[],
-  ) {
-    const point = this.getLatLng(placeCoordinates);
-    const latitudes = bounds.map((latLng) => latLng.lat);
-    const longitudes = bounds.map((latLng) => latLng.lng);
+  isPointInPolygon(point: number[], polygon: number[][]): boolean {
+    const [x, y] = point;
+    let inside = false;
 
-    const minLat = Math.min(...latitudes);
-    const maxLat = Math.max(...latitudes);
-    const minLng = Math.min(...longitudes);
-    const maxLng = Math.max(...longitudes);
+    for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
+      const [xi, yi] = polygon[i];
+      const [xj, yj] = polygon[j];
 
-    return (
-      point.lat >= minLat &&
-      point.lat <= maxLat &&
-      point.lng >= minLng &&
-      point.lng <= maxLng
-    );
+      const intersect =
+        yi > y !== yj > y && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi;
+      if (intersect) inside = !inside;
+    }
+
+    return inside;
   }
 
   private selectPlacesForSearchQuery(
@@ -195,6 +188,64 @@ export class SearchService implements OnModuleInit {
 
   // filters & helpers
 
+  private applyOrderBy(
+    places: Place[],
+    orderBy: SearchPlacesOrderByEnum,
+    langId: number,
+  ) {
+    let sortedPlaces = places;
+    if (orderBy === SearchPlacesOrderByEnum.CreatedAt) {
+      sortedPlaces = places
+        .slice()
+        .sort(
+          (a, b) =>
+            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+        );
+    }
+    if (orderBy === SearchPlacesOrderByEnum.Rating) {
+      sortedPlaces = places.slice().sort((a, b) => {
+        if (a.likesCount === b.likesCount) {
+          return b.viewsCount - a.viewsCount; // If likes are equal, sort vy views
+        }
+        return b.likesCount - a.likesCount; // Else sort by likes
+      });
+    }
+    if (orderBy === SearchPlacesOrderByEnum.Title) {
+      sortedPlaces = places.slice().sort((a, b) => {
+        const aTranslations = a.translations.find(
+          (tr) => tr.language.id === langId,
+        );
+        const bTranslations = b.translations.find(
+          (tr) => tr.language.id === langId,
+        );
+
+        if (!aTranslations || !bTranslations) {
+          console.error('Translation not found for one of the items:', a, b);
+          return 0; // Keep original order if translation is missing
+        }
+
+        const aTitle = aTranslations.title;
+        const bTitle = bTranslations.title;
+
+        // Check if titles contain the character «
+        const aContainsSpecialChar = aTitle.startsWith('«');
+        const bContainsSpecialChar = bTitle.startsWith('«');
+
+        if (aContainsSpecialChar && !bContainsSpecialChar) {
+          return 1; // Place a after b
+        }
+        if (!aContainsSpecialChar && bContainsSpecialChar) {
+          return -1; // Place a before b
+        }
+
+        return aTitle.localeCompare(bTitle, undefined, {
+          sensitivity: 'base',
+        });
+      });
+    }
+    return sortedPlaces;
+  }
+
   private applyPagination(places: Place[], dto: SearchRequestDto) {
     // Calculate the start index
     const startIndex = dto.pageSize * dto.page;
@@ -236,7 +287,12 @@ export class SearchService implements OnModuleInit {
         dto.title,
         langId,
       );
-      const paginationResult = this.applyPagination(filteredPlaces, dto);
+      const orderedResult = this.applyOrderBy(
+        filteredPlaces,
+        dto.orderBy ?? SearchPlacesOrderByEnum.CreatedAt,
+        langId,
+      );
+      const paginationResult = this.applyPagination(orderedResult, dto);
       return [paginationResult, filteredPlaces.length];
     }
 
@@ -271,11 +327,21 @@ export class SearchService implements OnModuleInit {
         dto.searchEndCoordinates,
         dto.radius,
       );
-      resultPlaces = resultPlaces.filter((place) =>
-        this.isPointInBounds(place.coordinates, searchBounds),
-      );
+      resultPlaces = resultPlaces.filter((place) => {
+        const placeLatLng = this.getLatLng(place.coordinates);
+        const point = [placeLatLng.lng, placeLatLng.lat];
+        return this.isPointInPolygon(
+          point,
+          searchBounds.map((latLng) => [latLng.lng, latLng.lat]),
+        );
+      });
     }
-    const paginationResult = this.applyPagination(resultPlaces, dto);
+    const orderedResult = this.applyOrderBy(
+      resultPlaces,
+      dto.orderBy ?? SearchPlacesOrderByEnum.CreatedAt,
+      langId,
+    );
+    const paginationResult = this.applyPagination(orderedResult, dto);
     return [paginationResult, resultPlaces.length];
   }
 
@@ -287,7 +353,7 @@ export class SearchService implements OnModuleInit {
       this.placesSearchCacheKey,
     );
     if (!cachedPlaces) {
-      // fallback to db search
+      this.handleCreateCacheCron();
       throw new NotFoundException();
     }
     return this.searchFromCache(dto, langId, cachedPlaces);
