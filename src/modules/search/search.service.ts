@@ -14,7 +14,6 @@ import { Cache } from 'cache-manager';
 import { SearchRequestDto } from './dto/search-request.dto';
 import { Interval } from '@nestjs/schedule';
 import { SearchPlacesOrderByEnum } from './enums/search-places-order-by.enum';
-import { regularExpressions } from '../../shared/regular-expressions';
 
 @Injectable()
 export class SearchService implements OnModuleInit {
@@ -282,18 +281,7 @@ export class SearchService implements OnModuleInit {
 
     // if search is by place titles
     if (isSearchByTitle) {
-      const filteredPlaces = this.filterPlacesByTitle(
-        resultPlaces,
-        dto.title,
-        langId,
-      );
-      const orderedResult = this.applyOrderBy(
-        filteredPlaces,
-        dto.orderBy ?? SearchPlacesOrderByEnum.CreatedAt,
-        langId,
-      );
-      const paginationResult = this.applyPagination(orderedResult, dto);
-      return [paginationResult, filteredPlaces.length];
+      resultPlaces = this.filterPlacesByTitle(resultPlaces, dto.title, langId);
     }
 
     // if there is place type filter with > 0 items
