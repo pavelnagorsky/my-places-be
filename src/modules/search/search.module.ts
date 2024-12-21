@@ -4,9 +4,10 @@ import { SearchController } from './search.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Place } from '../places/entities/place.entity';
 import { PlaceTranslation } from '../places/entities/place-translation.entity';
+import { HttpModule } from '@nestjs/axios';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Place, PlaceTranslation])],
+  imports: [TypeOrmModule.forFeature([Place, PlaceTranslation]), HttpModule],
   controllers: [SearchController],
   providers: [SearchService],
   exports: [SearchService],

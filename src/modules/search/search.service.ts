@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Inject,
   Injectable,
   Logger,
@@ -14,6 +15,19 @@ import { Cache } from 'cache-manager';
 import { SearchRequestDto } from './dto/search-request.dto';
 import { Interval } from '@nestjs/schedule';
 import { SearchPlacesOrderByEnum } from './enums/search-places-order-by.enum';
+import { decode } from '@mapbox/polyline';
+import { firstValueFrom } from 'rxjs';
+import { HttpService } from '@nestjs/axios';
+import { ConfigService } from '@nestjs/config';
+import { IGoogleCloudConfig } from '../../config/configuration';
+import { IGoogleDirectionsApiResponse } from './interfaces/interfaces';
+import {
+  booleanPointInPolygon,
+  buffer,
+  distance,
+  lineString,
+  point,
+} from '@turf/turf';
 
 @Injectable()
 export class SearchService implements OnModuleInit {
@@ -26,6 +40,8 @@ export class SearchService implements OnModuleInit {
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
     @InjectRepository(Place)
     private placesRepository: Repository<Place>,
+    private readonly httpService: HttpService,
+    private readonly configService: ConfigService,
   ) {}
 
   onModuleInit(): any {
@@ -51,76 +67,55 @@ export class SearchService implements OnModuleInit {
   ): boolean {
     const origin = this.getLatLng(placeCoordinates);
     const search = this.getLatLng(searchCoordinates);
-
-    const EarthRadius = 6371; // km
-    const originLatRadian = (origin.lat * Math.PI) / 180; // origin latitude in radians
-    const searchLatRadian = (search.lat * Math.PI) / 180; // search latitude in radians
-    const deltaLatRadian = ((search.lat - origin.lat) * Math.PI) / 180; // delta between latitudes radians
-    const deltaLngRadian = ((search.lng - origin.lng) * Math.PI) / 180; // delta between longitude radians
-
-    const a =
-      Math.sin(deltaLatRadian / 2) * Math.sin(deltaLatRadian / 2) +
-      Math.cos(originLatRadian) *
-        Math.cos(searchLatRadian) *
-        Math.sin(deltaLngRadian / 2) *
-        Math.sin(deltaLngRadian / 2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-
-    const distance = EarthRadius * c; // in metres
-    // this.logger.debug(
-    //   `distance and radius in km : ${distance}, ${radius}. Accept: ${
-    //     distance <= radius
-    //   }`,
-    // );
-
-    return distance <= radius;
+    const originPoint = point([origin.lng, origin.lat]);
+    const searchPoint = point([search.lng, search.lat]);
+    const distanceInKm = distance(originPoint, searchPoint, {
+      units: 'kilometers',
+    });
+    return distanceInKm <= radius;
   }
 
-  private getRouteBounds(
+  private async createRoutePolygon(
     startCoordinates: string,
     endCoordinates: string,
-    // radius of search in KM
-    radius: number,
+    // offset of search in KM
+    offset: number,
   ) {
     const startLatLng = this.getLatLng(startCoordinates);
     const endLatLng = this.getLatLng(endCoordinates);
-
-    const dX = endLatLng.lat - startLatLng.lat;
-    const dY = endLatLng.lng - startLatLng.lng;
-
-    const Lx = dY / Math.sqrt(Math.pow(dX, 2) + Math.pow(dY, 2));
-    const Ly = -dX / Math.sqrt(Math.pow(dX, 2) + Math.pow(dY, 2));
-    const R = radius / 111.32;
-    const bound1 = {
-      lat: startLatLng.lat + R * Lx,
-      lng: startLatLng.lng + R * Ly,
-    };
-    const bound2 = {
-      lat: startLatLng.lat - R * Lx,
-      lng: startLatLng.lng - R * Ly,
-    };
-    const bound3 = { lat: bound1.lat + dX, lng: bound1.lng + dY };
-    const bound4 = { lat: bound2.lat + dX, lng: bound2.lng + dY };
-
-    const bounds = [bound1, bound2, bound3, bound4];
-
-    return bounds;
-  }
-
-  isPointInPolygon(point: number[], polygon: number[][]): boolean {
-    const [x, y] = point;
-    let inside = false;
-
-    for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
-      const [xi, yi] = polygon[i];
-      const [xj, yj] = polygon[j];
-
-      const intersect =
-        yi > y !== yj > y && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi;
-      if (intersect) inside = !inside;
+    const url = `https://maps.googleapis.com/maps/api/directions/json?origin=${
+      startLatLng.lat
+    },${startLatLng.lng}&destination=${endLatLng.lat},${
+      endLatLng.lng
+    }&mode=driving&key=${
+      this.configService.get<IGoogleCloudConfig>('googleCloud')?.apiKey
+    }`;
+    try {
+      const { data } = await firstValueFrom(
+        this.httpService.get<IGoogleDirectionsApiResponse>(url),
+      );
+      if (data.status === 'OK' && !!data.routes) {
+        // Extract the encoded polyline string
+        const encodedPolyline = data.routes[0].overview_polyline.points;
+        // Decode the polyline to get the coordinates;
+        const decodedCoordinates = decode(encodedPolyline).map(([lat, lng]) => [
+          lng,
+          lat,
+        ]);
+        // Create a Turf.js polyline
+        const line = lineString(decodedCoordinates);
+        // Create a Turf.js polygon from polyline with offset
+        const buffered = buffer(line as any, offset, { units: 'kilometers' });
+        return buffered;
+      } else {
+        throw data;
+      }
+    } catch (e) {
+      this.logger.error(`Error fetching paths`, e);
+      throw new BadRequestException({
+        message: 'Incorrect route coordinates',
+      });
     }
-
-    return inside;
   }
 
   private selectPlacesForSearchQuery(
@@ -271,11 +266,11 @@ export class SearchService implements OnModuleInit {
     });
   }
 
-  private searchFromCache(
+  private async searchFromCache(
     dto: SearchRequestDto,
     langId: number,
     places: Place[],
-  ): [Place[], number] {
+  ): Promise<[Place[], number]> {
     let resultPlaces = places;
     const isSearchByTitle = dto.title?.length > 0;
 
@@ -310,18 +305,21 @@ export class SearchService implements OnModuleInit {
     }
     // if there is search route
     if (!!dto.searchStartCoordinates && !!dto.searchEndCoordinates) {
-      const searchBounds = this.getRouteBounds(
+      const polygon = await this.createRoutePolygon(
         dto.searchStartCoordinates,
         dto.searchEndCoordinates,
         dto.radius,
       );
+      if (!polygon)
+        throw new BadRequestException({ message: 'Invalid request route' });
       resultPlaces = resultPlaces.filter((place) => {
         const placeLatLng = this.getLatLng(place.coordinates);
-        const point = [placeLatLng.lng, placeLatLng.lat];
-        return this.isPointInPolygon(
-          point,
-          searchBounds.map((latLng) => [latLng.lng, latLng.lat]),
-        );
+        const coordinateToCheck = [placeLatLng.lng, placeLatLng.lat];
+        // Create a Turf.js point
+        const turfPoint = point(coordinateToCheck);
+        // Check if the point is inside the polygon
+        const isInside = booleanPointInPolygon(turfPoint, polygon);
+        return isInside;
       });
     }
     const orderedResult = this.applyOrderBy(
