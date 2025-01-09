@@ -2,6 +2,7 @@ import {
   Body,
   ClassSerializerInterceptor,
   Controller,
+  Get,
   ParseIntPipe,
   Post,
   Query,
@@ -19,6 +20,8 @@ import {
 import { ValidationExceptionDto } from '../../shared/validation/validation-exception.dto';
 import { SearchResponseDto } from './dto/search-response.dto';
 import { SearchRequestDto } from './dto/search-request.dto';
+import { SearchPlaceDto } from './dto/search-place.dto';
+import { ParseIntArrayPipe } from '../../shared/pipes/parse-int-array.pipe';
 
 @ApiTags('Search')
 @Controller('search')
@@ -54,5 +57,33 @@ export class SearchController {
       pageSize: searchDto.pageSize,
       totalItems: total,
     });
+  }
+
+  @ApiOperation({ summary: 'Get places by ids' })
+  @ApiOkResponse({
+    description: 'OK',
+    type: SearchPlaceDto,
+    isArray: true,
+  })
+  @ApiQuery({
+    name: 'lang',
+    type: Number,
+    description: 'The ID of the language',
+  })
+  @ApiQuery({
+    name: 'ids',
+    type: Number,
+    isArray: true,
+    description: 'Array of ids',
+    example: '1,2,3',
+  })
+  @UseInterceptors(ClassSerializerInterceptor)
+  @Get('ids')
+  async searchByIds(
+    @Query('lang', ParseIntPipe) langId: number,
+    @Query('ids', ParseIntArrayPipe) ids: number[],
+  ) {
+    const places = await this.searchService.searchPlacesByIds(ids);
+    return places.map((place) => new SearchPlaceDto(place, langId));
   }
 }

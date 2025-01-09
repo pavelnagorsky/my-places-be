@@ -35,6 +35,7 @@ export class SearchService implements OnModuleInit {
   private readonly placesSearchCacheKey = 'placesSearch';
   // 12 hours TTL
   private readonly placesCacheTTL = 12 * 60 * 60 * 1000;
+  private isCacheCreationActive = false;
 
   constructor(
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
@@ -418,13 +419,30 @@ export class SearchService implements OnModuleInit {
     }
   }
 
+  async searchPlacesByIds(ids: number[]) {
+    const cachedPlaces = await this.cacheManager.get<Place[]>(
+      this.placesSearchCacheKey,
+    );
+    // if no cache -> create cache
+    if (!cachedPlaces) return [];
+    return ids
+      .map((id) => cachedPlaces.find((place) => place.id === id))
+      .filter(Boolean) as Place[];
+  }
+
   // Cron job to recreate search cache every 4 hours
   @Interval(4 * 60 * 60 * 10000)
   private async handleCreateCacheCron() {
+    if (this.isCacheCreationActive) {
+      return;
+    }
+    this.isCacheCreationActive = true;
     try {
       this.logger.log('Search cache creation CRON JOB runs');
       await this.createSearchCache();
+      this.isCacheCreationActive = false;
     } catch (e) {
+      this.isCacheCreationActive = false;
       this.logger.error('Cache creation CRON JOB failed:', e?.message);
     }
   }

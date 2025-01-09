@@ -57,5 +57,6 @@ import { SearchModule } from './modules/search/search.module';
     SearchModule,
   ],
   controllers: [AppController],
+  providers: [],
 })
 export class AppModule {}
