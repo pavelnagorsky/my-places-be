@@ -8,7 +8,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Place } from '../places/entities/place.entity';
-import { Repository, SelectQueryBuilder } from 'typeorm';
+import { ILike, Repository, SelectQueryBuilder } from 'typeorm';
 import { PlaceStatusesEnum } from '../places/enums/place-statuses.enum';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
@@ -28,6 +28,7 @@ import {
   lineString,
   point,
 } from '@turf/turf';
+import { Review } from '../reviews/entities/review.entity';
 
 @Injectable()
 export class SearchService implements OnModuleInit {
@@ -40,6 +41,8 @@ export class SearchService implements OnModuleInit {
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
     @InjectRepository(Place)
     private placesRepository: Repository<Place>,
+    @InjectRepository(Review)
+    private reviewsRepository: Repository<Review>,
     private readonly httpService: HttpService,
     private readonly configService: ConfigService,
   ) {}
@@ -266,17 +269,56 @@ export class SearchService implements OnModuleInit {
     });
   }
 
+  private async filterPlacesByDescription(
+    places: Place[],
+    searchText: string,
+    langId: number,
+  ): Promise<Place[]> {
+    const lowerSearchText = searchText.toLowerCase();
+    const placeIdsFromMatchedReviews = this.reviewsRepository.find({
+      select: {
+        place: { id: true },
+      },
+      where: {
+        translations: {
+          description: ILike(`%${searchText}%`),
+          language: {
+            id: langId,
+          },
+        },
+      },
+    });
+    console.log(placeIdsFromMatchedReviews);
+    return places.filter((place) => {
+      const placeTranslation = place.translations.find(
+        (tr) => tr.language.id === langId,
+      );
+      if (!placeTranslation) return false;
+      return placeTranslation.title.toLowerCase().includes(lowerSearchText);
+    });
+  }
+
   private async searchFromCache(
     dto: SearchRequestDto,
     langId: number,
     places: Place[],
   ): Promise<[Place[], number]> {
     let resultPlaces = places;
-    const isSearchByTitle = dto.title?.length > 0;
 
+    const hasSearchByTitle = dto.title?.length > 0;
     // if search is by place titles
-    if (isSearchByTitle) {
+    if (hasSearchByTitle) {
       resultPlaces = this.filterPlacesByTitle(resultPlaces, dto.title, langId);
+    }
+
+    const hasSearchBySubstring = dto.searchSubstring?.length > 0;
+    // if search is by place descriptions and review descriptions
+    if (hasSearchBySubstring) {
+      resultPlaces = await this.filterPlacesByDescription(
+        resultPlaces,
+        dto.searchSubstring,
+        langId,
+      );
     }
 
     // if there is place type filter with > 0 items

@@ -36,4 +36,12 @@ export class SearchRequestDto extends PaginationRequestDto<SearchPlacesOrderByEn
     nullable: true,
   })
   searchEndCoordinates: string | null;
+
+  @ApiProperty({
+    description:
+      'search substring in place descriptions and review descriptions',
+    type: String,
+    nullable: true,
+  })
+  searchSubstring: string;
 }
