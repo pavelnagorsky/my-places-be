@@ -52,7 +52,7 @@ import { UpdateSlugDto } from './dto/update-slug.dto';
 import { CacheInterceptor } from '@nestjs/cache-manager';
 
 @ApiTags('Places')
-@Controller('/places')
+@Controller('places')
 export class PlacesController {
   constructor(private readonly placesService: PlacesService) {}
 
