@@ -43,5 +43,5 @@ export class SearchRequestDto extends PaginationRequestDto<SearchPlacesOrderByEn
     type: String,
     nullable: true,
   })
-  searchSubstring: string;
+  description: string;
 }

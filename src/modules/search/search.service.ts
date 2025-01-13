@@ -276,10 +276,13 @@ export class SearchService implements OnModuleInit {
     langId: number,
   ): Promise<Place[]> {
     const lowerSearchText = searchText.toLowerCase();
-    const placeIdsFromMatchedReviews = this.reviewsRepository.find({
+    // Find reviews with matched substring in description
+    const reviews = await this.reviewsRepository.find({
       select: {
         place: { id: true },
+        id: true,
       },
+      relations: ['place'],
       where: {
         translations: {
           description: ILike(`%${searchText}%`),
@@ -289,14 +292,25 @@ export class SearchService implements OnModuleInit {
         },
       },
     });
-    console.log(placeIdsFromMatchedReviews);
-    return places.filter((place) => {
-      const placeTranslation = place.translations.find(
-        (tr) => tr.language.id === langId,
-      );
-      if (!placeTranslation) return false;
-      return placeTranslation.title.toLowerCase().includes(lowerSearchText);
-    });
+    const placeIdsFromMatchedReviews = reviews.map((review) => review.place.id);
+    // Find places with matched substring in description
+    const matchedPlaceIds = places
+      .filter((place) => {
+        const placeTranslation = place.translations.find(
+          (tr) => tr.language.id === langId,
+        );
+        if (!placeTranslation) return false;
+        return placeTranslation.description
+          .toLowerCase()
+          .includes(lowerSearchText);
+      })
+      .map((place) => place.id);
+
+    const filteredPlaceIds = [
+      ...new Set([...placeIdsFromMatchedReviews, ...matchedPlaceIds]),
+    ];
+
+    return places.filter((place) => filteredPlaceIds.includes(place.id));
   }
 
   private async searchFromCache(
@@ -312,12 +326,12 @@ export class SearchService implements OnModuleInit {
       resultPlaces = this.filterPlacesByTitle(resultPlaces, dto.title, langId);
     }
 
-    const hasSearchBySubstring = dto.searchSubstring?.length > 0;
+    const hasSearchBySubstring = dto.description?.length > 0;
     // if search is by place descriptions and review descriptions
     if (hasSearchBySubstring) {
       resultPlaces = await this.filterPlacesByDescription(
         resultPlaces,
-        dto.searchSubstring,
+        dto.description,
         langId,
       );
     }
