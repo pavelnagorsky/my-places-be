@@ -23,6 +23,7 @@ import { Report } from '../../reports/entities/report.entity';
 import { PlaceTranslation } from './place-translation.entity';
 import { Favourite } from '../../favourites/entities/favourite.entity';
 import { Language } from '../../languages/entities/language.entity';
+import { Route } from '../../routes/entities/route.entity';
 
 @Entity()
 export class Place {
@@ -75,7 +76,7 @@ export class Place {
   @ManyToOne(() => User, (user) => user.placesModeration)
   moderator: User;
 
-  @Column({ type: 'varchar', length: 1500,  nullable: true, default: null })
+  @Column({ type: 'varchar', length: 1500, nullable: true, default: null })
   moderationMessage: string | null;
 
   @Column({ default: 0 })
@@ -103,4 +104,7 @@ export class Place {
     cascade: true,
   })
   reviews: Review[];
+
+  @ManyToMany(() => Route, (route) => route.places)
+  routes: Route[];
 }

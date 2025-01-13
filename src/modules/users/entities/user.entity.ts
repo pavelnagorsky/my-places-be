@@ -23,6 +23,7 @@ import { Report } from '../../reports/entities/report.entity';
 import { Language } from '../../languages/entities/language.entity';
 import { Favourite } from '../../favourites/entities/favourite.entity';
 import { RefreshTokenEntity } from '../../auth/entities/refresh-token.entity';
+import { Route } from '../../routes/entities/route.entity';
 
 @Entity()
 export class User {
@@ -103,4 +104,7 @@ export class User {
 
   @OneToMany(() => Favourite, (favourite) => favourite.user, { cascade: true })
   favourites: Favourite[];
+
+  @OneToMany(() => Route, (route) => route.author)
+  routes: Route[];
 }
