@@ -48,7 +48,7 @@ export class SearchService implements OnModuleInit {
     private readonly configService: ConfigService,
   ) {}
 
-  onModuleInit(): any {
+  async onModuleInit() {
     // fulfill search cache after the app start
     this.handleCreateCacheCron();
   }
@@ -496,6 +496,7 @@ export class SearchService implements OnModuleInit {
     try {
       this.logger.log('Search cache creation CRON JOB runs');
       await this.createSearchCache();
+      this.logger.log('Search cache creation CRON JOB completes successfully');
       this.isCacheCreationActive = false;
     } catch (e) {
       this.isCacheCreationActive = false;
