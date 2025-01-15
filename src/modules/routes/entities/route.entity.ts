@@ -30,10 +30,10 @@ export class Route extends BaseEntity {
   author: User;
 
   // KM
-  @Column({ type: 'decimal', default: 0 })
+  @Column({ type: 'float', default: 0 })
   distance: number;
 
-  // Hours
-  @Column({ type: 'decimal', default: 0 })
-  time: number;
+  // Minutes
+  @Column({ type: 'float', default: 0 })
+  duration: number;
 }

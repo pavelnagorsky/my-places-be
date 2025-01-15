@@ -20,10 +20,10 @@
     "test:e2e": "jest --config ./test/jest-e2e.json",
     "typeorm": "npm run build && ts-node ./node_modules/typeorm/cli",
     "migration:create": "npm run typeorm -- migration:create",
-    "migration:generate": "npm run typeorm -- migration:generate -d dist/database/typeorm.config.js",
-    "migration:run": "npm run typeorm -- migration:run -d dist/database/typeorm.config.js",
-    "migration:run-fake": "npm run typeorm -- migration:run --fake -d dist/database/typeorm.config.js",
-    "migration:revert": "npm run typeorm -- migration:revert -d dist/database/typeorm.config.js"
+    "migration:generate": "npm run typeorm -- migration:generate -d dist/src/database/typeorm.config.js",
+    "migration:run": "npm run typeorm -- migration:run -d dist/src/database/typeorm.config.js",
+    "migration:run-fake": "npm run typeorm -- migration:run --fake -d dist/src/database/typeorm.config.js",
+    "migration:revert": "npm run typeorm -- migration:revert -d dist/src/database/typeorm.config.js"
   },
   "dependencies": {
     "@google-cloud/storage": "^6.10.0",

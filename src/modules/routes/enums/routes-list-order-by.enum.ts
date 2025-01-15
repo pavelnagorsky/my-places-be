@@ -1,6 +1,6 @@
 export enum RoutesListOrderByEnum {
-  CREATED_AT = 0,
-  TITLE = 1,
+  CREATED_AT,
+  TITLE,
   DISTANCE,
   TIME,
 }

@@ -15,26 +15,36 @@ import { User } from '../users/entities/user.entity';
 import { AccessTokenPayloadDto } from '../auth/dto/access-token-payload.dto';
 import { RoutesListRequestDto } from './dto/routes-list-request.dto';
 import { RoutesListOrderByEnum } from './enums/routes-list-order-by.enum';
+import { RoutePlace } from './entities/route-place.entity';
 
 @Injectable()
 export class RoutesService {
   constructor(
     @InjectRepository(Route)
     private routesRepository: Repository<Route>,
+    @InjectRepository(RoutePlace)
+    private routesPlacesRepository: Repository<RoutePlace>,
   ) {}
 
   async create(dto: CreateRouteDto, user: User) {
-    const route = this.routesRepository.create({
-      ...dto,
-      routePlaces: dto.placeIds.map((id, index) => ({
+    const routePlaces = await this.routesPlacesRepository.save(
+      dto.placeIds.map((id, index) => ({
         place: { id: id },
         position: index,
       })),
+    );
+    const route = this.routesRepository.create({
+      coordinatesStart: dto.coordinatesStart,
+      coordinatesEnd: dto.coordinatesEnd,
+      distance: dto.distance,
+      title: dto.title,
+      duration: dto.duration,
+      routePlaces: routePlaces,
       author: user,
     });
 
     const { id } = await this.routesRepository.save(route);
-    return id;
+    return { id };
   }
 
   async findMyRoutes(
@@ -56,6 +66,7 @@ export class RoutesService {
       skip: dto.page * dto.pageSize,
       take: dto.pageSize,
       order: {
+        routePlaces: { position: 'asc' },
         createdAt:
           dto.orderBy === RoutesListOrderByEnum.CREATED_AT || !dto.orderBy
             ? orderDirection
@@ -89,17 +100,25 @@ export class RoutesService {
   }
 
   async update(id: number, dto: UpdateRouteDto) {
-    const route = this.routesRepository.create({
-      ...dto,
-      routePlaces: dto.placeIds.map((id, index) => ({
-        place: { id: id },
+    const routePlaces = await this.routesPlacesRepository.save(
+      dto.placeIds.map((placeId, index) => ({
+        route: { id },
+        place: { id: placeId },
         position: index,
       })),
+    );
+    const route = this.routesRepository.create({
       id,
+      coordinatesStart: dto.coordinatesStart,
+      coordinatesEnd: dto.coordinatesEnd,
+      distance: dto.distance,
+      title: dto.title,
+      duration: dto.duration,
+      routePlaces: routePlaces,
     });
 
     await this.routesRepository.save(route);
-    return id;
+    return { id };
   }
 
   async remove(id: number) {

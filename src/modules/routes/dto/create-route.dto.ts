@@ -1,6 +1,12 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
-import { IsNumber, IsString, Matches, MaxLength } from 'class-validator';
+import {
+  ArrayMinSize,
+  IsNumber,
+  IsString,
+  Matches,
+  MaxLength,
+} from 'class-validator';
 import { regularExpressions } from '../../../shared/regular-expressions';
 
 export class CreateRouteDto {
@@ -15,8 +21,23 @@ export class CreateRouteDto {
     description: 'Place ids',
     isArray: true,
   })
+  @ArrayMinSize(1)
   @IsNumber({}, { each: true })
   placeIds: number[];
+
+  @ApiProperty({
+    type: Number,
+    description: 'Distance in KM',
+  })
+  @IsNumber()
+  distance: number;
+
+  @ApiProperty({
+    type: Number,
+    description: 'Duration in minutes',
+  })
+  @IsNumber()
+  duration: number;
 
   @ApiProperty({
     type: String,
