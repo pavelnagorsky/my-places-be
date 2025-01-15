@@ -26,7 +26,10 @@ export class RoutesService {
   async create(dto: CreateRouteDto, user: User) {
     const route = this.routesRepository.create({
       ...dto,
-      places: dto.placeIds.map((id) => ({ id })),
+      routePlaces: dto.placeIds.map((id, index) => ({
+        place: { id: id },
+        position: index,
+      })),
       author: user,
     });
 
@@ -58,10 +61,17 @@ export class RoutesService {
             ? orderDirection
             : undefined,
       },
-      relations: { places: true },
+      relations: { routePlaces: { place: { translations: true } } },
       where: {
         author: {
           id: tokenPayload.id,
+        },
+        routePlaces: {
+          place: {
+            translations: {
+              language: { id: langId },
+            },
+          },
         },
         createdAt: getDateWhereOption(),
         title:
@@ -81,7 +91,10 @@ export class RoutesService {
   async update(id: number, dto: UpdateRouteDto) {
     const route = this.routesRepository.create({
       ...dto,
-      places: dto.placeIds.map((id) => ({ id })),
+      routePlaces: dto.placeIds.map((id, index) => ({
+        place: { id: id },
+        position: index,
+      })),
       id,
     });
 

@@ -1,14 +1,13 @@
 import {
   Column,
   Entity,
-  JoinTable,
-  ManyToMany,
   ManyToOne,
+  OneToMany,
   PrimaryGeneratedColumn,
 } from 'typeorm';
-import { Place } from '../../places/entities/place.entity';
 import { BaseEntity } from '../../../shared/entities/base.entity';
 import { User } from '../../users/entities/user.entity';
+import { RoutePlace } from './route-place.entity';
 
 @Entity()
 export class Route extends BaseEntity {
@@ -24,9 +23,8 @@ export class Route extends BaseEntity {
   @Column()
   coordinatesEnd: string;
 
-  @ManyToMany(() => Place, (place) => place.routes)
-  @JoinTable()
-  places: Place[];
+  @OneToMany(() => RoutePlace, (routePlace) => routePlace.route)
+  routePlaces: RoutePlace[];
 
   @ManyToOne(() => User, (user) => user.routes)
   author: User;

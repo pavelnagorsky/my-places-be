@@ -24,6 +24,7 @@ import { PlaceTranslation } from './place-translation.entity';
 import { Favourite } from '../../favourites/entities/favourite.entity';
 import { Language } from '../../languages/entities/language.entity';
 import { Route } from '../../routes/entities/route.entity';
+import { RoutePlace } from '../../routes/entities/route-place.entity';
 
 @Entity()
 export class Place {
@@ -105,6 +106,6 @@ export class Place {
   })
   reviews: Review[];
 
-  @ManyToMany(() => Route, (route) => route.places)
-  routes: Route[];
+  @OneToMany(() => RoutePlace, (routePlace) => routePlace.place)
+  routePlaces: RoutePlace[];
 }
