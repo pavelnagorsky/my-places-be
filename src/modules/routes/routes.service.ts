@@ -73,6 +73,19 @@ export class RoutesService {
             : undefined,
       },
       relations: { routePlaces: { place: { translations: true } } },
+      select: {
+        routePlaces: {
+          position: true,
+          id: true,
+          place: {
+            slug: true,
+            id: true,
+            translations: {
+              title: true,
+            },
+          },
+        },
+      },
       where: {
         author: {
           id: tokenPayload.id,

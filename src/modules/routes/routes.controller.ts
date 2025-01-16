@@ -3,7 +3,6 @@ import {
   Get,
   Post,
   Body,
-  Patch,
   Param,
   Delete,
   Query,
@@ -33,9 +32,9 @@ import { TokenPayload } from '../auth/decorators/token-payload.decorator';
 import { UserFromTokenPipe } from '../auth/pipes/user-from-token.pipe';
 import { User } from '../users/entities/user.entity';
 import { AccessTokenPayloadDto } from '../auth/dto/access-token-payload.dto';
-import { MyPlacesResponseDto } from '../places/dto/my-places-response.dto';
-import { MyPlacesRequestDto } from '../places/dto/my-places-request.dto';
 import { RoutesListRequestDto } from './dto/routes-list-request.dto';
+import { RoutesListResponseDto } from './dto/routes-list-response.dto';
+import { MyPlacesResponseDto } from '../places/dto/my-places-response.dto';
 
 @ApiTags('Routes')
 @Controller('routes')
@@ -67,6 +66,7 @@ export class RoutesController {
   @ApiOperation({ summary: 'Get my routes' })
   @ApiOkResponse({
     description: 'OK',
+    type: RoutesListResponseDto,
   })
   @ApiBody({
     type: RoutesListRequestDto,
@@ -91,7 +91,11 @@ export class RoutesController {
       tokenPayload,
     );
 
-    return routes;
+    return new RoutesListResponseDto(routes, {
+      requestedPage: dto.page,
+      pageSize: dto.pageSize,
+      totalItems: total,
+    });
   }
 
   @Get(':id')
