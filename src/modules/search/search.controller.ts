@@ -22,6 +22,8 @@ import { SearchResponseDto } from './dto/search-response.dto';
 import { SearchRequestDto } from './dto/search-request.dto';
 import { SearchPlaceDto } from './dto/search-place.dto';
 import { ParseIntArrayPipe } from '../../shared/pipes/parse-int-array.pipe';
+import { OptionsSearchResponseDto } from './dto/options-search-response.dto';
+import { OptionsSearchRequestDto } from './dto/options-search-request.dto';
 
 @ApiTags('Search')
 @Controller('search')
@@ -85,5 +87,32 @@ export class SearchController {
   ) {
     const places = await this.searchService.searchPlacesByIds(ids);
     return places.map((place) => new SearchPlaceDto(place, langId));
+  }
+
+  @ApiOperation({ summary: 'Get places options' })
+  @ApiOkResponse({
+    description: 'OK',
+    type: OptionsSearchResponseDto,
+  })
+  @ApiQuery({
+    name: 'lang',
+    type: Number,
+    description: 'The ID of the language',
+  })
+  @UseInterceptors(ClassSerializerInterceptor)
+  @Post('options')
+  async searchOptions(
+    @Query('lang', ParseIntPipe) langId: number,
+    @Body() dto: OptionsSearchRequestDto,
+  ) {
+    const [places, total] = await this.searchService.searchPlaceOptions(
+      dto,
+      langId,
+    );
+    return new OptionsSearchResponseDto(places, langId, {
+      requestedPage: dto.page,
+      pageSize: dto.pageSize,
+      totalItems: total,
+    });
   }
 }

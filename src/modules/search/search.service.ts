@@ -29,6 +29,9 @@ import {
   point,
 } from '@turf/turf';
 import { Review } from '../reviews/entities/review.entity';
+import { OptionsSearchDto } from './dto/options-search.dto';
+import { OptionsSearchRequestDto } from './dto/options-search-request.dto';
+import { PaginationRequestDto } from '../../shared/dto/pagination-request.dto';
 
 @Injectable()
 export class SearchService implements OnModuleInit {
@@ -244,7 +247,7 @@ export class SearchService implements OnModuleInit {
     return sortedPlaces;
   }
 
-  private applyPagination(places: Place[], dto: SearchRequestDto) {
+  private applyPagination(places: Place[], dto: PaginationRequestDto) {
     // Calculate the start index
     const startIndex = dto.pageSize * dto.page;
 
@@ -385,7 +388,7 @@ export class SearchService implements OnModuleInit {
       langId,
     );
     const paginationResult = this.applyPagination(orderedResult, dto);
-    return [paginationResult, resultPlaces.length];
+    return [paginationResult, orderedResult.length];
   }
 
   public async search(
@@ -484,6 +487,29 @@ export class SearchService implements OnModuleInit {
     return ids
       .map((id) => cachedPlaces.find((place) => place.id === id))
       .filter(Boolean) as Place[];
+  }
+
+  async searchPlaceOptions(
+    dto: OptionsSearchRequestDto,
+    langId: number,
+  ): Promise<[Place[], number]> {
+    let places = await this.cacheManager.get<Place[]>(
+      this.placesSearchCacheKey,
+    );
+    if (!places) return [[], 0];
+    if (!!dto.excludeIds && dto.excludeIds?.length > 0) {
+      places = places.filter((p) => !dto.excludeIds?.includes(p.id));
+    }
+    if (dto.search) {
+      places = this.filterPlacesByTitle(places, dto.search, langId);
+    }
+    const orderedResult = this.applyOrderBy(
+      places,
+      dto.orderBy ?? SearchPlacesOrderByEnum.CreatedAt,
+      langId,
+    );
+    const paginationResult = this.applyPagination(orderedResult, dto);
+    return [paginationResult, orderedResult.length];
   }
 
   // Cron job to recreate search cache every 4 hours
