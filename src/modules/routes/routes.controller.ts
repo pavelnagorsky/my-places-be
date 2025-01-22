@@ -11,6 +11,7 @@ import {
   UseInterceptors,
   ClassSerializerInterceptor,
   ForbiddenException,
+  NotFoundException,
 } from '@nestjs/common';
 import { RoutesService } from './routes.service';
 import { CreateRouteDto } from './dto/create-route.dto';
@@ -35,6 +36,7 @@ import { AccessTokenPayloadDto } from '../auth/dto/access-token-payload.dto';
 import { RoutesListRequestDto } from './dto/routes-list-request.dto';
 import { RoutesListResponseDto } from './dto/routes-list-response.dto';
 import { MyPlacesResponseDto } from '../places/dto/my-places-response.dto';
+import { RouteDto } from './dto/route.dto';
 
 @ApiTags('Routes')
 @Controller('routes')
@@ -86,8 +88,8 @@ export class RoutesController {
     tokenPayload: AccessTokenPayloadDto,
   ) {
     const [routes, total] = await this.routesService.findMyRoutes(
-      langId,
       dto,
+      langId,
       tokenPayload,
     );
 
@@ -98,9 +100,28 @@ export class RoutesController {
     });
   }
 
+  @ApiOperation({ summary: 'Get route by id' })
+  @ApiOkResponse({
+    description: 'OK',
+    type: RouteDto,
+  })
+  @ApiQuery({
+    name: 'lang',
+    type: Number,
+    description: 'The ID of the language',
+  })
+  @UseInterceptors(ClassSerializerInterceptor)
+  @Auth()
   @Get(':id')
-  async findOne(@Param('id') id: string) {
-    return this.routesService.findOne(+id);
+  async findOne(
+    @Param('id', ParseIntPipe) id: number,
+    @Query('lang', ParseIntPipe) langId: number,
+    @TokenPayload()
+    tokenPayload: AccessTokenPayloadDto,
+  ) {
+    const route = await this.routesService.findOne(id, langId, tokenPayload.id);
+    if (!route) throw new NotFoundException({ message: 'Route not found' });
+    return route;
   }
 
   @ApiOperation({ summary: 'Update Route' })

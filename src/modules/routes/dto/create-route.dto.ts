@@ -26,20 +26,6 @@ export class CreateRouteDto {
   placeIds: number[];
 
   @ApiProperty({
-    type: Number,
-    description: 'Distance in KM',
-  })
-  @IsNumber()
-  distance: number;
-
-  @ApiProperty({
-    type: Number,
-    description: 'Duration in minutes',
-  })
-  @IsNumber()
-  duration: number;
-
-  @ApiProperty({
     type: String,
     description: 'Route start coordinates [lat;lng]',
   })

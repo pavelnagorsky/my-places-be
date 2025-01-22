@@ -10,6 +10,14 @@ export class RoutePlace {
   @Column({ type: 'tinyint', default: 0 })
   position: number;
 
+  // KM
+  @Column({ type: 'float', default: 0 })
+  distance: number;
+
+  // Minutes
+  @Column({ type: 'float', default: 0 })
+  duration: number;
+
   @ManyToOne(() => Place, (place) => place.routePlaces, { onDelete: 'CASCADE' })
   place: Place;
 
