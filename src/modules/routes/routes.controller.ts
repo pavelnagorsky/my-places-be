@@ -121,7 +121,7 @@ export class RoutesController {
   ) {
     const route = await this.routesService.findOne(id, langId, tokenPayload.id);
     if (!route) throw new NotFoundException({ message: 'Route not found' });
-    return route;
+    return new RouteDto(route);
   }
 
   @ApiOperation({ summary: 'Update Route' })

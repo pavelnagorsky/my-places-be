@@ -145,7 +145,7 @@ export class RoutesService {
   }
 
   async findOne(id: number, langId: number, userId: number) {
-    const res = await this.routesRepository.findAndCount({
+    const res = await this.routesRepository.findOne({
       relations: { routePlaces: { place: { translations: true } } },
       select: {
         routePlaces: {
@@ -163,6 +163,7 @@ export class RoutesService {
           },
         },
       },
+      order: { routePlaces: { position: 'asc' } },
       where: {
         author: {
           id: userId,
