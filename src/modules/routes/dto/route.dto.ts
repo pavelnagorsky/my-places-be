@@ -4,6 +4,7 @@ import { RoutePlaceDto } from './route-place.dto';
 import { RoutePlace } from '../entities/route-place.entity';
 import { Exclude, Transform } from 'class-transformer';
 import { CoordinatesDto } from '../../places/dto/coordinates.dto';
+import { IsDateString } from 'class-validator';
 
 export class RouteDto {
   @ApiProperty({ title: 'Place id', type: Number })
@@ -53,6 +54,10 @@ export class RouteDto {
     description: 'updated at',
   })
   updatedAt: Date;
+
+  @ApiProperty({ type: Date, description: 'Datetime of route start' })
+  @IsDateString()
+  timeStart: Date;
 
   constructor(partial: Partial<Route>) {
     Object.assign(this, partial);

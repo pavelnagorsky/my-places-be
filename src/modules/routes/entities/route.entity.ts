@@ -36,4 +36,7 @@ export class Route extends BaseEntity {
   // Minutes
   @Column({ type: 'float', default: 0 })
   duration: number;
+
+  @Column({ type: 'datetime', default: () => 'CURRENT_TIMESTAMP' })
+  timeStart: Date;
 }

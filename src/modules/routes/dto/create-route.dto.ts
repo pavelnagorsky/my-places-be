@@ -2,6 +2,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
 import {
   ArrayMinSize,
+  IsDateString,
   IsNumber,
   IsString,
   Matches,
@@ -35,4 +36,8 @@ export class CreateRouteDto {
   @ApiProperty({ type: String, description: 'Route end coordinates [lat;lng]' })
   @Matches(regularExpressions.coordinates)
   coordinatesEnd: string;
+
+  @ApiProperty({ type: String, description: 'Datetime of route start' })
+  @IsDateString()
+  timeStart: string;
 }

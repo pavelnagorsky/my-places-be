@@ -61,6 +61,7 @@ export class RoutesService {
       title: dto.title,
       duration: routeDetails.totalDuration,
       routePlaces: routePlaces,
+      timeStart: new Date(dto.timeStart),
       author: user,
     });
 
@@ -206,6 +207,7 @@ export class RoutesService {
       distance: routeDetails.totalDistance,
       title: dto.title,
       duration: routeDetails.totalDuration,
+      timeStart: new Date(dto.timeStart),
       routePlaces: routePlaces,
     });
 
@@ -289,7 +291,7 @@ export class RoutesService {
     }
   }
 
-  private async getPlacesByIds(placeIds: number[]) {
+  private async getPlacesByIds(placeIds: number[]): Promise<Place[]> {
     const places = await this.placesRepository.find({
       where: {
         id: In(placeIds),
@@ -297,6 +299,11 @@ export class RoutesService {
       },
       select: { id: true, coordinates: true },
     });
-    return places;
+
+    const placesMap = new Map(places.map((place) => [place.id, place]));
+
+    return placeIds
+      .map((id) => placesMap.get(id) || (null as any))
+      .filter(Boolean);
   }
 }
