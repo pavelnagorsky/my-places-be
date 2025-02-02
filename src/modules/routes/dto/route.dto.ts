@@ -4,7 +4,8 @@ import { RoutePlaceDto } from './route-place.dto';
 import { RoutePlace } from '../entities/route-place.entity';
 import { Exclude, Transform } from 'class-transformer';
 import { CoordinatesDto } from '../../places/dto/coordinates.dto';
-import { IsDateString } from 'class-validator';
+import { IsDateString, IsEnum } from 'class-validator';
+import { TravelModesEnum } from '../enums/travel-modes.enum';
 
 export class RouteDto {
   @ApiProperty({ title: 'Place id', type: Number })
@@ -55,9 +56,23 @@ export class RouteDto {
   })
   updatedAt: Date;
 
-  @ApiProperty({ type: Date, description: 'Datetime of route start' })
-  @IsDateString()
-  timeStart: Date;
+  @ApiProperty({
+    type: Number,
+    description: 'Distance in km - from last place to end of the route',
+  })
+  lastRouteLegDistance: number;
+
+  @ApiProperty({
+    type: Number,
+    description: 'Duration in minutes - from last place to end of the route',
+  })
+  lastRouteLegDuration: number;
+
+  @ApiProperty({
+    enum: TravelModesEnum,
+    description: 'Travel mode',
+  })
+  travelMode: TravelModesEnum;
 
   constructor(partial: Partial<Route>) {
     Object.assign(this, partial);

@@ -24,6 +24,7 @@ import { HttpService } from '@nestjs/axios';
 import { ConfigService } from '@nestjs/config';
 import { Place } from '../places/entities/place.entity';
 import { PlaceStatusesEnum } from '../places/enums/place-statuses.enum';
+import { TravelModesEnum } from './enums/travel-modes.enum';
 
 @Injectable()
 export class RoutesService {
@@ -45,6 +46,7 @@ export class RoutesService {
       dto.coordinatesStart,
       dto.coordinatesEnd,
       places.map((p) => p.coordinates),
+      dto.travelMode,
     );
     const routePlaces = await this.routesPlacesRepository.save(
       dto.placeIds.map((id, index) => ({
@@ -61,8 +63,10 @@ export class RoutesService {
       title: dto.title,
       duration: routeDetails.totalDuration,
       routePlaces: routePlaces,
-      timeStart: new Date(dto.timeStart),
       author: user,
+      travelMode: dto.travelMode,
+      lastRouteLegDistance: routeDetails.lastRouteLegDistance,
+      lastRouteLegDuration: routeDetails.lastRouteLegDuration,
     });
 
     const { id } = await this.routesRepository.save(route);
@@ -189,6 +193,7 @@ export class RoutesService {
       dto.coordinatesStart,
       dto.coordinatesEnd,
       places.map((p) => p.coordinates),
+      dto.travelMode,
     );
 
     const routePlaces = await this.routesPlacesRepository.save(
@@ -207,8 +212,10 @@ export class RoutesService {
       distance: routeDetails.totalDistance,
       title: dto.title,
       duration: routeDetails.totalDuration,
-      timeStart: new Date(dto.timeStart),
       routePlaces: routePlaces,
+      travelMode: dto.travelMode,
+      lastRouteLegDistance: routeDetails.lastRouteLegDistance,
+      lastRouteLegDuration: routeDetails.lastRouteLegDuration,
     });
 
     await this.routesRepository.save(route);
@@ -247,6 +254,7 @@ export class RoutesService {
     startCoordinates: string,
     endCoordinates: string,
     waypointsCoordinates: string[],
+    travelMode: TravelModesEnum,
   ) {
     const startLatLng = this.getLatLng(startCoordinates);
     const endLatLng = this.getLatLng(endCoordinates);
@@ -259,7 +267,7 @@ export class RoutesService {
       startLatLng.lat
     },${startLatLng.lng}&destination=${endLatLng.lat},${
       endLatLng.lng
-    }&waypoints=${waypointsString}&mode=driving&mode=driving&key=${
+    }&waypoints=${waypointsString}&mode=${travelMode.toLowerCase()}&key=${
       this.configService.get<IGoogleCloudConfig>('googleCloud')?.apiKey
     }`;
     try {
@@ -279,7 +287,18 @@ export class RoutesService {
           0,
         );
 
-        return { distanceLegs, durationLegs, totalDistance, totalDuration };
+        const lastRouteLeg = route.legs[route.legs.length - 1];
+        const lastRouteLegDistance = lastRouteLeg.distance.value / 1000; // KM
+        const lastRouteLegDuration = lastRouteLeg.duration.value / 60; // Minutes
+
+        return {
+          distanceLegs,
+          durationLegs,
+          totalDistance,
+          totalDuration,
+          lastRouteLegDistance,
+          lastRouteLegDuration,
+        };
       } else {
         throw data;
       }

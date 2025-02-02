@@ -8,6 +8,7 @@ import {
 import { BaseEntity } from '../../../shared/entities/base.entity';
 import { User } from '../../users/entities/user.entity';
 import { RoutePlace } from './route-place.entity';
+import { TravelModesEnum } from '../enums/travel-modes.enum';
 
 @Entity()
 export class Route extends BaseEntity {
@@ -37,6 +38,14 @@ export class Route extends BaseEntity {
   @Column({ type: 'float', default: 0 })
   duration: number;
 
-  @Column({ type: 'datetime', default: () => 'CURRENT_TIMESTAMP' })
-  timeStart: Date;
+  // Duration in minutes - from last place to end of the route
+  @Column({ type: 'float', default: 0 })
+  lastRouteLegDuration: number;
+
+  // Distance in km - from last place to end of the route
+  @Column({ type: 'float', default: 0 })
+  lastRouteLegDistance: number;
+
+  @Column({ default: TravelModesEnum.DRIVING })
+  travelMode: TravelModesEnum;
 }

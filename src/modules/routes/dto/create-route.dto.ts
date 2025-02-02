@@ -3,12 +3,14 @@ import { Transform } from 'class-transformer';
 import {
   ArrayMinSize,
   IsDateString,
+  IsEnum,
   IsNumber,
   IsString,
   Matches,
   MaxLength,
 } from 'class-validator';
 import { regularExpressions } from '../../../shared/regular-expressions';
+import { TravelModesEnum } from '../enums/travel-modes.enum';
 
 export class CreateRouteDto {
   @ApiProperty({ type: String, description: 'Place title' })
@@ -37,7 +39,11 @@ export class CreateRouteDto {
   @Matches(regularExpressions.coordinates)
   coordinatesEnd: string;
 
-  @ApiProperty({ type: String, description: 'Datetime of route start' })
-  @IsDateString()
-  timeStart: string;
+  @ApiProperty({
+    enum: TravelModesEnum,
+    description: 'Travel mode',
+    default: TravelModesEnum.DRIVING,
+  })
+  @IsEnum(TravelModesEnum)
+  travelMode: TravelModesEnum;
 }

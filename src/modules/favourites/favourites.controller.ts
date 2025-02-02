@@ -10,6 +10,7 @@ import {
   UseInterceptors,
   ClassSerializerInterceptor,
   Body,
+  Put,
 } from '@nestjs/common';
 import { FavouritesService } from './favourites.service';
 import {
@@ -26,6 +27,7 @@ import { FavouriteDto } from './dto/favourite.dto';
 import { TokenPayload } from '../auth/decorators/token-payload.decorator';
 import { AccessTokenPayloadDto } from '../auth/dto/access-token-payload.dto';
 import { FavouritesRequestDto } from './dto/favourites-request.dto';
+import { UpdateIsActualDto } from './dto/update-is-actual.dto';
 
 @ApiTags('Favourites')
 @Controller('favourites')
@@ -91,13 +93,22 @@ export class FavouritesController {
     type: Number,
     description: 'Favourite id',
   })
+  @ApiBody({
+    type: UpdateIsActualDto,
+  })
+  @UseInterceptors(ClassSerializerInterceptor)
   @Auth()
-  @Patch(':id')
+  @Put(':id')
   async update(
     @Param('id', ParseIntPipe) id: number,
+    @Body() dto: UpdateIsActualDto,
     @TokenPayload() tokenPayload: AccessTokenPayloadDto,
   ) {
-    return await this.favouritesService.updateIsActual(id, tokenPayload.id);
+    return await this.favouritesService.updateIsActual(
+      id,
+      dto,
+      tokenPayload.id,
+    );
   }
 
   @ApiOperation({ summary: 'Delete my favourite' })

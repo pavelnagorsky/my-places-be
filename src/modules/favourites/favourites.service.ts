@@ -14,6 +14,7 @@ import {
 } from 'typeorm';
 import { Favourite } from './entities/favourite.entity';
 import { FavouritesRequestDto } from './dto/favourites-request.dto';
+import { UpdateIsActualDto } from './dto/update-is-actual.dto';
 
 @Injectable()
 export class FavouritesService {
@@ -110,16 +111,14 @@ export class FavouritesService {
     });
   }
 
-  async updateIsActual(id: number, userId: number) {
-    const fav = await this.favouritesRepository.findOne({
-      where: { id: id, user: { id: userId } },
-    });
-    if (!fav)
-      throw new NotFoundException({
-        message: 'Favourite not found',
-      });
-    fav.actual = !fav.actual;
-    await this.favouritesRepository.save(fav);
+  async updateIsActual(id: number, dto: UpdateIsActualDto, userId: number) {
+    await this.favouritesRepository.update(
+      {
+        id: id,
+        user: { id: userId },
+      },
+      { id, actual: dto.isActual },
+    );
     return;
   }
 
