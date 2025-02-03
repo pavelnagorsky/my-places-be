@@ -24,6 +24,7 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { CacheModule } from '@nestjs/cache-manager';
 import { SearchModule } from './modules/search/search.module';
 import { RoutesModule } from './modules/routes/routes.module';
+import { ExcursionsModule } from './modules/excursions/excursions.module';
 
 @Module({
   imports: [
@@ -57,6 +58,7 @@ import { RoutesModule } from './modules/routes/routes.module';
     FavouritesModule,
     SearchModule,
     RoutesModule,
+    ExcursionsModule,
   ],
   controllers: [AppController],
   providers: [],

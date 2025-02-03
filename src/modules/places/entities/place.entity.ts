@@ -25,6 +25,7 @@ import { Favourite } from '../../favourites/entities/favourite.entity';
 import { Language } from '../../languages/entities/language.entity';
 import { Route } from '../../routes/entities/route.entity';
 import { RoutePlace } from '../../routes/entities/route-place.entity';
+import { ExcursionPlace } from '../../excursions/entities/excursion-place.entity';
 
 @Entity()
 export class Place {
@@ -108,4 +109,7 @@ export class Place {
 
   @OneToMany(() => RoutePlace, (routePlace) => routePlace.place)
   routePlaces: RoutePlace[];
+
+  @OneToMany(() => ExcursionPlace, (excursionPlace) => excursionPlace.place)
+  excursionPlaces: ExcursionPlace[];
 }

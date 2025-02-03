@@ -24,6 +24,7 @@ import { Language } from '../../languages/entities/language.entity';
 import { Favourite } from '../../favourites/entities/favourite.entity';
 import { RefreshTokenEntity } from '../../auth/entities/refresh-token.entity';
 import { Route } from '../../routes/entities/route.entity';
+import { Excursion } from '../../excursions/entities/excursion.entity';
 
 @Entity()
 export class User {
@@ -107,4 +108,10 @@ export class User {
 
   @OneToMany(() => Route, (route) => route.author)
   routes: Route[];
+
+  @OneToMany(() => Excursion, (excursion) => excursion.author)
+  excursions: Excursion[];
+
+  @OneToMany(() => Excursion, (excursion) => excursion.moderator)
+  excursionsModeration: Excursion[];
 }
