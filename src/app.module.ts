@@ -25,6 +25,7 @@ import { CacheModule } from '@nestjs/cache-manager';
 import { SearchModule } from './modules/search/search.module';
 import { RoutesModule } from './modules/routes/routes.module';
 import { ExcursionsModule } from './modules/excursions/excursions.module';
+import { GoogleMapsModule } from './modules/google-maps/google-maps.module';
 
 @Module({
   imports: [

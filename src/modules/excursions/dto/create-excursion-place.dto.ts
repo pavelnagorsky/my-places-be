@@ -1,5 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNumber } from 'class-validator';
+import { IsNumber, IsString } from 'class-validator';
+import { Transform } from 'class-transformer';
 
 export class CreateExcursionPlaceDto {
   @ApiProperty({
@@ -8,4 +9,16 @@ export class CreateExcursionPlaceDto {
   })
   @IsNumber()
   id: number;
+
+  @ApiProperty({ type: String, description: 'Excursion place description' })
+  @Transform(({ value }) => value.trim())
+  @IsString()
+  description: string;
+
+  @ApiProperty({
+    type: Number,
+    description: 'Excursion duration on place in minutes',
+  })
+  @IsNumber()
+  excursionDuration: number;
 }

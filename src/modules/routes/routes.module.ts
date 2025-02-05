@@ -6,9 +6,13 @@ import { Route } from './entities/route.entity';
 import { RoutePlace } from './entities/route-place.entity';
 import { HttpModule } from '@nestjs/axios';
 import { Place } from '../places/entities/place.entity';
+import { GoogleMapsModule } from '../google-maps/google-maps.module';
 
 @Module({
-  imports: [HttpModule, TypeOrmModule.forFeature([Route, RoutePlace, Place])],
+  imports: [
+    GoogleMapsModule,
+    TypeOrmModule.forFeature([Route, RoutePlace, Place]),
+  ],
   controllers: [RoutesController],
   providers: [RoutesService],
 })

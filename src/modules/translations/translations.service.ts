@@ -55,8 +55,16 @@ export class TranslationsService implements OnModuleInit {
     this.setupInterceptors();
   }
 
+  private allLanguages: Language[] = [];
+
   async getAllLanguages(): Promise<Language[]> {
-    return await this.languagesService.findAll();
+    if (this.allLanguages.length > 0) {
+      this.logger.log('Using cached list of languages');
+      return this.allLanguages;
+    }
+    const languages = await this.languagesService.findAll();
+    this.allLanguages = languages;
+    return this.allLanguages;
   }
 
   parseToSlug(text: string) {
