@@ -15,23 +15,11 @@ import { Cache } from 'cache-manager';
 import { SearchRequestDto } from './dto/search-request.dto';
 import { Interval } from '@nestjs/schedule';
 import { SearchPlacesOrderByEnum } from './enums/search-places-order-by.enum';
-import { decode } from '@mapbox/polyline';
-import { firstValueFrom } from 'rxjs';
-import { HttpService } from '@nestjs/axios';
-import { ConfigService } from '@nestjs/config';
-import { IGoogleCloudConfig } from '../../config/configuration';
-import { IGoogleDirectionsApiResponse } from './interfaces/interfaces';
-import {
-  booleanPointInPolygon,
-  buffer,
-  distance,
-  lineString,
-  point,
-} from '@turf/turf';
+import { booleanPointInPolygon, distance, point } from '@turf/turf';
 import { Review } from '../reviews/entities/review.entity';
-import { OptionsSearchDto } from './dto/options-search.dto';
 import { OptionsSearchRequestDto } from './dto/options-search-request.dto';
 import { PaginationRequestDto } from '../../shared/dto/pagination-request.dto';
+import { GoogleMapsService } from '../google-maps/google-maps.service';
 
 @Injectable()
 export class SearchService implements OnModuleInit {
@@ -47,8 +35,7 @@ export class SearchService implements OnModuleInit {
     private placesRepository: Repository<Place>,
     @InjectRepository(Review)
     private reviewsRepository: Repository<Review>,
-    private readonly httpService: HttpService,
-    private readonly configService: ConfigService,
+    private readonly googleMapsService: GoogleMapsService,
   ) {}
 
   async onModuleInit() {
@@ -80,49 +67,6 @@ export class SearchService implements OnModuleInit {
       units: 'kilometers',
     });
     return distanceInKm <= radius;
-  }
-
-  private async createRoutePolygon(
-    startCoordinates: string,
-    endCoordinates: string,
-    // offset of search in KM
-    offset: number,
-  ) {
-    const startLatLng = this.getLatLng(startCoordinates);
-    const endLatLng = this.getLatLng(endCoordinates);
-    const url = `https://maps.googleapis.com/maps/api/directions/json?origin=${
-      startLatLng.lat
-    },${startLatLng.lng}&destination=${endLatLng.lat},${
-      endLatLng.lng
-    }&mode=driving&key=${
-      this.configService.get<IGoogleCloudConfig>('googleCloud')?.apiKey
-    }`;
-    try {
-      const { data } = await firstValueFrom(
-        this.httpService.get<IGoogleDirectionsApiResponse>(url),
-      );
-      if (data.status === 'OK' && !!data.routes) {
-        // Extract the encoded polyline string
-        const encodedPolyline = data.routes[0].overview_polyline.points;
-        // Decode the polyline to get the coordinates;
-        const decodedCoordinates = decode(encodedPolyline).map(([lat, lng]) => [
-          lng,
-          lat,
-        ]);
-        // Create a Turf.js polyline
-        const line = lineString(decodedCoordinates);
-        // Create a Turf.js polygon from polyline with offset
-        const buffered = buffer(line as any, offset, { units: 'kilometers' });
-        return buffered;
-      } else {
-        throw data;
-      }
-    } catch (e) {
-      this.logger.error(`Error fetching paths`, e);
-      throw new BadRequestException({
-        message: 'Incorrect route coordinates',
-      });
-    }
   }
 
   private selectPlacesForSearchQuery(
@@ -365,7 +309,7 @@ export class SearchService implements OnModuleInit {
     }
     // if there is search route
     if (!!dto.searchStartCoordinates && !!dto.searchEndCoordinates) {
-      const polygon = await this.createRoutePolygon(
+      const polygon = await this.googleMapsService.createRoutePolygon(
         dto.searchStartCoordinates,
         dto.searchEndCoordinates,
         dto.radius,

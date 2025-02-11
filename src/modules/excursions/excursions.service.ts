@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { CreateExcursionDto } from './dto/create-excursion.dto';
 import { UpdateExcursionDto } from './dto/update-excursion.dto';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -14,6 +14,7 @@ import { GoogleMapsService } from '../google-maps/google-maps.service';
 import { TranslationsService } from '../translations/translations.service';
 import { MailingService } from '../mailing/mailing.service';
 import { CreateExcursionPlaceDto } from './dto/create-excursion-place.dto';
+import { ExcursionStatusesEnum } from './enums/excursion-statuses.enum';
 
 @Injectable()
 export class ExcursionsService {
@@ -77,7 +78,6 @@ export class ExcursionsService {
       excursionPlaces: excursionPlaces,
       author: user,
       travelMode: dto.travelMode,
-      timeStart: new Date(dto.timeStart),
       lastRouteLegDistance: routeDetails.lastRouteLegDistance,
       lastRouteLegDuration: routeDetails.lastRouteLegDuration,
     });
@@ -94,8 +94,97 @@ export class ExcursionsService {
     return `This action returns a #${id} excursion`;
   }
 
-  update(id: number, updateExcursionDto: UpdateExcursionDto) {
-    return `This action updates a #${id} excursion`;
+  private async addView(excursionId: number) {
+    return this.excursionsRepository
+      .createQueryBuilder()
+      .update()
+      .set({ viewsCount: () => 'viewsCount + 1' })
+      .where({ id: Equal(excursionId) })
+      .execute();
+  }
+
+  async update(
+    id: number,
+    dto: UpdateExcursionDto,
+    langId: number,
+    byAdmin = false,
+  ) {
+    const oldExcursion = await this.excursionsRepository.findOne({
+      relations: {
+        translations: {
+          language: true,
+        },
+        excursionPlaces: {
+          translations: {
+            language: true,
+          },
+        },
+      },
+      where: {
+        id: id,
+      },
+    });
+    // TODO: expect excursionPlaces - place - id to be presented
+    console.log('Old excursion', oldExcursion);
+    if (!oldExcursion)
+      throw new BadRequestException({ message: 'Excursion not exists' });
+
+    const places = await this.getPlacesByIds(
+      dto.places.map((place) => place.id),
+    );
+    const waypoints = places.slice(1, -1).map((place) => place.coordinates);
+    const routeDetails = await this.googleMapsService.getRouteDetails(
+      places[0].coordinates,
+      places[places.length - 1].coordinates,
+      waypoints,
+      dto.travelMode,
+    );
+    const detectedLanguageId =
+      await this.translationsService.getLanguageIdOfText(dto.description);
+    const excursionTranslations = await this.updateExcursionTranslations(
+      detectedLanguageId || langId,
+      oldExcursion,
+      dto,
+      dto.shouldTranslate,
+    );
+
+    const excursionPlacesTranslations = await Promise.all(
+      dto.places.map((placeDto) =>
+        this.updateExcursionPlaceTranslations(
+          detectedLanguageId || langId,
+          oldExcursion,
+          placeDto,
+          dto.shouldTranslate,
+        ),
+      ),
+    );
+    const excursionPlaces = await this.excursionPlacesRepository.save(
+      dto.places.map((placeDto, index) => ({
+        place: { id: placeDto.id },
+        excursionDuration: placeDto.excursionDuration,
+        translations: excursionPlacesTranslations[index],
+        distance: routeDetails.distanceLegs[index] ?? 0,
+        duration: routeDetails.durationLegs[index],
+        position: index,
+      })),
+    );
+    const excursion = this.excursionsRepository.create({
+      id: id,
+      distance: routeDetails.totalDistance,
+      translations: excursionTranslations,
+      duration: routeDetails.totalDuration,
+      excursionPlaces: excursionPlaces,
+      travelMode: dto.travelMode,
+      lastRouteLegDistance: routeDetails.lastRouteLegDistance,
+      lastRouteLegDuration: routeDetails.lastRouteLegDuration,
+    });
+    if (!byAdmin) {
+      excursion.status = ExcursionStatusesEnum.MODERATION;
+      excursion.moderationMessage = null;
+    }
+
+    await this.excursionsRepository.save(excursion);
+    return { id };
   }
 
   remove(id: number) {
@@ -192,7 +281,7 @@ export class ExcursionsService {
       return;
     };
 
-    const updateTranslations = excursion.translations.map(
+    const updatedTranslations = excursion.translations.map(
       async (translation) => {
         // translate excursion
         await mergeUpdateTranslations(translations, translation);
@@ -200,7 +289,7 @@ export class ExcursionsService {
       },
     );
 
-    await Promise.all(updateTranslations);
+    await Promise.all(updatedTranslations);
 
     return translations;
   }
@@ -244,7 +333,7 @@ export class ExcursionsService {
   // update excursion place translations
   private async updateExcursionPlaceTranslations(
     sourceLangId: number,
-    excursionPlace: ExcursionPlace,
+    excursion: Excursion,
     dto: CreateExcursionPlaceDto,
     translateAll: boolean,
   ) {
@@ -279,17 +368,31 @@ export class ExcursionsService {
       return;
     };
 
-    const updateTranslations = excursionPlace.translations.map(
-      async (translation) => {
-        // translate excursion
-        await mergeUpdateTranslations(translations, translation);
-        return;
-      },
+    const oldExcursionPlace = excursion.excursionPlaces.find(
+      (excursionPlace) => excursionPlace.place.id === dto.id,
     );
 
-    await Promise.all(updateTranslations);
+    // If place translations exist - update conditionally
+    if (oldExcursionPlace) {
+      const updatedTranslations = oldExcursionPlace.translations.map(
+        async (translation) => {
+          // translate excursion
+          await mergeUpdateTranslations(translations, translation);
+          return;
+        },
+      );
 
-    return translations;
+      await Promise.all(updatedTranslations);
+
+      return translations;
+    } else {
+      // If place is new - create new translations
+      const newTranslations = await this.createExcursionPlaceTranslations(
+        sourceLangId,
+        dto,
+      );
+      return newTranslations;
+    }
   }
 
   private async getPlacesByIds(placeIds: number[]): Promise<Place[]> {

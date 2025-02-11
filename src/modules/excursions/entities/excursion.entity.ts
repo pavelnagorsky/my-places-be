@@ -32,9 +32,6 @@ export class Excursion extends BaseEntity {
   @ManyToOne(() => User, (user) => user.excursions)
   author: User;
 
-  @Column({ type: 'datetime', default: () => 'CURRENT_TIMESTAMP' })
-  timeStart: Date;
-
   // KM
   @Column({ type: 'float', default: 0 })
   distance: number;

@@ -5,6 +5,8 @@ import { TravelModesEnum } from '../routes/enums/travel-modes.enum';
 import { IGoogleCloudConfig } from '../../config/configuration';
 import { firstValueFrom } from 'rxjs';
 import { IGoogleDirectionsApiResponse } from '../search/interfaces/interfaces';
+import { decode } from '@mapbox/polyline';
+import { buffer, lineString } from '@turf/turf';
 
 @Injectable()
 export class GoogleMapsService {
@@ -13,6 +15,8 @@ export class GoogleMapsService {
     private readonly httpService: HttpService,
     private readonly configService: ConfigService,
   ) {}
+
+  private readonly baseUrl = 'https://maps.googleapis.com/maps/api';
 
   private getLatLng(coordinates: string) {
     const latLng = coordinates.split(';');
@@ -37,9 +41,9 @@ export class GoogleMapsService {
     const waypointsString = waypoints
       .map((wp) => `${wp.lat},${wp.lng}`)
       .join('|');
-    const url = `https://maps.googleapis.com/maps/api/directions/json?origin=${
-      startLatLng.lat
-    },${startLatLng.lng}&destination=${endLatLng.lat},${
+    const url = `${this.baseUrl}/directions/json?origin=${startLatLng.lat},${
+      startLatLng.lng
+    }&destination=${endLatLng.lat},${
       endLatLng.lng
     }&waypoints=${waypointsString}&mode=${travelMode.toLowerCase()}&key=${
       this.configService.get<IGoogleCloudConfig>('googleCloud')?.apiKey
@@ -73,6 +77,47 @@ export class GoogleMapsService {
           lastRouteLegDistance,
           lastRouteLegDuration,
         };
+      } else {
+        throw data;
+      }
+    } catch (e) {
+      this.logger.error(`Error fetching paths`, e);
+      throw new BadRequestException({
+        message: 'Incorrect route coordinates',
+      });
+    }
+  }
+
+  async createRoutePolygon(
+    startCoordinates: string,
+    endCoordinates: string,
+    // offset of search in KM
+    offset: number,
+  ) {
+    const startLatLng = this.getLatLng(startCoordinates);
+    const endLatLng = this.getLatLng(endCoordinates);
+    const url = `${this.baseUrl}/directions/json?origin=${startLatLng.lat},${
+      startLatLng.lng
+    }&destination=${endLatLng.lat},${endLatLng.lng}&mode=driving&key=${
+      this.configService.get<IGoogleCloudConfig>('googleCloud')?.apiKey
+    }`;
+    try {
+      const { data } = await firstValueFrom(
+        this.httpService.get<IGoogleDirectionsApiResponse>(url),
+      );
+      if (data.status === 'OK' && !!data.routes) {
+        // Extract the encoded polyline string
+        const encodedPolyline = data.routes[0].overview_polyline.points;
+        // Decode the polyline to get the coordinates;
+        const decodedCoordinates = decode(encodedPolyline).map(([lat, lng]) => [
+          lng,
+          lat,
+        ]);
+        // Create a Turf.js polyline
+        const line = lineString(decodedCoordinates);
+        // Create a Turf.js polygon from polyline with offset
+        const buffered = buffer(line as any, offset, { units: 'kilometers' });
+        return buffered;
       } else {
         throw data;
       }

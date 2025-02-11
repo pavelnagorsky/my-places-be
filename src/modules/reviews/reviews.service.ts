@@ -135,13 +135,13 @@ export class ReviewsService {
       return;
     };
 
-    const updateTranslations = review.translations.map(async (translation) => {
+    const updatedTranslations = review.translations.map(async (translation) => {
       // translate review
       await mergeUpdateTranslations(translations, translation);
       return;
     });
 
-    await Promise.all(updateTranslations);
+    await Promise.all(updatedTranslations);
 
     return translations;
   }

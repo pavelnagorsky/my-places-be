@@ -1,15 +1,15 @@
 import {
-  Controller,
-  Get,
-  Post,
   Body,
-  Patch,
-  Param,
-  Delete,
-  UseInterceptors,
   ClassSerializerInterceptor,
-  Query,
+  Controller,
+  Delete,
+  Get,
+  Param,
   ParseIntPipe,
+  Post,
+  Put,
+  Query,
+  UseInterceptors,
 } from '@nestjs/common';
 import { ExcursionsService } from './excursions.service';
 import { CreateExcursionDto } from './dto/create-excursion.dto';
@@ -19,6 +19,7 @@ import {
   ApiBody,
   ApiOkResponse,
   ApiOperation,
+  ApiParam,
   ApiQuery,
   ApiTags,
   PickType,
@@ -29,6 +30,7 @@ import { Excursion } from './entities/excursion.entity';
 import { TokenPayload } from '../auth/decorators/token-payload.decorator';
 import { UserFromTokenPipe } from '../auth/pipes/user-from-token.pipe';
 import { User } from '../users/entities/user.entity';
+import { RoleNamesEnum } from '../roles/enums/role-names.enum';
 
 @ApiTags('Excursions')
 @Controller('excursions')
@@ -77,12 +79,75 @@ export class ExcursionsController {
     return this.excursionsService.findOne(+id);
   }
 
-  @Patch(':id')
-  update(
-    @Param('id') id: string,
+  @ApiOperation({ summary: 'Update Excursion' })
+  @ApiOkResponse({
+    description: 'OK',
+    type: PickType(Excursion, ['id']),
+  })
+  @ApiBadRequestResponse({
+    description: 'Validation failed',
+    type: ValidationExceptionDto,
+  })
+  @ApiParam({
+    name: 'id',
+    type: Number,
+    description: 'The ID of the excursion',
+  })
+  @ApiQuery({
+    name: 'lang',
+    type: Number,
+    description: 'The ID of the language',
+  })
+  @ApiBody({
+    type: UpdateExcursionDto,
+  })
+  @UseInterceptors(ClassSerializerInterceptor)
+  @Auth()
+  @Put(':id')
+  async update(
+    @Query('lang', ParseIntPipe) langId: number,
+    @Param('id', ParseIntPipe) id: number,
     @Body() updateExcursionDto: UpdateExcursionDto,
   ) {
-    return this.excursionsService.update(+id, updateExcursionDto);
+    return await this.excursionsService.update(id, updateExcursionDto, langId);
+  }
+
+  @ApiOperation({ summary: 'Update Excursion by admin' })
+  @ApiOkResponse({
+    description: 'OK',
+    type: PickType(Excursion, ['id']),
+  })
+  @ApiBadRequestResponse({
+    description: 'Validation failed',
+    type: ValidationExceptionDto,
+  })
+  @ApiParam({
+    name: 'id',
+    type: Number,
+    description: 'The ID of the excursion',
+  })
+  @ApiQuery({
+    name: 'lang',
+    type: Number,
+    description: 'The ID of the language',
+  })
+  @ApiBody({
+    type: UpdateExcursionDto,
+  })
+  @UseInterceptors(ClassSerializerInterceptor)
+  @Auth(RoleNamesEnum.ADMIN)
+  @Put(':id/administration')
+  async updateByAdmin(
+    @Query('lang', ParseIntPipe) langId: number,
+    @Param('id', ParseIntPipe) id: number,
+    @Body() updateExcursionDto: UpdateExcursionDto,
+  ) {
+    return await this.excursionsService.update(
+      id,
+      updateExcursionDto,
+      langId,
+      true,
+    );
   }
 
   @Delete(':id')

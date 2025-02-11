@@ -37,8 +37,4 @@ export class CreateExcursionDto {
   })
   @IsEnum(TravelModesEnum)
   travelMode: TravelModesEnum;
-
-  @ApiProperty({ type: Date, description: 'Datetime of excursion start' })
-  @IsDateString()
-  timeStart: Date;
 }
