@@ -28,9 +28,6 @@
 # Generate migration
 $ npm run migration:generate migrations/migration-name
 
-# Generate migration
-$ npm run migration:generate migrations/migration-name
-
 # Run migrations
 $ npm run migration:run
 ```

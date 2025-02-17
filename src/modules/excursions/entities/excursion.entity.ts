@@ -1,6 +1,7 @@
 import {
   Column,
   Entity,
+  Index,
   ManyToOne,
   OneToMany,
   PrimaryGeneratedColumn,
@@ -16,6 +17,10 @@ import { ExcursionStatusesEnum } from '../enums/excursion-statuses.enum';
 export class Excursion extends BaseEntity {
   @PrimaryGeneratedColumn()
   id: number;
+
+  @Index({ unique: true })
+  @Column()
+  slug: string;
 
   @OneToMany(
     () => ExcursionTranslation,

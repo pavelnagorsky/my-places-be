@@ -2,7 +2,7 @@ import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { CreateExcursionDto } from './dto/create-excursion.dto';
 import { UpdateExcursionDto } from './dto/update-excursion.dto';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Equal, In, Repository } from 'typeorm';
+import { Equal, In, Not, Repository } from 'typeorm';
 import { Place } from '../places/entities/place.entity';
 import { User } from '../users/entities/user.entity';
 import { Excursion } from './entities/excursion.entity';
@@ -15,6 +15,7 @@ import { TranslationsService } from '../translations/translations.service';
 import { MailingService } from '../mailing/mailing.service';
 import { CreateExcursionPlaceDto } from './dto/create-excursion-place.dto';
 import { ExcursionStatusesEnum } from './enums/excursion-statuses.enum';
+import { LanguageIdEnum } from '../languages/enums/language-id.enum';
 
 @Injectable()
 export class ExcursionsService {
@@ -71,7 +72,14 @@ export class ExcursionsService {
         position: index,
       })),
     );
+
+    const titleTranslationRu =
+      excursionTranslations.find((tr) => tr.language.id === LanguageIdEnum.RU)
+        ?.title || dto.title;
+    const parsedSlug = await this.createValidSlug(titleTranslationRu);
+
     const excursion = this.excursionsRepository.create({
+      slug: parsedSlug,
       distance: routeDetails.totalDistance,
       translations: excursionTranslations,
       duration: routeDetails.totalDuration,
@@ -84,6 +92,43 @@ export class ExcursionsService {
 
     const { id } = await this.excursionsRepository.save(excursion);
     return { id };
+  }
+
+  private async createValidSlug(text: string, excursionId?: number) {
+    let validatedSlug = this.translationsService.parseToSlug(text);
+    let success = false;
+    let i = 0;
+    while (!success && i < 10) {
+      i += 1;
+      const slugExists = await this.validateSlugExists(
+        validatedSlug,
+        excursionId,
+      );
+      if (!slugExists) {
+        success = true;
+      } else {
+        if (i > 1) {
+          validatedSlug = validatedSlug.slice(0, -1) + i;
+        } else {
+          validatedSlug = `${validatedSlug}-${i}`;
+        }
+      }
+    }
+    if (!success) {
+      throw new BadRequestException({
+        message: 'Invalid slug',
+      });
+    }
+    return validatedSlug;
+  }
+
+  private async validateSlugExists(slug: string, excursionId?: number) {
+    return this.excursionsRepository.exists({
+      where: {
+        slug: Equal(slug),
+        id: excursionId ? Not(excursionId) : undefined,
+      },
+    });
   }
 
   findAll() {
