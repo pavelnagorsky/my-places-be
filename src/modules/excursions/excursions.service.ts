@@ -68,7 +68,7 @@ export class ExcursionsService {
         excursionDuration: placeDto.excursionDuration,
         translations: excursionPlacesTranslations[index],
         distance: routeDetails.distanceLegs[index] ?? 0,
-        duration: routeDetails.durationLegs[index],
+        duration: routeDetails.durationLegs[index] ?? 0,
         position: index,
       })),
     );
@@ -209,7 +209,7 @@ export class ExcursionsService {
         excursionDuration: placeDto.excursionDuration,
         translations: excursionPlacesTranslations[index],
         distance: routeDetails.distanceLegs[index] ?? 0,
-        duration: routeDetails.durationLegs[index],
+        duration: routeDetails.durationLegs[index] ?? 0,
         position: index,
       })),
     );

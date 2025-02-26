@@ -46,6 +46,9 @@ $ npm run migration:generate migrations/migration-name
 
 # ➤ run
 $ npm run migration:run
+
+# ➤ revert
+$ npm run migration:revert
 ```
 
 
