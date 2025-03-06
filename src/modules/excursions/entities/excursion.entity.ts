@@ -12,6 +12,7 @@ import { TravelModesEnum } from '../../routes/enums/travel-modes.enum';
 import { ExcursionPlace } from './excursion-place.entity';
 import { ExcursionTranslation } from './excursion-translation.entity';
 import { ExcursionStatusesEnum } from '../enums/excursion-statuses.enum';
+import { ExcursionTypesEnum } from '../enums/excursion-types.enum';
 
 @Entity()
 export class Excursion extends BaseEntity {
@@ -36,6 +37,9 @@ export class Excursion extends BaseEntity {
 
   @ManyToOne(() => User, (user) => user.excursions)
   author: User;
+
+  @Column()
+  type: ExcursionTypesEnum;
 
   // KM
   @Column({ type: 'float', default: 0 })

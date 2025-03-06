@@ -9,6 +9,7 @@ import {
 } from 'class-validator';
 import { TravelModesEnum } from '../../routes/enums/travel-modes.enum';
 import { CreateExcursionPlaceDto } from './create-excursion-place.dto';
+import { ExcursionTypesEnum } from '../enums/excursion-types.enum';
 
 export class CreateExcursionDto {
   @ApiProperty({ type: String, description: 'Excursion title' })
@@ -37,4 +38,12 @@ export class CreateExcursionDto {
   })
   @IsEnum(TravelModesEnum)
   travelMode: TravelModesEnum;
+
+  @ApiProperty({
+    enum: ExcursionTypesEnum,
+    description: 'Excursion type',
+    default: ExcursionTypesEnum.Overview,
+  })
+  @IsEnum(ExcursionTypesEnum)
+  type: ExcursionTypesEnum;
 }
