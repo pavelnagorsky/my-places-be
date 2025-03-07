@@ -63,14 +63,20 @@ export class ExcursionsService {
       ),
     );
     const excursionPlaces = await this.excursionPlacesRepository.save(
-      dto.places.map((placeDto, index) => ({
-        place: { id: placeDto.id },
-        excursionDuration: placeDto.excursionDuration,
-        translations: excursionPlacesTranslations[index],
-        distance: routeDetails.distanceLegs[index] ?? 0,
-        duration: routeDetails.durationLegs[index] ?? 0,
-        position: index,
-      })),
+      dto.places.map((placeDto, index) => {
+        const distance =
+          index === 0 ? 0 : routeDetails.distanceLegs[index - 1] ?? 0;
+        const duration =
+          index === 0 ? 0 : routeDetails.durationLegs[index - 1] ?? 0;
+        return {
+          place: { id: placeDto.id },
+          excursionDuration: placeDto.excursionDuration,
+          translations: excursionPlacesTranslations[index],
+          distance: distance,
+          duration: duration,
+          position: index,
+        };
+      }),
     );
 
     const titleTranslationRu =
@@ -87,8 +93,6 @@ export class ExcursionsService {
       author: user,
       type: dto.type,
       travelMode: dto.travelMode,
-      lastRouteLegDistance: routeDetails.lastRouteLegDistance,
-      lastRouteLegDuration: routeDetails.lastRouteLegDuration,
     });
 
     const { id } = await this.excursionsRepository.save(excursion);
@@ -209,8 +213,8 @@ export class ExcursionsService {
         place: { id: placeDto.id },
         excursionDuration: placeDto.excursionDuration,
         translations: excursionPlacesTranslations[index],
-        distance: routeDetails.distanceLegs[index] ?? 0,
-        duration: routeDetails.durationLegs[index] ?? 0,
+        distance: routeDetails.distanceLegs[index + 1] ?? 0,
+        duration: routeDetails.durationLegs[index + 1] ?? 0,
         position: index,
       })),
     );
@@ -222,8 +226,6 @@ export class ExcursionsService {
       excursionPlaces: excursionPlaces,
       type: dto.type,
       travelMode: dto.travelMode,
-      lastRouteLegDistance: routeDetails.lastRouteLegDistance,
-      lastRouteLegDuration: routeDetails.lastRouteLegDuration,
     });
     if (!byAdmin) {
       excursion.status = ExcursionStatusesEnum.MODERATION;
@@ -347,6 +349,7 @@ export class ExcursionsService {
     dto: CreateExcursionPlaceDto,
   ) {
     const allLanguages = await this.translationsService.getAllLanguages();
+    const shouldTranslate = dto.description?.length > 2;
 
     const translations: ExcursionPlaceTranslation[] = [];
 
@@ -359,8 +362,8 @@ export class ExcursionsService {
               id: lang.id,
             },
             description:
-              lang.id === sourceLangId
-                ? dto.description
+              lang.id === sourceLangId || !shouldTranslate
+                ? dto.description || ''
                 : await this.translationsService.createTranslation(
                     dto.description,
                     lang.code,
@@ -391,28 +394,44 @@ export class ExcursionsService {
       arrayToSave: ExcursionPlaceTranslation[],
       translation: ExcursionPlaceTranslation,
     ) => {
+      const { id, language } = translation;
+      const { description: newDescription } = dto;
+
+      // Determine if translation is needed
+      const shouldTranslate = newDescription?.length > 2;
+      const isSourceLanguage = language.id === sourceLangId;
+
+      let description = translation.description;
+
+      if (isSourceLanguage) {
+        // Update description for the source language
+        description = newDescription;
+      } else if (translateAll) {
+        if (shouldTranslate) {
+          // Translate description if translateAll is enabled and description is valid
+          description = await this.translationsService.createTranslation(
+            newDescription,
+            language.code,
+            sourceLangId,
+          );
+        } else {
+          description = dto.description || '';
+        }
+      } else if (!translateAll) {
+        // Keep the existing description if translateAll is not enabled
+        description = translation.description;
+      }
+
+      // Create the new translation object
       const newTranslation = this.excursionPlaceTranslationsRepository.create({
-        id: translation.id,
-        language: {
-          id: translation.language.id,
-        },
-        // update if this language was selected in request
-        // translate if translateAll option was selected
-        // else do not change
-        description:
-          translation.language.id === sourceLangId
-            ? dto.description
-            : translateAll
-            ? await this.translationsService.createTranslation(
-                dto.description,
-                translation.language.code,
-                sourceLangId,
-              )
-            : translation.description,
-        original: translation.language.id === sourceLangId,
+        id,
+        language: { id: language.id },
+        description,
+        original: isSourceLanguage,
       });
+
+      // Add the new translation to the array
       arrayToSave.push(newTranslation);
-      return;
     };
 
     const oldExcursionPlace = excursion.excursionPlaces.find(

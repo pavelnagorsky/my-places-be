@@ -49,14 +49,6 @@ export class Excursion extends BaseEntity {
   @Column({ type: 'float', default: 0 })
   duration: number;
 
-  // Duration in minutes - from last place to end of the route
-  @Column({ type: 'float', default: 0 })
-  lastRouteLegDuration: number;
-
-  // Distance in km - from last place to end of the route
-  @Column({ type: 'float', default: 0 })
-  lastRouteLegDistance: number;
-
   @Column({ default: TravelModesEnum.DRIVING })
   travelMode: TravelModesEnum;
 
