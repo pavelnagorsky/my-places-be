@@ -8,7 +8,7 @@ import { IsDateString, IsEnum } from 'class-validator';
 import { TravelModesEnum } from '../enums/travel-modes.enum';
 
 export class RouteDto {
-  @ApiProperty({ title: 'Place id', type: Number })
+  @ApiProperty({ title: 'Route id', type: Number })
   id: number;
 
   @ApiProperty({ type: String, description: 'Route title' })

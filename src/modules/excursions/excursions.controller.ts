@@ -4,6 +4,7 @@ import {
   Controller,
   Delete,
   Get,
+  NotFoundException,
   Param,
   ParseIntPipe,
   Post,
@@ -17,6 +18,7 @@ import { UpdateExcursionDto } from './dto/update-excursion.dto';
 import {
   ApiBadRequestResponse,
   ApiBody,
+  ApiNotFoundResponse,
   ApiOkResponse,
   ApiOperation,
   ApiParam,
@@ -31,6 +33,13 @@ import { TokenPayload } from '../auth/decorators/token-payload.decorator';
 import { UserFromTokenPipe } from '../auth/pipes/user-from-token.pipe';
 import { User } from '../users/entities/user.entity';
 import { RoleNamesEnum } from '../roles/enums/role-names.enum';
+import { RoutesListResponseDto } from '../routes/dto/routes-list-response.dto';
+import { RoutesListRequestDto } from '../routes/dto/routes-list-request.dto';
+import { AccessTokenPayloadDto } from '../auth/dto/access-token-payload.dto';
+import { ExcursionsListRequestDto } from './dto/excursions-list-request.dto';
+import { ExcursionsListResponseDto } from './dto/excursions-list-response.dto';
+import { PlaceDto } from '../places/dto/place.dto';
+import { ExcursionDto } from './dto/excursion.dto';
 
 @ApiTags('Excursions')
 @Controller('excursions')
@@ -69,14 +78,100 @@ export class ExcursionsController {
     );
   }
 
-  @Get()
-  findAll() {
-    return this.excursionsService.findAll();
+  @ApiOperation({ summary: 'Find my excursions' })
+  @ApiOkResponse({
+    description: 'OK',
+    type: ExcursionsListResponseDto,
+  })
+  @ApiBody({
+    type: ExcursionsListRequestDto,
+  })
+  @ApiQuery({
+    name: 'lang',
+    type: Number,
+    description: 'The ID of the language',
+  })
+  @UseInterceptors(ClassSerializerInterceptor)
+  @Auth()
+  @Post('my-excursions')
+  async findMyExcursions(
+    @Query('lang', ParseIntPipe) langId: number,
+    @Body() dto: ExcursionsListRequestDto,
+    @TokenPayload()
+    tokenPayload: AccessTokenPayloadDto,
+  ) {
+    const [excursions, total] = await this.excursionsService.findMyExcursions(
+      dto,
+      langId,
+      tokenPayload,
+    );
+
+    return new ExcursionsListResponseDto(excursions, {
+      requestedPage: dto.page,
+      pageSize: dto.pageSize,
+      totalItems: total,
+    });
   }
 
+  @ApiOperation({ summary: 'Get excursion by id and language id' })
+  @ApiOkResponse({
+    description: 'OK',
+    type: ExcursionDto,
+  })
+  @ApiNotFoundResponse({
+    description: 'Not found',
+  })
+  @ApiParam({
+    name: 'id',
+    type: Number,
+    description: 'The ID of the excursion',
+  })
+  @ApiQuery({
+    name: 'lang',
+    type: Number,
+    description: 'The ID of the language',
+  })
+  @UseInterceptors(ClassSerializerInterceptor)
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.excursionsService.findOne(+id);
+  async findOneById(
+    @Param('id', ParseIntPipe) id: number,
+    @Query('lang', ParseIntPipe) langId: number,
+  ) {
+    const excursion = await this.excursionsService.findOne(id, langId);
+    if (!excursion)
+      throw new NotFoundException({ message: 'Excursion not found' });
+    return new ExcursionDto(excursion);
+  }
+
+  @ApiOperation({ summary: 'Get excursion by slug and language id' })
+  @ApiOkResponse({
+    description: 'OK',
+    type: ExcursionDto,
+  })
+  @ApiNotFoundResponse({
+    description: 'Not found',
+  })
+  @ApiParam({
+    name: 'slug',
+    type: String,
+    description: 'The slug of the excursion',
+  })
+  @ApiQuery({
+    name: 'lang',
+    type: Number,
+    description: 'The ID of the language',
+  })
+  @UseInterceptors(ClassSerializerInterceptor)
+  @Get('slug/:slug')
+  async findOneBySlug(
+    @Param('slug') slug: string,
+    @Query('lang', ParseIntPipe) langId: number,
+  ) {
+    const excursion = await this.excursionsService.findOne(slug, langId);
+    if (!excursion)
+      throw new NotFoundException({ message: 'Excursion not found' });
+    this.excursionsService.addView(excursion.id);
+    return new ExcursionDto(excursion);
   }
 
   @ApiOperation({ summary: 'Update Excursion' })

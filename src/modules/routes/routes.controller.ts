@@ -81,7 +81,7 @@ export class RoutesController {
   @UseInterceptors(ClassSerializerInterceptor)
   @Auth()
   @Post('my-routes')
-  async findAll(
+  async findMyRoutes(
     @Query('lang', ParseIntPipe) langId: number,
     @Body() dto: RoutesListRequestDto,
     @TokenPayload()

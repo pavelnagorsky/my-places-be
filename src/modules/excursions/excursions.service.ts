@@ -2,7 +2,16 @@ import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { CreateExcursionDto } from './dto/create-excursion.dto';
 import { UpdateExcursionDto } from './dto/update-excursion.dto';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Equal, In, Not, Repository } from 'typeorm';
+import {
+  Between,
+  Equal,
+  ILike,
+  In,
+  LessThanOrEqual,
+  MoreThanOrEqual,
+  Not,
+  Repository,
+} from 'typeorm';
 import { Place } from '../places/entities/place.entity';
 import { User } from '../users/entities/user.entity';
 import { Excursion } from './entities/excursion.entity';
@@ -16,6 +25,9 @@ import { MailingService } from '../mailing/mailing.service';
 import { CreateExcursionPlaceDto } from './dto/create-excursion-place.dto';
 import { ExcursionStatusesEnum } from './enums/excursion-statuses.enum';
 import { LanguageIdEnum } from '../languages/enums/language-id.enum';
+import { AccessTokenPayloadDto } from '../auth/dto/access-token-payload.dto';
+import { ExcursionsListOrderByEnum } from './enums/excursions-list-order-by.enum';
+import { ExcursionsListRequestDto } from './dto/excursions-list-request.dto';
 
 @Injectable()
 export class ExcursionsService {
@@ -136,15 +148,7 @@ export class ExcursionsService {
     });
   }
 
-  findAll() {
-    return `This action returns all excursions`;
-  }
-
-  findOne(id: number) {
-    return `This action returns a #${id} excursion`;
-  }
-
-  private async addView(excursionId: number) {
+  async addView(excursionId: number) {
     return this.excursionsRepository
       .createQueryBuilder()
       .update()
@@ -234,6 +238,147 @@ export class ExcursionsService {
 
     await this.excursionsRepository.save(excursion);
     return { id };
+  }
+
+  async findMyExcursions(
+    dto: ExcursionsListRequestDto,
+    langId: number,
+    tokenPayload: AccessTokenPayloadDto,
+  ) {
+    const orderDirection = dto.orderAsc ? 'ASC' : 'DESC';
+
+    const getDateWhereOption = () => {
+      if (!!dto.dateFrom && !!dto.dateTo)
+        return Between(new Date(dto.dateFrom), new Date(dto.dateTo));
+      if (!!dto.dateFrom) return MoreThanOrEqual(new Date(dto.dateFrom));
+      if (!!dto.dateTo) return LessThanOrEqual(new Date(dto.dateTo));
+      return undefined;
+    };
+
+    const res = await this.excursionsRepository.findAndCount({
+      relations: { excursionPlaces: { place: { translations: true } } },
+      skip: dto.page * dto.pageSize,
+      take: dto.pageSize,
+      order: {
+        createdAt:
+          dto.orderBy === ExcursionsListOrderByEnum.CREATED_AT || !dto.orderBy
+            ? orderDirection
+            : undefined,
+        translations: {
+          title:
+            dto.orderBy === ExcursionsListOrderByEnum.TITLE
+              ? orderDirection
+              : undefined,
+        },
+        distance:
+          dto.orderBy === ExcursionsListOrderByEnum.DISTANCE
+            ? orderDirection
+            : undefined,
+        duration:
+          dto.orderBy === ExcursionsListOrderByEnum.DURATION
+            ? orderDirection
+            : undefined,
+        excursionPlaces: { position: 'asc' },
+      },
+      select: {
+        translations: { title: true },
+        excursionPlaces: {
+          position: true,
+          id: true,
+          duration: true,
+          distance: true,
+          excursionDuration: true,
+          place: {
+            slug: true,
+            id: true,
+            coordinates: true,
+            translations: {
+              title: true,
+            },
+          },
+        },
+      },
+      where: {
+        author: {
+          id: tokenPayload.id,
+        },
+        translations: {
+          title:
+            !!dto.search && dto.search.length > 0
+              ? ILike(`%${dto.search}%`)
+              : undefined,
+          language: {
+            id: langId,
+          },
+        },
+        excursionPlaces: {
+          place: {
+            translations: {
+              language: { id: langId },
+            },
+          },
+        },
+        createdAt: getDateWhereOption(),
+      },
+    });
+
+    return res;
+  }
+
+  async findOne(idOrSlug: number | string, langId: number) {
+    const isSlug = typeof idOrSlug === 'string';
+    const res = await this.excursionsRepository.findOne({
+      relations: { excursionPlaces: { place: { translations: true } } },
+      order: {
+        excursionPlaces: { position: 'asc' },
+      },
+      select: {
+        translations: true,
+        id: true,
+        type: true,
+        distance: true,
+        slug: true,
+        duration: true,
+        createdAt: true,
+        updatedAt: true,
+        travelMode: true,
+        viewsCount: true,
+        excursionPlaces: {
+          position: true,
+          id: true,
+          duration: true,
+          distance: true,
+          excursionDuration: true,
+          translations: { description: true },
+          place: {
+            slug: true,
+            id: true,
+            coordinates: true,
+            translations: {
+              title: true,
+            },
+          },
+        },
+      },
+      where: {
+        id: isSlug ? undefined : idOrSlug,
+        slug: isSlug ? Equal(idOrSlug) : undefined,
+        translations: {
+          language: {
+            id: langId,
+          },
+        },
+        excursionPlaces: {
+          place: {
+            translations: {
+              language: { id: langId },
+            },
+          },
+        },
+      },
+    });
+
+    return res;
   }
 
   remove(id: number) {
