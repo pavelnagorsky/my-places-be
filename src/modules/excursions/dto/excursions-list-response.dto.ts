@@ -16,6 +16,6 @@ export class ExcursionsListResponseDto extends PaginationResponseDto {
     },
   ) {
     super(pagination.requestedPage, pagination.pageSize, pagination.totalItems);
-    this.items = data.map((route) => new ExcursionsListItemDto(route));
+    this.items = data.map((excursion) => new ExcursionsListItemDto(excursion));
   }
 }

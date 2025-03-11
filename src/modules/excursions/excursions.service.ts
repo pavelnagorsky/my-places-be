@@ -256,7 +256,10 @@ export class ExcursionsService {
     };
 
     const res = await this.excursionsRepository.findAndCount({
-      relations: { excursionPlaces: { place: { translations: true } } },
+      relations: {
+        translations: true,
+        excursionPlaces: { place: { translations: true } },
+      },
       skip: dto.page * dto.pageSize,
       take: dto.pageSize,
       order: {
@@ -328,7 +331,10 @@ export class ExcursionsService {
   async findOne(idOrSlug: number | string, langId: number) {
     const isSlug = typeof idOrSlug === 'string';
     const res = await this.excursionsRepository.findOne({
-      relations: { excursionPlaces: { place: { translations: true } } },
+      relations: {
+        translations: true,
+        excursionPlaces: { place: { translations: true } },
+      },
       order: {
         excursionPlaces: { position: 'asc' },
       },
