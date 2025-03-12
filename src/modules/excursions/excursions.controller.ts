@@ -3,6 +3,7 @@ import {
   ClassSerializerInterceptor,
   Controller,
   Delete,
+  ForbiddenException,
   Get,
   NotFoundException,
   Param,
@@ -40,6 +41,7 @@ import { ExcursionsListRequestDto } from './dto/excursions-list-request.dto';
 import { ExcursionsListResponseDto } from './dto/excursions-list-response.dto';
 import { PlaceDto } from '../places/dto/place.dto';
 import { ExcursionDto } from './dto/excursion.dto';
+import { Place } from '../places/entities/place.entity';
 
 @ApiTags('Excursions')
 @Controller('excursions')
@@ -245,8 +247,34 @@ export class ExcursionsController {
     );
   }
 
+  @ApiOperation({ summary: 'Delete excursion' })
+  @ApiOkResponse({
+    description: 'OK',
+    type: PickType(Excursion, ['id']),
+  })
+  @ApiParam({
+    name: 'id',
+    type: Number,
+    description: 'The ID of the excursion',
+  })
+  @Auth()
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.excursionsService.remove(+id);
+  async remove(
+    @Param('id', ParseIntPipe) id: number,
+    @TokenPayload() tokenPayload: AccessTokenPayloadDto,
+  ) {
+    const userIsAuthor = await this.excursionsService.checkUserRelation(
+      tokenPayload.id,
+      id,
+    );
+    const isAdmin = !!tokenPayload.roles.find(
+      (role) => role.name === RoleNamesEnum.ADMIN,
+    );
+    if (!userIsAuthor && !isAdmin)
+      throw new ForbiddenException({
+        message: 'Forbidden, user is not author',
+      });
+    const data = await this.excursionsService.remove(id);
+    return data;
   }
 }

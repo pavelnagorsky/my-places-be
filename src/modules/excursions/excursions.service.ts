@@ -169,6 +169,7 @@ export class ExcursionsService {
           language: true,
         },
         excursionPlaces: {
+          place: true,
           translations: {
             language: true,
           },
@@ -178,8 +179,6 @@ export class ExcursionsService {
         id: id,
       },
     });
-    // TODO: expect excursionPlaces - place - id to be presented
-    console.log('Old excursion', oldExcursion);
     if (!oldExcursion)
       throw new BadRequestException({ message: 'Excursion not exists' });
 
@@ -333,7 +332,7 @@ export class ExcursionsService {
     const res = await this.excursionsRepository.findOne({
       relations: {
         translations: true,
-        excursionPlaces: { place: { translations: true } },
+        excursionPlaces: { translations: true, place: { translations: true } },
       },
       order: {
         excursionPlaces: { position: 'asc' },
@@ -375,6 +374,11 @@ export class ExcursionsService {
           },
         },
         excursionPlaces: {
+          translations: {
+            language: {
+              id: langId,
+            },
+          },
           place: {
             translations: {
               language: { id: langId },
@@ -387,8 +391,22 @@ export class ExcursionsService {
     return res;
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} excursion`;
+  async checkUserRelation(userId: number, excursionId: number) {
+    return await this.excursionsRepository.exists({
+      where: {
+        author: {
+          id: Equal(userId),
+        },
+        id: Equal(excursionId),
+      },
+    });
+  }
+
+  async remove(id: number) {
+    const deleted = await this.excursionsRepository.remove(
+      this.excursionsRepository.create({ id }),
+    );
+    return { id };
   }
 
   // create excursion translations
