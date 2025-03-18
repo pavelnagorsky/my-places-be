@@ -361,6 +361,7 @@ export class ExcursionsService {
             coordinates: true,
             translations: {
               title: true,
+              address: true,
             },
           },
         },

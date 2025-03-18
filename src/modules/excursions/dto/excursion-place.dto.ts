@@ -17,6 +17,12 @@ export class ExcursionPlaceDto {
     return this.translations[0]?.title || '';
   }
 
+  @ApiProperty({ type: String, description: 'Place address' })
+  @Expose()
+  get address(): string {
+    return this.translations[0]?.address || '';
+  }
+
   @ApiProperty({
     title: 'Excursion leg view duration in minutes',
     type: Number,
