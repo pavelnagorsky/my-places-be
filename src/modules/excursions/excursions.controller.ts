@@ -42,6 +42,9 @@ import { ExcursionsListResponseDto } from './dto/excursions-list-response.dto';
 import { PlaceDto } from '../places/dto/place.dto';
 import { ExcursionDto } from './dto/excursion.dto';
 import { Place } from '../places/entities/place.entity';
+import { PlaceSlugDto } from '../places/dto/place-slug.dto';
+import { CacheInterceptor } from '@nestjs/cache-manager';
+import { ExcursionSlugDto } from './dto/excursion-slug.dto';
 
 @ApiTags('Excursions')
 @Controller('excursions')
@@ -174,6 +177,19 @@ export class ExcursionsController {
       throw new NotFoundException({ message: 'Excursion not found' });
     this.excursionsService.addView(excursion.id);
     return new ExcursionDto(excursion);
+  }
+
+  @ApiOperation({ summary: 'Get excursions slugs' })
+  @ApiOkResponse({
+    description: 'OK',
+    type: ExcursionSlugDto,
+    isArray: true,
+  })
+  @UseInterceptors(CacheInterceptor)
+  @Get('slugs')
+  async getPlacesSlugs() {
+    const slugs = await this.excursionsService.getSlugs();
+    return slugs;
   }
 
   @ApiOperation({ summary: 'Update Excursion' })

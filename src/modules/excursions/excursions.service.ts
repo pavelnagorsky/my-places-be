@@ -410,6 +410,16 @@ export class ExcursionsService {
     return { id };
   }
 
+  async getSlugs() {
+    return this.excursionsRepository
+      .createQueryBuilder('excursion')
+      .where('excursion.status = :approvedStatus', {
+        approvedStatus: ExcursionStatusesEnum.APPROVED,
+      })
+      .select(['excursion.id', 'excursion.slug'])
+      .getMany();
+  }
+
   // create excursion translations
   private async createExcursionTranslations(
     sourceLangId: number,
