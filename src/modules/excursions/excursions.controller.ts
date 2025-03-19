@@ -118,36 +118,6 @@ export class ExcursionsController {
     });
   }
 
-  @ApiOperation({ summary: 'Get excursion by id and language id' })
-  @ApiOkResponse({
-    description: 'OK',
-    type: ExcursionDto,
-  })
-  @ApiNotFoundResponse({
-    description: 'Not found',
-  })
-  @ApiParam({
-    name: 'id',
-    type: Number,
-    description: 'The ID of the excursion',
-  })
-  @ApiQuery({
-    name: 'lang',
-    type: Number,
-    description: 'The ID of the language',
-  })
-  @UseInterceptors(ClassSerializerInterceptor)
-  @Get(':id')
-  async findOneById(
-    @Param('id', ParseIntPipe) id: number,
-    @Query('lang', ParseIntPipe) langId: number,
-  ) {
-    const excursion = await this.excursionsService.findOne(id, langId);
-    if (!excursion)
-      throw new NotFoundException({ message: 'Excursion not found' });
-    return new ExcursionDto(excursion);
-  }
-
   @ApiOperation({ summary: 'Get excursion by slug and language id' })
   @ApiOkResponse({
     description: 'OK',
@@ -187,9 +157,39 @@ export class ExcursionsController {
   })
   @UseInterceptors(CacheInterceptor)
   @Get('slugs')
-  async getPlacesSlugs() {
+  async getSlugs() {
     const slugs = await this.excursionsService.getSlugs();
     return slugs;
+  }
+
+  @ApiOperation({ summary: 'Get excursion by id and language id' })
+  @ApiOkResponse({
+    description: 'OK',
+    type: ExcursionDto,
+  })
+  @ApiNotFoundResponse({
+    description: 'Not found',
+  })
+  @ApiParam({
+    name: 'id',
+    type: Number,
+    description: 'The ID of the excursion',
+  })
+  @ApiQuery({
+    name: 'lang',
+    type: Number,
+    description: 'The ID of the language',
+  })
+  @UseInterceptors(ClassSerializerInterceptor)
+  @Get(':id')
+  async findOneById(
+    @Param('id', ParseIntPipe) id: number,
+    @Query('lang', ParseIntPipe) langId: number,
+  ) {
+    const excursion = await this.excursionsService.findOne(id, langId);
+    if (!excursion)
+      throw new NotFoundException({ message: 'Excursion not found' });
+    return new ExcursionDto(excursion);
   }
 
   @ApiOperation({ summary: 'Update Excursion' })
