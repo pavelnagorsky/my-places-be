@@ -83,6 +83,18 @@ export class ExcursionDto {
   @ApiProperty({ title: 'Views count', type: Number })
   viewsCount: number;
 
+  @ApiProperty({
+    type: String,
+    description: 'Excursion images',
+    isArray: true,
+  })
+  @Expose()
+  get images(): string[] {
+    return this.excursionPlaces
+      .map((excursionPlace) => excursionPlace.place.images[0]?.url)
+      .filter(Boolean);
+  }
+
   constructor(partial: Partial<Excursion>) {
     Object.assign(this, partial);
     this.places = (partial.excursionPlaces ?? []).map(

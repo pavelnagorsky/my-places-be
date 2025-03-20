@@ -28,6 +28,7 @@ import { LanguageIdEnum } from '../languages/enums/language-id.enum';
 import { AccessTokenPayloadDto } from '../auth/dto/access-token-payload.dto';
 import { ExcursionsListOrderByEnum } from './enums/excursions-list-order-by.enum';
 import { ExcursionsListRequestDto } from './dto/excursions-list-request.dto';
+import { ReviewStatusesEnum } from '../reviews/enums/review-statuses.enum';
 
 @Injectable()
 export class ExcursionsService {
@@ -332,10 +333,23 @@ export class ExcursionsService {
     const res = await this.excursionsRepository.findOne({
       relations: {
         translations: true,
-        excursionPlaces: { translations: true, place: { translations: true } },
+        excursionPlaces: {
+          translations: true,
+          place: {
+            translations: true,
+            images: true,
+            reviews: { translations: true },
+          },
+        },
       },
       order: {
-        excursionPlaces: { position: 'asc' },
+        excursionPlaces: {
+          position: 'asc',
+          place: {
+            images: { position: 'asc' },
+            reviews: { createdAt: 'desc' },
+          },
+        },
       },
       select: {
         translations: true,
@@ -359,6 +373,14 @@ export class ExcursionsService {
             slug: true,
             id: true,
             coordinates: true,
+            images: true,
+            reviews: {
+              id: true,
+              createdAt: true,
+              translations: {
+                title: true,
+              },
+            },
             translations: {
               title: true,
               address: true,
@@ -383,6 +405,12 @@ export class ExcursionsService {
           place: {
             translations: {
               language: { id: langId },
+            },
+            reviews: {
+              status: Equal(ReviewStatusesEnum.APPROVED),
+              translations: {
+                language: { id: langId },
+              },
             },
           },
         },

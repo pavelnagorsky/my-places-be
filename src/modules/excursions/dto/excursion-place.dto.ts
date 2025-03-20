@@ -3,6 +3,9 @@ import { Exclude, Expose, Transform } from 'class-transformer';
 import { PlaceTranslation } from '../../places/entities/place-translation.entity';
 import { CoordinatesDto } from '../../places/dto/coordinates.dto';
 import { ExcursionPlace } from '../entities/excursion-place.entity';
+import { Image } from '../../images/entities/image.entity';
+import { ExcursionPlaceReviewDto } from './excursion-place-review.dto';
+import { Review } from '../../reviews/entities/review.entity';
 
 export class ExcursionPlaceDto {
   @ApiProperty({ title: 'Place id', type: Number })
@@ -50,6 +53,27 @@ export class ExcursionPlaceDto {
   })
   @Transform(({ value }: { value: string }) => new CoordinatesDto(value))
   coordinates: CoordinatesDto;
+
+  @ApiProperty({
+    type: String,
+    description: 'Place images',
+    isArray: true,
+  })
+  @Transform(
+    ({ value }: { value: Partial<Image>[] }) =>
+      value?.filter((v) => Boolean(v.url)).map((v) => v.url) ?? [],
+  )
+  images: string[];
+
+  @ApiProperty({
+    type: ExcursionPlaceReviewDto,
+    description: 'Place reviews',
+    isArray: true,
+  })
+  @Transform(({ value }: { value: Partial<Review>[] }) =>
+    value.map((review) => new ExcursionPlaceReviewDto(review)),
+  )
+  reviews: ExcursionPlaceReviewDto[];
 
   constructor(partial: Partial<ExcursionPlace>) {
     Object.assign(this, partial.place);
