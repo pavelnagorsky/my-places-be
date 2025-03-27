@@ -1,6 +1,7 @@
 export enum ExcursionsModerationListOrderByEnum {
   CREATED_AT,
+  UPDATED_AT,
   TITLE,
-  DISTANCE,
-  DURATION,
+  AUTHOR,
+  TYPE,
 }

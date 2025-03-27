@@ -3,14 +3,11 @@ import { Exclude, Expose, Transform } from 'class-transformer';
 import { ExcursionTranslation } from '../entities/excursion-translation.entity';
 import { ExcursionPlace } from '../entities/excursion-place.entity';
 import { ExcursionTypesEnum } from '../enums/excursion-types.enum';
-import { TravelModesEnum } from 'src/modules/routes/enums/travel-modes.enum';
 import { Excursion } from '../entities/excursion.entity';
-import { ExcursionsListItemPlaceDto } from './excursions-list-item-place.dto';
-import { ExcursionStatusesEnum } from '../enums/excursion-statuses.enum';
 import { ExcursionsModerationListItemPlaceDto } from './excursions-moderation-list-item-place.dto';
 import { User } from '../../users/entities/user.entity';
 
-export class ExcursionsListItemDto {
+export class ExcursionsModerationListItemDto {
   @ApiProperty({ title: 'Excursion id', type: Number })
   id: number;
 

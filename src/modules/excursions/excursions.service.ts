@@ -1,4 +1,9 @@
-import { BadRequestException, Injectable, Logger } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
 import { CreateExcursionDto } from './dto/create-excursion.dto';
 import { UpdateExcursionDto } from './dto/update-excursion.dto';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -31,6 +36,9 @@ import { ExcursionsListRequestDto } from './dto/excursions-list-request.dto';
 import { ReviewStatusesEnum } from '../reviews/enums/review-statuses.enum';
 import { ExcursionsModerationListRequestDto } from './dto/excursions-moderation-list-request.dto';
 import { ExcursionsModerationListOrderByEnum } from './enums/excursions-moderation-list-order-by.enum';
+import { ModerationDto } from '../places/dto/moderation.dto';
+import { PlaceEmail } from '../mailing/emails/place.email';
+import { PlaceForEmailDto } from '../places/dto/place-for-email.dto';
 
 @Injectable()
 export class ExcursionsService {
@@ -275,12 +283,12 @@ export class ExcursionsService {
               ? orderDirection
               : undefined,
         },
-        distance:
-          dto.orderBy === ExcursionsListOrderByEnum.DISTANCE
+        type:
+          dto.orderBy === ExcursionsListOrderByEnum.TYPE
             ? orderDirection
             : undefined,
-        duration:
-          dto.orderBy === ExcursionsListOrderByEnum.DURATION
+        status:
+          dto.orderBy === ExcursionsListOrderByEnum.STATUS
             ? orderDirection
             : undefined,
         excursionPlaces: { position: 'asc' },
@@ -446,7 +454,11 @@ export class ExcursionsService {
       take: dto.pageSize,
       order: {
         createdAt:
-          dto.orderBy === ExcursionsModerationListOrderByEnum.CREATED_AT ||
+          dto.orderBy === ExcursionsModerationListOrderByEnum.CREATED_AT
+            ? orderDirection
+            : undefined,
+        updatedAt:
+          dto.orderBy === ExcursionsModerationListOrderByEnum.UPDATED_AT ||
           !dto.orderBy
             ? orderDirection
             : undefined,
@@ -456,14 +468,20 @@ export class ExcursionsService {
               ? orderDirection
               : undefined,
         },
-        distance:
-          dto.orderBy === ExcursionsModerationListOrderByEnum.DISTANCE
+        type:
+          dto.orderBy === ExcursionsModerationListOrderByEnum.TYPE
             ? orderDirection
             : undefined,
-        duration:
-          dto.orderBy === ExcursionsModerationListOrderByEnum.DURATION
-            ? orderDirection
-            : undefined,
+        author: {
+          firstName:
+            dto.orderBy === ExcursionsModerationListOrderByEnum.AUTHOR
+              ? orderDirection
+              : undefined,
+          lastName:
+            dto.orderBy === ExcursionsModerationListOrderByEnum.AUTHOR
+              ? orderDirection
+              : undefined,
+        },
         excursionPlaces: { position: 'asc' },
       },
       select: {
@@ -540,6 +558,45 @@ export class ExcursionsService {
       })
       .select(['excursion.id', 'excursion.slug'])
       .getMany();
+  }
+
+  async moderateExcursion(id: number, dto: ModerationDto, moderator: User) {
+    const excursion = await this.excursionsRepository.findOne({
+      where: {
+        id: id,
+      },
+      select: {
+        id: true,
+      },
+    });
+    if (!excursion)
+      throw new NotFoundException({
+        message: 'Excursion not found',
+      });
+
+    const updatedStatus = dto.accept
+      ? ExcursionStatusesEnum.APPROVED
+      : ExcursionStatusesEnum.REJECTED;
+
+    await this.excursionsRepository.save({
+      id: id,
+      moderator: moderator,
+      status: updatedStatus,
+      moderationMessage: dto.feedback || null,
+    });
+
+    // TODO:
+    // send email
+    // const excursionForEmail = await this.getExcursionForEmail(id);
+    // if (!excursionForEmail || !excursionForEmail.author.receiveEmails) return;
+    // const email = new PlaceEmail(
+    //   {
+    //     status: updatedStatus,
+    //     comment: dto.feedback,
+    //   },
+    //   new PlaceForEmailDto(placeForEmail),
+    // );
+    // this.mailingService.sendEmail(email);
   }
 
   // create excursion translations

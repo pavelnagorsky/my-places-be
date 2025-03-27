@@ -45,6 +45,11 @@ import { Place } from '../places/entities/place.entity';
 import { PlaceSlugDto } from '../places/dto/place-slug.dto';
 import { CacheInterceptor } from '@nestjs/cache-manager';
 import { ExcursionSlugDto } from './dto/excursion-slug.dto';
+import { ModerationReviewsResponseDto } from '../reviews/dto/moderation-reviews-response.dto';
+import { ModerationReviewsRequestDto } from '../reviews/dto/moderation-reviews-request.dto';
+import { ExcursionsModerationListResponseDto } from './dto/excursions-moderation-list-response.dto';
+import { ExcursionsModerationListRequestDto } from './dto/excursions-moderation-list-request.dto';
+import { ModerationDto } from '../places/dto/moderation.dto';
 
 @ApiTags('Excursions')
 @Controller('excursions')
@@ -223,6 +228,59 @@ export class ExcursionsController {
     @Body() updateExcursionDto: UpdateExcursionDto,
   ) {
     return await this.excursionsService.update(id, updateExcursionDto, langId);
+  }
+
+  @ApiOperation({ summary: 'Get excursions for moderation' })
+  @ApiOkResponse({
+    description: 'OK',
+    type: ExcursionsModerationListResponseDto,
+  })
+  @ApiBody({
+    type: ExcursionsModerationListRequestDto,
+  })
+  @ApiQuery({
+    name: 'lang',
+    type: Number,
+    description: 'The ID of the language',
+  })
+  @UseInterceptors(ClassSerializerInterceptor)
+  @Auth(RoleNamesEnum.MODERATOR, RoleNamesEnum.ADMIN)
+  @Post('moderation-list')
+  async getExcursionsForModeration(
+    @Query('lang', ParseIntPipe) langId: number,
+    @Body() dto: ExcursionsModerationListRequestDto,
+  ) {
+    const [excursions, total] =
+      await this.excursionsService.findModerationExcursions(dto, langId);
+    return new ExcursionsModerationListResponseDto(excursions, {
+      requestedPage: dto.page,
+      pageSize: dto.pageSize,
+      totalItems: total,
+    });
+  }
+
+  @ApiOperation({ summary: 'Moderate excursion' })
+  @ApiOkResponse({
+    description: 'OK',
+  })
+  @ApiParam({
+    name: 'id',
+    type: Number,
+    description: 'The id of the excursion',
+  })
+  @ApiBody({
+    type: ModerationDto,
+  })
+  @UseInterceptors(ClassSerializerInterceptor)
+  @Auth(RoleNamesEnum.MODERATOR, RoleNamesEnum.ADMIN)
+  @Post(':id/moderation')
+  async moderateExcursion(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: ModerationDto,
+    @TokenPayload(UserFromTokenPipe) moderator: User,
+  ) {
+    await this.excursionsService.moderateExcursion(id, dto, moderator);
+    return;
   }
 
   @ApiOperation({ summary: 'Update Excursion by admin' })
