@@ -250,10 +250,10 @@ export class ExcursionsService {
     return { id };
   }
 
-  async findMyExcursions(
+  async findExcursions(
     dto: ExcursionsListRequestDto,
     langId: number,
-    tokenPayload: AccessTokenPayloadDto,
+    userId?: number,
   ) {
     const orderDirection = dto.orderAsc ? 'ASC' : 'DESC';
 
@@ -269,6 +269,7 @@ export class ExcursionsService {
       relations: {
         translations: true,
         excursionPlaces: { place: { translations: true } },
+        author: true,
       },
       skip: dto.page * dto.pageSize,
       take: dto.pageSize,
@@ -295,6 +296,7 @@ export class ExcursionsService {
       },
       select: {
         translations: { title: true },
+        author: { firstName: true, lastName: true, email: true },
         excursionPlaces: {
           position: true,
           id: true,
@@ -313,7 +315,7 @@ export class ExcursionsService {
       },
       where: {
         author: {
-          id: tokenPayload.id,
+          id: userId ? userId : undefined,
         },
         translations: {
           title:
@@ -331,6 +333,10 @@ export class ExcursionsService {
             },
           },
         },
+        status:
+          !!dto.statuses && dto.statuses?.length > 0
+            ? In(dto.statuses)
+            : undefined,
         createdAt: getDateWhereOption(),
       },
     });

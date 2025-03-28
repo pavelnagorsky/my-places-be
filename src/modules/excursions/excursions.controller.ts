@@ -34,19 +34,12 @@ import { TokenPayload } from '../auth/decorators/token-payload.decorator';
 import { UserFromTokenPipe } from '../auth/pipes/user-from-token.pipe';
 import { User } from '../users/entities/user.entity';
 import { RoleNamesEnum } from '../roles/enums/role-names.enum';
-import { RoutesListResponseDto } from '../routes/dto/routes-list-response.dto';
-import { RoutesListRequestDto } from '../routes/dto/routes-list-request.dto';
 import { AccessTokenPayloadDto } from '../auth/dto/access-token-payload.dto';
 import { ExcursionsListRequestDto } from './dto/excursions-list-request.dto';
 import { ExcursionsListResponseDto } from './dto/excursions-list-response.dto';
-import { PlaceDto } from '../places/dto/place.dto';
 import { ExcursionDto } from './dto/excursion.dto';
-import { Place } from '../places/entities/place.entity';
-import { PlaceSlugDto } from '../places/dto/place-slug.dto';
 import { CacheInterceptor } from '@nestjs/cache-manager';
 import { ExcursionSlugDto } from './dto/excursion-slug.dto';
-import { ModerationReviewsResponseDto } from '../reviews/dto/moderation-reviews-response.dto';
-import { ModerationReviewsRequestDto } from '../reviews/dto/moderation-reviews-request.dto';
 import { ExcursionsModerationListResponseDto } from './dto/excursions-moderation-list-response.dto';
 import { ExcursionsModerationListRequestDto } from './dto/excursions-moderation-list-request.dto';
 import { ModerationDto } from '../places/dto/moderation.dto';
@@ -103,17 +96,49 @@ export class ExcursionsController {
   })
   @UseInterceptors(ClassSerializerInterceptor)
   @Auth()
-  @Post('my-excursions')
+  @Post('personal-list')
   async findMyExcursions(
     @Query('lang', ParseIntPipe) langId: number,
     @Body() dto: ExcursionsListRequestDto,
     @TokenPayload()
     tokenPayload: AccessTokenPayloadDto,
   ) {
-    const [excursions, total] = await this.excursionsService.findMyExcursions(
+    const [excursions, total] = await this.excursionsService.findExcursions(
       dto,
       langId,
-      tokenPayload,
+      tokenPayload.id,
+    );
+
+    return new ExcursionsListResponseDto(excursions, {
+      requestedPage: dto.page,
+      pageSize: dto.pageSize,
+      totalItems: total,
+    });
+  }
+
+  @ApiOperation({ summary: 'Find excursions for administration' })
+  @ApiOkResponse({
+    description: 'OK',
+    type: ExcursionsListResponseDto,
+  })
+  @ApiBody({
+    type: ExcursionsListRequestDto,
+  })
+  @ApiQuery({
+    name: 'lang',
+    type: Number,
+    description: 'The ID of the language',
+  })
+  @UseInterceptors(ClassSerializerInterceptor)
+  @Auth(RoleNamesEnum.ADMIN)
+  @Post('administration-list')
+  async findAdministrationExcursions(
+    @Query('lang', ParseIntPipe) langId: number,
+    @Body() dto: ExcursionsListRequestDto,
+  ) {
+    const [excursions, total] = await this.excursionsService.findExcursions(
+      dto,
+      langId,
     );
 
     return new ExcursionsListResponseDto(excursions, {

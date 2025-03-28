@@ -89,6 +89,21 @@ export class ExcursionsListItemDto {
   })
   moderationMessage: string | null;
 
+  @Exclude()
+  author: User;
+
+  @ApiProperty({ type: String, description: 'Author username' })
+  @Expose()
+  get authorName(): string {
+    return `${this.author.firstName} ${this.author.lastName}`;
+  }
+
+  @ApiProperty({ type: String, description: 'Author email' })
+  @Expose()
+  get authorEmail(): string {
+    return this.author.email;
+  }
+
   constructor(partial: Partial<Excursion>) {
     Object.assign(this, partial);
     this.places = (partial.excursionPlaces ?? []).map(
