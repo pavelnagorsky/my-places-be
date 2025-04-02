@@ -107,7 +107,6 @@ export class PlacesController {
   @ApiBody({
     type: ValidateSlugDto,
   })
-  @Auth(RoleNamesEnum.ADMIN)
   @Post('slugs/validate')
   async checkSlugValidity(@Body() createSlugDto: ValidateSlugDto) {
     const slugExists = await this.placesService.validateSlugExists(

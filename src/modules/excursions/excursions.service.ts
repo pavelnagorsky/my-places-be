@@ -39,6 +39,10 @@ import { ExcursionsModerationListOrderByEnum } from './enums/excursions-moderati
 import { ModerationDto } from '../places/dto/moderation.dto';
 import { PlaceEmail } from '../mailing/emails/place.email';
 import { PlaceForEmailDto } from '../places/dto/place-for-email.dto';
+import { ChangePlaceStatusDto } from '../places/dto/change-place-status.dto';
+import { ChangeExcursionStatusDto } from './dto/change-excursion-status.dto';
+import { ExcursionEmail } from '../mailing/emails/excursion.email';
+import { ExcursionForEmailDto } from './dto/excursion-for-email.dto';
 
 @Injectable()
 export class ExcursionsService {
@@ -150,7 +154,7 @@ export class ExcursionsService {
     return validatedSlug;
   }
 
-  private async validateSlugExists(slug: string, excursionId?: number) {
+  async validateSlugExists(slug: string, excursionId?: number) {
     return this.excursionsRepository.exists({
       where: {
         slug: Equal(slug),
@@ -614,18 +618,73 @@ export class ExcursionsService {
       moderationMessage: dto.feedback || null,
     });
 
-    // TODO:
     // send email
-    // const excursionForEmail = await this.getExcursionForEmail(id);
-    // if (!excursionForEmail || !excursionForEmail.author.receiveEmails) return;
-    // const email = new PlaceEmail(
-    //   {
-    //     status: updatedStatus,
-    //     comment: dto.feedback,
-    //   },
-    //   new PlaceForEmailDto(placeForEmail),
-    // );
-    // this.mailingService.sendEmail(email);
+    const excursionForEmail = await this.getExcursionForEmail(id);
+    if (!excursionForEmail || !excursionForEmail.author.receiveEmails) return;
+    const email = new ExcursionEmail(
+      new ExcursionForEmailDto(excursionForEmail),
+    );
+    this.mailingService.sendEmail(email);
+  }
+
+  async changeStatus(id: number, dto: ChangeExcursionStatusDto) {
+    const excursion = await this.excursionsRepository.findOne({
+      where: { id: Equal(id) },
+      select: { id: true, status: true },
+    });
+    if (!excursion)
+      throw new NotFoundException({ message: 'Excursion not found' });
+
+    // update status
+    excursion.status = dto.status;
+    if (dto.status === ExcursionStatusesEnum.REJECTED)
+      excursion.moderationMessage = dto.message || '';
+    if (dto.status === ExcursionStatusesEnum.APPROVED)
+      excursion.moderationMessage = null;
+    await this.excursionsRepository.save(excursion);
+
+    // send email
+    const excursionForEmail = await this.getExcursionForEmail(id);
+    if (!excursionForEmail || !excursionForEmail.author.receiveEmails) return;
+
+    const email = new ExcursionEmail(
+      new ExcursionForEmailDto({
+        ...excursionForEmail,
+        moderationMessage: dto.message,
+      }),
+    );
+    await this.mailingService.sendEmail(email);
+  }
+
+  private async getExcursionForEmail(id: number) {
+    const excursion = await this.excursionsRepository.findOne({
+      relations: {
+        translations: true,
+        author: true,
+      },
+      select: {
+        id: true,
+        createdAt: true,
+        moderationMessage: true,
+        status: true,
+        author: {
+          email: true,
+          firstName: true,
+          lastName: true,
+          receiveEmails: true,
+        },
+        translations: { title: true },
+      },
+      where: {
+        id: Equal(id),
+        translations: {
+          language: {
+            id: LanguageIdEnum.RU,
+          },
+        },
+      },
+    });
+    return excursion;
   }
 
   // create excursion translations

@@ -730,13 +730,14 @@ export class PlacesService {
         createdAt: true,
         advertisement: true,
         status: true,
+        advEndDate: true,
         author: {
           email: true,
           firstName: true,
           lastName: true,
           receiveEmails: true,
         },
-        advEndDate: true,
+        translations: { title: true },
       },
       where: {
         id: id,

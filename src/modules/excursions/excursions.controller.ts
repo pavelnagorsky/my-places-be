@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   ClassSerializerInterceptor,
   Controller,
@@ -44,6 +45,8 @@ import { ExcursionsModerationListResponseDto } from './dto/excursions-moderation
 import { ExcursionsModerationListRequestDto } from './dto/excursions-moderation-list-request.dto';
 import { ModerationDto } from '../places/dto/moderation.dto';
 import { UpdateSlugDto } from './dto/update-slug.dto';
+import { ValidateSlugDto } from './dto/validate-slug.dto';
+import { ChangeExcursionStatusDto } from './dto/change-excursion-status.dto';
 
 @ApiTags('Excursions')
 @Controller('excursions')
@@ -223,6 +226,31 @@ export class ExcursionsController {
     return new ExcursionDto(excursion);
   }
 
+  @ApiOperation({ summary: 'Validate excursion slug' })
+  @ApiOkResponse({
+    description: 'OK',
+  })
+  @ApiBadRequestResponse({
+    description: 'Validation failed',
+    type: ValidationExceptionDto,
+  })
+  @ApiBody({
+    type: ValidateSlugDto,
+  })
+  @Post('slugs/validate')
+  async checkSlugValidity(@Body() createSlugDto: ValidateSlugDto) {
+    const slugExists = await this.excursionsService.validateSlugExists(
+      createSlugDto.slug,
+      createSlugDto.id,
+    );
+    const existsMessage = 'SLUG_EXISTS';
+    if (slugExists)
+      throw new BadRequestException({
+        message: existsMessage,
+      });
+    return;
+  }
+
   @ApiOperation({ summary: 'Update Excursion' })
   @ApiOkResponse({
     description: 'OK',
@@ -251,9 +279,18 @@ export class ExcursionsController {
   async update(
     @Query('lang', ParseIntPipe) langId: number,
     @Param('id', ParseIntPipe) id: number,
+    @TokenPayload() tokenDto: AccessTokenPayloadDto,
     @Body() updateExcursionDto: UpdateExcursionDto,
   ) {
-    return await this.excursionsService.update(id, updateExcursionDto, langId);
+    const isAdmin = tokenDto.roles
+      .map((r) => r.name)
+      .includes(RoleNamesEnum.ADMIN);
+    return await this.excursionsService.update(
+      id,
+      updateExcursionDto,
+      langId,
+      isAdmin,
+    );
   }
 
   @ApiOperation({ summary: 'Get excursions for moderation' })
@@ -309,44 +346,6 @@ export class ExcursionsController {
     return;
   }
 
-  @ApiOperation({ summary: 'Update Excursion by admin' })
-  @ApiOkResponse({
-    description: 'OK',
-    type: PickType(Excursion, ['id']),
-  })
-  @ApiBadRequestResponse({
-    description: 'Validation failed',
-    type: ValidationExceptionDto,
-  })
-  @ApiParam({
-    name: 'id',
-    type: Number,
-    description: 'The ID of the excursion',
-  })
-  @ApiQuery({
-    name: 'lang',
-    type: Number,
-    description: 'The ID of the language',
-  })
-  @ApiBody({
-    type: UpdateExcursionDto,
-  })
-  @UseInterceptors(ClassSerializerInterceptor)
-  @Auth(RoleNamesEnum.ADMIN)
-  @Put(':id/administration')
-  async updateByAdmin(
-    @Query('lang', ParseIntPipe) langId: number,
-    @Param('id', ParseIntPipe) id: number,
-    @Body() updateExcursionDto: UpdateExcursionDto,
-  ) {
-    return await this.excursionsService.update(
-      id,
-      updateExcursionDto,
-      langId,
-      true,
-    );
-  }
-
   @ApiOperation({ summary: 'Delete excursion' })
   @ApiOkResponse({
     description: 'OK',
@@ -396,11 +395,34 @@ export class ExcursionsController {
   })
   @Auth(RoleNamesEnum.ADMIN)
   @Put(':id/slug')
-  async updatePlaceSlug(
+  async updateSlug(
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: UpdateSlugDto,
   ) {
     await this.excursionsService.updateSlug(id, dto.slug);
+    return;
+  }
+
+  @ApiOperation({ summary: 'Change excursion status' })
+  @ApiOkResponse({
+    description: 'OK',
+  })
+  @ApiParam({
+    name: 'id',
+    type: Number,
+    description: 'The id of the excursion',
+  })
+  @ApiBody({
+    type: ChangeExcursionStatusDto,
+  })
+  @UseInterceptors(ClassSerializerInterceptor)
+  @Auth(RoleNamesEnum.ADMIN)
+  @Post(':id/change-status')
+  async changeStatus(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: ChangeExcursionStatusDto,
+  ) {
+    await this.excursionsService.changeStatus(id, dto);
     return;
   }
 }
