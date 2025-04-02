@@ -6,6 +6,8 @@ import { ExcursionPlace } from '../entities/excursion-place.entity';
 import { ExcursionTypesEnum } from '../enums/excursion-types.enum';
 import { TravelModesEnum } from 'src/modules/routes/enums/travel-modes.enum';
 import { Excursion } from '../entities/excursion.entity';
+import { User } from '../../users/entities/user.entity';
+import { ExcursionStatusesEnum } from '../enums/excursion-statuses.enum';
 
 export class ExcursionDto {
   @ApiProperty({ title: 'Excursion id', type: Number })
@@ -93,6 +95,25 @@ export class ExcursionDto {
     return this.excursionPlaces
       .map((excursionPlace) => excursionPlace.place.images[0]?.url)
       .filter(Boolean);
+  }
+
+  @ApiProperty({
+    type: String,
+    description: 'Excursion moderation feedback',
+    nullable: true,
+  })
+  moderationMessage: string | null;
+
+  @ApiProperty({ enum: ExcursionStatusesEnum, description: 'Excursion status' })
+  status: ExcursionStatusesEnum;
+
+  @Exclude()
+  author: User;
+
+  @ApiProperty({ type: String, description: 'Author username' })
+  @Expose()
+  get authorName(): string {
+    return `${this.author.firstName} ${this.author.lastName}`;
   }
 
   constructor(partial: Partial<Excursion>) {

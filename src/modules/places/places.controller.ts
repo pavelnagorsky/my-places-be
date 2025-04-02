@@ -318,7 +318,10 @@ export class PlacesController {
       tokenPayload.id,
       id,
     );
-    if (!userIsPlaceAuthor)
+    const isAdmin = !!tokenPayload.roles.find(
+      (role) => role.name === RoleNamesEnum.ADMIN,
+    );
+    if (!userIsPlaceAuthor && !isAdmin)
       throw new ForbiddenException({
         message: 'Forbidden, user is not author',
       });

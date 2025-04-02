@@ -43,6 +43,7 @@ import { ExcursionSlugDto } from './dto/excursion-slug.dto';
 import { ExcursionsModerationListResponseDto } from './dto/excursions-moderation-list-response.dto';
 import { ExcursionsModerationListRequestDto } from './dto/excursions-moderation-list-request.dto';
 import { ModerationDto } from '../places/dto/moderation.dto';
+import { UpdateSlugDto } from './dto/update-slug.dto';
 
 @ApiTags('Excursions')
 @Controller('excursions')
@@ -375,5 +376,31 @@ export class ExcursionsController {
       });
     const data = await this.excursionsService.remove(id);
     return data;
+  }
+
+  @ApiOperation({ summary: 'Update excursion slug' })
+  @ApiOkResponse({
+    description: 'OK',
+  })
+  @ApiBadRequestResponse({
+    description: 'Validation failed',
+    type: ValidationExceptionDto,
+  })
+  @ApiParam({
+    name: 'id',
+    type: Number,
+    description: 'The id of the excursion',
+  })
+  @ApiBody({
+    type: UpdateSlugDto,
+  })
+  @Auth(RoleNamesEnum.ADMIN)
+  @Put(':id/slug')
+  async updatePlaceSlug(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: UpdateSlugDto,
+  ) {
+    await this.excursionsService.updateSlug(id, dto.slug);
+    return;
   }
 }

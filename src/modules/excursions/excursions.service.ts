@@ -349,6 +349,7 @@ export class ExcursionsService {
     const res = await this.excursionsRepository.findOne({
       relations: {
         translations: true,
+        author: true,
         excursionPlaces: {
           translations: true,
           place: {
@@ -378,6 +379,9 @@ export class ExcursionsService {
         updatedAt: true,
         travelMode: true,
         viewsCount: true,
+        author: { id: true, firstName: true, lastName: true },
+        moderationMessage: true,
+        status: true,
         excursionPlaces: {
           position: true,
           id: true,
@@ -564,6 +568,25 @@ export class ExcursionsService {
       })
       .select(['excursion.id', 'excursion.slug'])
       .getMany();
+  }
+
+  async updateSlug(id: number, slug: string) {
+    const excursionExists = await this.checkExist(id);
+    if (!excursionExists) {
+      throw new NotFoundException({ message: 'Excursion not exists' });
+    }
+    await this.excursionsRepository.save({
+      id,
+      slug,
+    });
+  }
+
+  private async checkExist(excursionId: number): Promise<boolean> {
+    return this.excursionsRepository.exists({
+      where: {
+        id: Equal(excursionId),
+      },
+    });
   }
 
   async moderateExcursion(id: number, dto: ModerationDto, moderator: User) {
