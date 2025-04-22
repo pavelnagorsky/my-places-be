@@ -278,8 +278,13 @@ export class ExcursionsService {
       skip: dto.page * dto.pageSize,
       take: dto.pageSize,
       order: {
+        excursionPlaces: { position: 'asc' },
         createdAt:
           dto.orderBy === ExcursionsListOrderByEnum.CREATED_AT || !dto.orderBy
+            ? orderDirection
+            : undefined,
+        updatedAt:
+          dto.orderBy === ExcursionsListOrderByEnum.UPDATED_AT
             ? orderDirection
             : undefined,
         translations: {
@@ -296,7 +301,6 @@ export class ExcursionsService {
           dto.orderBy === ExcursionsListOrderByEnum.STATUS
             ? orderDirection
             : undefined,
-        excursionPlaces: { position: 'asc' },
       },
       select: {
         translations: { title: true },

@@ -3,4 +3,5 @@ export enum ExcursionsListOrderByEnum {
   TITLE,
   STATUS,
   TYPE,
+  UPDATED_AT,
 }

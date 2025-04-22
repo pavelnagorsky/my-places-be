@@ -25,7 +25,7 @@ export class ExcursionDto {
   @ApiProperty({ type: String, description: 'Excursion description' })
   @Expose()
   get description(): string {
-    return this.translations[0]?.title || '';
+    return this.translations[0]?.description || '';
   }
 
   @Exclude()
