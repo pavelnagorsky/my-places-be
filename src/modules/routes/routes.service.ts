@@ -169,9 +169,9 @@ export class RoutesService {
       },
       order: { routePlaces: { position: 'asc' } },
       where: {
-        author: {
-          id: userId,
-        },
+        // author: {
+        //   id: userId,
+        // },
         id: id,
         routePlaces: {
           place: {
