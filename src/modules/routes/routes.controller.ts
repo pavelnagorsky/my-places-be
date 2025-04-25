@@ -111,7 +111,6 @@ export class RoutesController {
     description: 'The ID of the language',
   })
   @UseInterceptors(ClassSerializerInterceptor)
-  @Auth()
   @Get(':id')
   async findOne(
     @Param('id', ParseIntPipe) id: number,
