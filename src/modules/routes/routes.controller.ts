@@ -116,10 +116,8 @@ export class RoutesController {
   async findOne(
     @Param('id', ParseIntPipe) id: number,
     @Query('lang', ParseIntPipe) langId: number,
-    @TokenPayload()
-    tokenPayload: AccessTokenPayloadDto,
   ) {
-    const route = await this.routesService.findOne(id, langId, tokenPayload.id);
+    const route = await this.routesService.findOne(id, langId);
     if (!route) throw new NotFoundException({ message: 'Route not found' });
     return new RouteDto(route);
   }

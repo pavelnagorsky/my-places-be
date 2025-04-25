@@ -8,7 +8,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Place } from '../places/entities/place.entity';
-import { ILike, Repository, SelectQueryBuilder } from 'typeorm';
+import { ILike, IsNull, Not, Repository, SelectQueryBuilder } from 'typeorm';
 import { PlaceStatusesEnum } from '../places/enums/place-statuses.enum';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
@@ -236,6 +236,9 @@ export class SearchService implements OnModuleInit {
           language: {
             id: langId,
           },
+        },
+        place: {
+          id: Not(IsNull()),
         },
       },
     });
