@@ -278,7 +278,6 @@ export class ExcursionsService {
       skip: dto.page * dto.pageSize,
       take: dto.pageSize,
       order: {
-        excursionPlaces: { position: 'asc' },
         createdAt:
           dto.orderBy === ExcursionsListOrderByEnum.CREATED_AT || !dto.orderBy
             ? orderDirection
@@ -500,7 +499,6 @@ export class ExcursionsService {
               ? orderDirection
               : undefined,
         },
-        excursionPlaces: { position: 'asc' },
       },
       select: {
         id: true,

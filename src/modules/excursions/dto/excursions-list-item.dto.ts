@@ -106,7 +106,9 @@ export class ExcursionsListItemDto {
 
   constructor(partial: Partial<Excursion>) {
     Object.assign(this, partial);
-    this.places = (partial.excursionPlaces ?? []).map(
+    const excursionPlaces = partial.excursionPlaces ?? [];
+    excursionPlaces.sort((a, b) => a.position - b.position);
+    this.places = excursionPlaces.map(
       (excursionPlace) => new ExcursionsListItemPlaceDto(excursionPlace),
     );
   }
