@@ -1,6 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
 import {
+  ArrayMaxSize,
   ArrayMinSize,
   IsDateString,
   IsEnum,
@@ -29,6 +30,9 @@ export class CreateExcursionDto {
     isArray: true,
   })
   @ArrayMinSize(2, { message: 'Minimum 2 waypoints required' })
+  @ArrayMaxSize(27, {
+    message: 'Maximum 25 waypoints (+ origin and destination)',
+  })
   places: CreateExcursionPlaceDto[];
 
   @ApiProperty({

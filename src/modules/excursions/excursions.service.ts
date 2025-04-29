@@ -797,6 +797,7 @@ export class ExcursionsService {
     sourceLangId: number,
     dto: CreateExcursionPlaceDto,
   ) {
+    this.logger.log('CREATE: Excursion places translations started');
     const allLanguages = await this.translationsService.getAllLanguages();
     const shouldTranslate = dto.description?.length > 2;
 
@@ -836,6 +837,7 @@ export class ExcursionsService {
     dto: CreateExcursionPlaceDto,
     translateAll: boolean,
   ) {
+    this.logger.log('UPDATE: Excursion places translations started');
     const translations: ExcursionPlaceTranslation[] = [];
 
     // helper function to merge update translations

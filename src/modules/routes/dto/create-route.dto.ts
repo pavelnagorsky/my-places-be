@@ -1,6 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
 import {
+  ArrayMaxSize,
   ArrayMinSize,
   IsDateString,
   IsEnum,
@@ -25,6 +26,9 @@ export class CreateRouteDto {
     isArray: true,
   })
   @ArrayMinSize(1)
+  @ArrayMaxSize(25, {
+    message: 'Maximum 25 waypoints ',
+  })
   @IsNumber({}, { each: true })
   placeIds: number[];
 
