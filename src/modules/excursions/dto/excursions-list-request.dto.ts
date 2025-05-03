@@ -25,4 +25,12 @@ export class ExcursionsListRequestDto extends PaginationRequestDto<ExcursionsLis
   @IsNumber({}, { each: true })
   @ValidateIf((object, value) => Boolean(value))
   statuses?: ExcursionStatusesEnum[];
+  @ApiProperty({
+    type: Number,
+    isArray: true,
+    description: 'User IDs',
+  })
+  @IsNumber({}, { each: true })
+  @ValidateIf((object, value) => Boolean(value))
+  userIds?: number[];
 }

@@ -47,6 +47,8 @@ import { ModerationDto } from '../places/dto/moderation.dto';
 import { UpdateSlugDto } from './dto/update-slug.dto';
 import { ValidateSlugDto } from './dto/validate-slug.dto';
 import { ChangeExcursionStatusDto } from './dto/change-excursion-status.dto';
+import { ExcursionsSearchResponseDto } from './dto/excursions-search-response.dto';
+import { ExcursionsSearchRequestDto } from './dto/excursions-search-request.dto';
 
 @ApiTags('Excursions')
 @Controller('excursions')
@@ -146,6 +148,37 @@ export class ExcursionsController {
     );
 
     return new ExcursionsListResponseDto(excursions, {
+      requestedPage: dto.page,
+      pageSize: dto.pageSize,
+      totalItems: total,
+    });
+  }
+
+  @ApiOperation({ summary: 'Search excursions' })
+  @ApiOkResponse({
+    description: 'OK',
+    type: ExcursionsSearchResponseDto,
+  })
+  @ApiBody({
+    type: ExcursionsSearchRequestDto,
+  })
+  @ApiQuery({
+    name: 'lang',
+    type: Number,
+    description: 'The ID of the language',
+  })
+  @UseInterceptors(ClassSerializerInterceptor)
+  @Post('search')
+  async searchExcursions(
+    @Query('lang', ParseIntPipe) langId: number,
+    @Body() dto: ExcursionsSearchRequestDto,
+  ) {
+    const [excursions, total] = await this.excursionsService.searchExcursions(
+      dto,
+      langId,
+    );
+
+    return new ExcursionsSearchResponseDto(excursions, {
       requestedPage: dto.page,
       pageSize: dto.pageSize,
       totalItems: total,

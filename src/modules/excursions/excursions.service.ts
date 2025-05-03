@@ -9,6 +9,7 @@ import { UpdateExcursionDto } from './dto/update-excursion.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import {
   Between,
+  Brackets,
   Equal,
   ILike,
   In,
@@ -30,19 +31,17 @@ import { MailingService } from '../mailing/mailing.service';
 import { CreateExcursionPlaceDto } from './dto/create-excursion-place.dto';
 import { ExcursionStatusesEnum } from './enums/excursion-statuses.enum';
 import { LanguageIdEnum } from '../languages/enums/language-id.enum';
-import { AccessTokenPayloadDto } from '../auth/dto/access-token-payload.dto';
 import { ExcursionsListOrderByEnum } from './enums/excursions-list-order-by.enum';
 import { ExcursionsListRequestDto } from './dto/excursions-list-request.dto';
 import { ReviewStatusesEnum } from '../reviews/enums/review-statuses.enum';
 import { ExcursionsModerationListRequestDto } from './dto/excursions-moderation-list-request.dto';
 import { ExcursionsModerationListOrderByEnum } from './enums/excursions-moderation-list-order-by.enum';
 import { ModerationDto } from '../places/dto/moderation.dto';
-import { PlaceEmail } from '../mailing/emails/place.email';
-import { PlaceForEmailDto } from '../places/dto/place-for-email.dto';
-import { ChangePlaceStatusDto } from '../places/dto/change-place-status.dto';
 import { ChangeExcursionStatusDto } from './dto/change-excursion-status.dto';
 import { ExcursionEmail } from '../mailing/emails/excursion.email';
 import { ExcursionForEmailDto } from './dto/excursion-for-email.dto';
+import { ExcursionsSearchRequestDto } from './dto/excursions-search-request.dto';
+import { ExcursionsSearchOrderByEnum } from './enums/excursions-search-order-by.enum';
 
 @Injectable()
 export class ExcursionsService {
@@ -228,6 +227,10 @@ export class ExcursionsService {
     );
     const excursionPlaces = await this.excursionPlacesRepository.save(
       dto.places.map((placeDto, index) => ({
+        id: oldExcursion.excursionPlaces.find(
+          (excPlace) => excPlace.place.id === placeDto.id,
+        )?.id,
+        excursion: { id: oldExcursion.id },
         place: { id: placeDto.id },
         excursionDuration: placeDto.excursionDuration,
         translations: excursionPlacesTranslations[index],
@@ -268,6 +271,9 @@ export class ExcursionsService {
       if (!!dto.dateTo) return LessThanOrEqual(new Date(dto.dateTo));
       return undefined;
     };
+
+    const authorWhereStatement =
+      userId ?? (!!dto.userIds?.length ? In(dto.userIds) : undefined);
 
     const res = await this.excursionsRepository.findAndCount({
       relations: {
@@ -322,7 +328,7 @@ export class ExcursionsService {
       },
       where: {
         author: {
-          id: userId ? userId : undefined,
+          id: authorWhereStatement,
         },
         translations: {
           title:
@@ -546,6 +552,104 @@ export class ExcursionsService {
     });
 
     return res;
+  }
+
+  async searchExcursions(dto: ExcursionsSearchRequestDto, langId: number) {
+    const orderDirection = dto.orderAsc ? 'ASC' : 'DESC';
+
+    // Create the base query builder
+    const queryBuilder = this.excursionsRepository
+      .createQueryBuilder('excursion')
+      .leftJoinAndSelect('excursion.translations', 'translations')
+      .leftJoinAndSelect('excursion.excursionPlaces', 'excursionPlaces')
+      .leftJoinAndSelect('excursionPlaces.place', 'place')
+      .leftJoinAndSelect('place.translations', 'placeTranslations')
+      .leftJoinAndSelect('place.images', 'placeImages');
+
+    // Add count of excursionPlaces
+    queryBuilder.loadRelationCountAndMap(
+      'excursion.placesCount',
+      'excursion.excursionPlaces',
+    );
+
+    // Apply filters
+    queryBuilder.where('excursion.status = :status', {
+      status: ExcursionStatusesEnum.APPROVED,
+    });
+    queryBuilder.andWhere('translations.languageId = :langId', { langId });
+
+    if (dto.types?.length) {
+      queryBuilder.andWhere('excursion.type IN (:...types)', {
+        types: dto.types,
+      });
+    }
+
+    if (dto.travelModes?.length) {
+      queryBuilder.andWhere('excursion.travelMode IN (:...travelModes)', {
+        travelModes: dto.travelModes,
+      });
+    }
+
+    // Apply search text conditions (OR across multiple fields)
+    if (dto.search?.length) {
+      const searchTerm = `%${dto.search}%`;
+      queryBuilder.andWhere(
+        new Brackets((qb) => {
+          qb.where('translations.title LIKE :search', {
+            search: searchTerm,
+          })
+            .orWhere('translations.description LIKE :search', {
+              search: searchTerm,
+            })
+            .orWhere('placeTranslations.title LIKE :search', {
+              search: searchTerm,
+            })
+            .orWhere('placeTranslations.description LIKE :search', {
+              search: searchTerm,
+            });
+        }),
+      );
+    }
+
+    // Apply ordering
+    switch (dto.orderBy) {
+      case ExcursionsSearchOrderByEnum.Title:
+        queryBuilder.orderBy('translations.title', orderDirection);
+        break;
+      case ExcursionsSearchOrderByEnum.Rating:
+        queryBuilder.orderBy('excursion.viewsCount', orderDirection);
+        break;
+      case ExcursionsSearchOrderByEnum.CreatedAt:
+      default:
+        queryBuilder.orderBy('excursion.createdAt', orderDirection);
+    }
+
+    // Apply pagination
+    queryBuilder.skip(dto.page * dto.pageSize);
+    queryBuilder.take(dto.pageSize);
+
+    // Select specific fields to match your original query
+    queryBuilder.select([
+      'excursion.id',
+      'excursion.slug',
+      'excursion.duration',
+      'excursion.distance',
+      'excursion.createdAt',
+      'excursion.type',
+      'excursion.travelMode',
+      'excursion.viewsCount',
+      'translations.title',
+      'translations.description',
+      'excursionPlaces.position',
+      'excursionPlaces.id',
+      'place.id',
+      'placeImages.url',
+    ]);
+
+    // Execute the query
+    const result = await queryBuilder.getManyAndCount();
+
+    return result;
   }
 
   async checkUserRelation(userId: number, excursionId: number) {
