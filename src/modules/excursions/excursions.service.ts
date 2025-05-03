@@ -557,48 +557,56 @@ export class ExcursionsService {
   async searchExcursions(dto: ExcursionsSearchRequestDto, langId: number) {
     const orderDirection = dto.orderAsc ? 'ASC' : 'DESC';
 
-    // Create the base query builder
-    const queryBuilder = this.excursionsRepository
+    // Create a subquery to find excursion IDs that match the search criteria
+    const subQuery = this.excursionsRepository
       .createQueryBuilder('excursion')
-      .leftJoinAndSelect('excursion.translations', 'translations')
-      .leftJoinAndSelect('excursion.excursionPlaces', 'excursionPlaces')
-      .leftJoinAndSelect('excursionPlaces.place', 'place')
-      .leftJoinAndSelect('place.translations', 'placeTranslations')
-      .leftJoinAndSelect('place.images', 'placeImages');
-
-    // Add count of excursionPlaces
-    queryBuilder.loadRelationCountAndMap(
-      'excursion.placesCount',
-      'excursion.excursionPlaces',
-    );
-
-    // Apply filters
-    queryBuilder.where('excursion.status = :status', {
-      status: ExcursionStatusesEnum.APPROVED,
-    });
-    queryBuilder.andWhere('translations.languageId = :langId', { langId });
+      .leftJoin(
+        'excursion.translations',
+        'translations',
+        'translations.languageId = :langId',
+        { langId },
+      )
+      .leftJoin('excursion.excursionPlaces', 'excursionPlaces')
+      .leftJoinAndSelect(
+        'excursionPlaces.translations',
+        'excursionPlaceTranslations',
+        'excursionPlaceTranslations.languageId = :langId',
+        { langId },
+      )
+      .leftJoin('excursionPlaces.place', 'place')
+      .leftJoin(
+        'place.translations',
+        'placeTranslations',
+        'placeTranslations.languageId = :langId',
+        { langId },
+      )
+      .select('excursion.id') // Only select the ID for the IN clause
+      .where('excursion.status = :status', {
+        status: ExcursionStatusesEnum.APPROVED,
+      });
 
     if (dto.types?.length) {
-      queryBuilder.andWhere('excursion.type IN (:...types)', {
+      subQuery.andWhere('excursion.type IN (:...types)', {
         types: dto.types,
       });
     }
 
     if (dto.travelModes?.length) {
-      queryBuilder.andWhere('excursion.travelMode IN (:...travelModes)', {
+      subQuery.andWhere('excursion.travelMode IN (:...travelModes)', {
         travelModes: dto.travelModes,
       });
     }
 
-    // Apply search text conditions (OR across multiple fields)
+    // Add search conditions to the subquery only
     if (dto.search?.length) {
       const searchTerm = `%${dto.search}%`;
-      queryBuilder.andWhere(
+      subQuery.andWhere(
         new Brackets((qb) => {
-          qb.where('translations.title LIKE :search', {
-            search: searchTerm,
-          })
+          qb.where('translations.title LIKE :search', { search: searchTerm })
             .orWhere('translations.description LIKE :search', {
+              search: searchTerm,
+            })
+            .orWhere('excursionPlaceTranslations.description LIKE :search', {
               search: searchTerm,
             })
             .orWhere('placeTranslations.title LIKE :search', {
@@ -610,6 +618,27 @@ export class ExcursionsService {
         }),
       );
     }
+
+    // Create the base query builder
+    const queryBuilder = this.excursionsRepository
+      .createQueryBuilder('excursion')
+      .leftJoinAndSelect(
+        'excursion.translations',
+        'translations',
+        'translations.languageId = :langId',
+        { langId },
+      )
+      .leftJoinAndSelect('excursion.excursionPlaces', 'excursionPlaces')
+      .leftJoinAndSelect('excursionPlaces.place', 'place')
+      .leftJoinAndSelect('place.images', 'placeImages')
+      .where('excursion.id IN (' + subQuery.getQuery() + ')') // Filter excursions using the subquery
+      .setParameters(subQuery.getParameters());
+
+    // Add count of excursionPlaces
+    queryBuilder.loadRelationCountAndMap(
+      'excursion.placesCount',
+      'excursion.excursionPlaces',
+    );
 
     // Apply ordering
     switch (dto.orderBy) {
