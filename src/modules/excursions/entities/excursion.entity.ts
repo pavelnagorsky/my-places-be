@@ -32,7 +32,13 @@ export class Excursion extends BaseEntity {
   )
   translations: ExcursionTranslation[];
 
-  @OneToMany(() => ExcursionPlace, (excursionPlace) => excursionPlace.excursion)
+  @OneToMany(
+    () => ExcursionPlace,
+    (excursionPlace) => excursionPlace.excursion,
+    {
+      cascade: true,
+    },
+  )
   excursionPlaces: ExcursionPlace[];
 
   @ManyToOne(() => User, (user) => user.excursions)
