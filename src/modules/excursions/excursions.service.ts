@@ -3,10 +3,10 @@ import {
   Injectable,
   Logger,
   NotFoundException,
-} from '@nestjs/common';
-import { CreateExcursionDto } from './dto/create-excursion.dto';
-import { UpdateExcursionDto } from './dto/update-excursion.dto';
-import { InjectRepository } from '@nestjs/typeorm';
+} from "@nestjs/common";
+import { CreateExcursionDto } from "./dto/create-excursion.dto";
+import { UpdateExcursionDto } from "./dto/update-excursion.dto";
+import { InjectRepository } from "@nestjs/typeorm";
 import {
   Between,
   Brackets,
@@ -17,35 +17,35 @@ import {
   MoreThanOrEqual,
   Not,
   Repository,
-} from 'typeorm';
-import { Place } from '../places/entities/place.entity';
-import { User } from '../users/entities/user.entity';
-import { Excursion } from './entities/excursion.entity';
-import { ExcursionPlace } from './entities/excursion-place.entity';
-import { ExcursionTranslation } from './entities/excursion-translation.entity';
-import { ExcursionPlaceTranslation } from './entities/excursion-place-translation.entity';
-import { PlaceStatusesEnum } from '../places/enums/place-statuses.enum';
-import { GoogleMapsService } from '../google-maps/google-maps.service';
-import { TranslationsService } from '../translations/translations.service';
-import { MailingService } from '../mailing/mailing.service';
-import { CreateExcursionPlaceDto } from './dto/create-excursion-place.dto';
-import { ExcursionStatusesEnum } from './enums/excursion-statuses.enum';
-import { LanguageIdEnum } from '../languages/enums/language-id.enum';
-import { ExcursionsListOrderByEnum } from './enums/excursions-list-order-by.enum';
-import { ExcursionsListRequestDto } from './dto/excursions-list-request.dto';
-import { ReviewStatusesEnum } from '../reviews/enums/review-statuses.enum';
-import { ExcursionsModerationListRequestDto } from './dto/excursions-moderation-list-request.dto';
-import { ExcursionsModerationListOrderByEnum } from './enums/excursions-moderation-list-order-by.enum';
-import { ModerationDto } from '../places/dto/moderation.dto';
-import { ChangeExcursionStatusDto } from './dto/change-excursion-status.dto';
-import { ExcursionEmail } from '../mailing/emails/excursion.email';
-import { ExcursionForEmailDto } from './dto/excursion-for-email.dto';
-import { ExcursionsSearchRequestDto } from './dto/excursions-search-request.dto';
-import { ExcursionsSearchOrderByEnum } from './enums/excursions-search-order-by.enum';
+} from "typeorm";
+import { Place } from "../places/entities/place.entity";
+import { User } from "../users/entities/user.entity";
+import { Excursion } from "./entities/excursion.entity";
+import { ExcursionPlace } from "./entities/excursion-place.entity";
+import { ExcursionTranslation } from "./entities/excursion-translation.entity";
+import { ExcursionPlaceTranslation } from "./entities/excursion-place-translation.entity";
+import { PlaceStatusesEnum } from "../places/enums/place-statuses.enum";
+import { GoogleMapsService } from "../google-maps/google-maps.service";
+import { TranslationsService } from "../translations/translations.service";
+import { MailingService } from "../mailing/mailing.service";
+import { CreateExcursionPlaceDto } from "./dto/create-excursion-place.dto";
+import { ExcursionStatusesEnum } from "./enums/excursion-statuses.enum";
+import { LanguageIdEnum } from "../languages/enums/language-id.enum";
+import { ExcursionsListOrderByEnum } from "./enums/excursions-list-order-by.enum";
+import { ExcursionsListRequestDto } from "./dto/excursions-list-request.dto";
+import { ReviewStatusesEnum } from "../reviews/enums/review-statuses.enum";
+import { ExcursionsModerationListRequestDto } from "./dto/excursions-moderation-list-request.dto";
+import { ExcursionsModerationListOrderByEnum } from "./enums/excursions-moderation-list-order-by.enum";
+import { ModerationDto } from "../places/dto/moderation.dto";
+import { ChangeExcursionStatusDto } from "./dto/change-excursion-status.dto";
+import { ExcursionEmail } from "../mailing/emails/excursion.email";
+import { ExcursionForEmailDto } from "./dto/excursion-for-email.dto";
+import { ExcursionsSearchRequestDto } from "./dto/excursions-search-request.dto";
+import { ExcursionsSearchOrderByEnum } from "./enums/excursions-search-order-by.enum";
 
 @Injectable()
 export class ExcursionsService {
-  private readonly logger = new Logger('Search service');
+  private readonly logger = new Logger("Search service");
   constructor(
     @InjectRepository(Excursion)
     private excursionsRepository: Repository<Excursion>,
@@ -59,34 +59,34 @@ export class ExcursionsService {
     private placesRepository: Repository<Place>,
     private readonly googleMapsService: GoogleMapsService,
     private translationsService: TranslationsService,
-    private mailingService: MailingService,
+    private mailingService: MailingService
   ) {}
 
   async create(dto: CreateExcursionDto, langId: number, user: User) {
     const places = await this.getPlacesByIds(
-      dto.places.map((place) => place.id),
+      dto.places.map((place) => place.id)
     );
     const waypoints = places.slice(1, -1).map((place) => place.coordinates);
     const routeDetails = await this.googleMapsService.getRouteDetails(
       places[0].coordinates,
       places[places.length - 1].coordinates,
       waypoints,
-      dto.travelMode,
+      dto.travelMode
     );
     const detectedLanguageId =
       await this.translationsService.getLanguageIdOfText(dto.description);
     const excursionTranslations = await this.createExcursionTranslations(
       detectedLanguageId || langId,
-      dto,
+      dto
     );
 
     const excursionPlacesTranslations = await Promise.all(
       dto.places.map((placeDto) =>
         this.createExcursionPlaceTranslations(
           detectedLanguageId || langId,
-          placeDto,
-        ),
-      ),
+          placeDto
+        )
+      )
     );
     const excursionPlaces = await this.excursionPlacesRepository.save(
       dto.places.map((placeDto, index) => {
@@ -102,7 +102,7 @@ export class ExcursionsService {
           duration: duration,
           position: index,
         };
-      }),
+      })
     );
 
     const titleTranslationRu =
@@ -133,7 +133,7 @@ export class ExcursionsService {
       i += 1;
       const slugExists = await this.validateSlugExists(
         validatedSlug,
-        excursionId,
+        excursionId
       );
       if (!slugExists) {
         success = true;
@@ -147,7 +147,7 @@ export class ExcursionsService {
     }
     if (!success) {
       throw new BadRequestException({
-        message: 'Invalid slug',
+        message: "Invalid slug",
       });
     }
     return validatedSlug;
@@ -166,7 +166,7 @@ export class ExcursionsService {
     return this.excursionsRepository
       .createQueryBuilder()
       .update()
-      .set({ viewsCount: () => 'viewsCount + 1' })
+      .set({ viewsCount: () => "viewsCount + 1" })
       .where({ id: Equal(excursionId) })
       .execute();
   }
@@ -175,7 +175,7 @@ export class ExcursionsService {
     id: number,
     dto: UpdateExcursionDto,
     langId: number,
-    byAdmin = false,
+    byAdmin = false
   ) {
     const oldExcursion = await this.excursionsRepository.findOne({
       relations: {
@@ -194,17 +194,17 @@ export class ExcursionsService {
       },
     });
     if (!oldExcursion)
-      throw new BadRequestException({ message: 'Excursion not exists' });
+      throw new BadRequestException({ message: "Excursion not exists" });
 
     const places = await this.getPlacesByIds(
-      dto.places.map((place) => place.id),
+      dto.places.map((place) => place.id)
     );
     const waypoints = places.slice(1, -1).map((place) => place.coordinates);
     const routeDetails = await this.googleMapsService.getRouteDetails(
       places[0].coordinates,
       places[places.length - 1].coordinates,
       waypoints,
-      dto.travelMode,
+      dto.travelMode
     );
     const detectedLanguageId =
       await this.translationsService.getLanguageIdOfText(dto.description);
@@ -212,7 +212,7 @@ export class ExcursionsService {
       detectedLanguageId || langId,
       oldExcursion,
       dto,
-      dto.shouldTranslate,
+      dto.shouldTranslate
     );
 
     const excursionPlacesTranslations = await Promise.all(
@@ -221,14 +221,14 @@ export class ExcursionsService {
           detectedLanguageId || langId,
           oldExcursion,
           placeDto,
-          dto.shouldTranslate,
-        ),
-      ),
+          dto.shouldTranslate
+        )
+      )
     );
     const excursionPlaces = await this.excursionPlacesRepository.save(
       dto.places.map((placeDto, index) => ({
         id: oldExcursion.excursionPlaces.find(
-          (excPlace) => excPlace.place.id === placeDto.id,
+          (excPlace) => excPlace.place.id === placeDto.id
         )?.id,
         excursion: { id: oldExcursion.id },
         place: { id: placeDto.id },
@@ -237,7 +237,7 @@ export class ExcursionsService {
         distance: routeDetails.distanceLegs[index + 1] ?? 0,
         duration: routeDetails.durationLegs[index + 1] ?? 0,
         position: index,
-      })),
+      }))
     );
     const excursion = this.excursionsRepository.create({
       id: id,
@@ -260,9 +260,9 @@ export class ExcursionsService {
   async findExcursions(
     dto: ExcursionsListRequestDto,
     langId: number,
-    userId?: number,
+    userId?: number
   ) {
-    const orderDirection = dto.orderAsc ? 'ASC' : 'DESC';
+    const orderDirection = dto.orderAsc ? "ASC" : "DESC";
 
     const getDateWhereOption = () => {
       if (!!dto.dateFrom && !!dto.dateTo)
@@ -358,7 +358,7 @@ export class ExcursionsService {
   }
 
   async findOne(idOrSlug: number | string, langId: number) {
-    const isSlug = typeof idOrSlug === 'string';
+    const isSlug = typeof idOrSlug === "string";
     const res = await this.excursionsRepository.findOne({
       relations: {
         translations: true,
@@ -374,10 +374,10 @@ export class ExcursionsService {
       },
       order: {
         excursionPlaces: {
-          position: 'asc',
+          position: "asc",
           place: {
-            images: { position: 'asc' },
-            reviews: { createdAt: 'desc' },
+            images: { position: "asc" },
+            reviews: { createdAt: "desc" },
           },
         },
       },
@@ -455,9 +455,9 @@ export class ExcursionsService {
 
   async findModerationExcursions(
     dto: ExcursionsModerationListRequestDto,
-    langId: number,
+    langId: number
   ) {
-    const orderDirection = dto.orderAsc ? 'ASC' : 'DESC';
+    const orderDirection = dto.orderAsc ? "ASC" : "DESC";
 
     const getDateWhereOption = () => {
       if (!!dto.dateFrom && !!dto.dateTo)
@@ -555,44 +555,44 @@ export class ExcursionsService {
   }
 
   async searchExcursions(dto: ExcursionsSearchRequestDto, langId: number) {
-    const orderDirection = dto.orderAsc ? 'ASC' : 'DESC';
+    const orderDirection = dto.orderAsc ? "ASC" : "DESC";
 
     // Create a subquery to find excursion IDs that match the search criteria
     const subQuery = this.excursionsRepository
-      .createQueryBuilder('excursion')
-      .leftJoin(
-        'excursion.translations',
-        'translations',
-        'translations.languageId = :langId',
-        { langId },
+      .createQueryBuilder("excursion")
+      .innerJoin(
+        "excursion.translations",
+        "translations",
+        "translations.languageId = :langId",
+        { langId }
       )
-      .leftJoin('excursion.excursionPlaces', 'excursionPlaces')
-      .leftJoinAndSelect(
-        'excursionPlaces.translations',
-        'excursionPlaceTranslations',
-        'excursionPlaceTranslations.languageId = :langId',
-        { langId },
+      .innerJoin("excursion.excursionPlaces", "excursionPlaces")
+      .innerJoin(
+        "excursionPlaces.translations",
+        "excursionPlaceTranslations",
+        "excursionPlaceTranslations.languageId = :langId",
+        { langId }
       )
-      .leftJoin('excursionPlaces.place', 'place')
-      .leftJoin(
-        'place.translations',
-        'placeTranslations',
-        'placeTranslations.languageId = :langId',
-        { langId },
+      .innerJoin("excursionPlaces.place", "place")
+      .innerJoin(
+        "place.translations",
+        "placeTranslations",
+        "placeTranslations.languageId = :langId",
+        { langId }
       )
-      .select('excursion.id') // Only select the ID for the IN clause
-      .where('excursion.status = :status', {
+      .select("excursion.id") // Only select the ID for the IN clause
+      .where("excursion.status = :status", {
         status: ExcursionStatusesEnum.APPROVED,
       });
 
     if (dto.types?.length) {
-      subQuery.andWhere('excursion.type IN (:...types)', {
+      subQuery.andWhere("excursion.type IN (:...types)", {
         types: dto.types,
       });
     }
 
     if (dto.travelModes?.length) {
-      subQuery.andWhere('excursion.travelMode IN (:...travelModes)', {
+      subQuery.andWhere("excursion.travelMode IN (:...travelModes)", {
         travelModes: dto.travelModes,
       });
     }
@@ -602,55 +602,55 @@ export class ExcursionsService {
       const searchTerm = `%${dto.search}%`;
       subQuery.andWhere(
         new Brackets((qb) => {
-          qb.where('translations.title LIKE :search', { search: searchTerm })
-            .orWhere('translations.description LIKE :search', {
+          qb.where("translations.title LIKE :search", { search: searchTerm })
+            .orWhere("translations.description LIKE :search", {
               search: searchTerm,
             })
-            .orWhere('excursionPlaceTranslations.description LIKE :search', {
+            .orWhere("excursionPlaceTranslations.description LIKE :search", {
               search: searchTerm,
             })
-            .orWhere('placeTranslations.title LIKE :search', {
+            .orWhere("placeTranslations.title LIKE :search", {
               search: searchTerm,
             })
-            .orWhere('placeTranslations.description LIKE :search', {
+            .orWhere("placeTranslations.description LIKE :search", {
               search: searchTerm,
             });
-        }),
+        })
       );
     }
 
     // Create the base query builder
     const queryBuilder = this.excursionsRepository
-      .createQueryBuilder('excursion')
-      .leftJoinAndSelect(
-        'excursion.translations',
-        'translations',
-        'translations.languageId = :langId',
-        { langId },
+      .createQueryBuilder("excursion")
+      .innerJoinAndSelect(
+        "excursion.translations",
+        "translations",
+        "translations.languageId = :langId",
+        { langId }
       )
-      .leftJoinAndSelect('excursion.excursionPlaces', 'excursionPlaces')
-      .leftJoinAndSelect('excursionPlaces.place', 'place')
-      .leftJoinAndSelect('place.images', 'placeImages')
-      .where('excursion.id IN (' + subQuery.getQuery() + ')') // Filter excursions using the subquery
+      .innerJoin("excursion.excursionPlaces", "excursionPlaces")
+      .innerJoin("excursionPlaces.place", "place")
+      .innerJoinAndSelect("place.images", "placeImages")
+      .where("excursion.id IN (" + subQuery.getQuery() + ")") // Filter excursions using the subquery
       .setParameters(subQuery.getParameters());
 
     // Add count of excursionPlaces
     queryBuilder.loadRelationCountAndMap(
-      'excursion.placesCount',
-      'excursion.excursionPlaces',
+      "excursion.placesCount",
+      "excursion.excursionPlaces"
     );
 
     // Apply ordering
     switch (dto.orderBy) {
-      case ExcursionsSearchOrderByEnum.Title:
-        queryBuilder.orderBy('translations.title', orderDirection);
+      case ExcursionsSearchOrderByEnum.TITLE:
+        queryBuilder.orderBy("translations.title", orderDirection);
         break;
-      case ExcursionsSearchOrderByEnum.Rating:
-        queryBuilder.orderBy('excursion.viewsCount', orderDirection);
+      case ExcursionsSearchOrderByEnum.RATING:
+        queryBuilder.orderBy("excursion.viewsCount", orderDirection);
         break;
-      case ExcursionsSearchOrderByEnum.CreatedAt:
+      case ExcursionsSearchOrderByEnum.CREATED_AT:
       default:
-        queryBuilder.orderBy('excursion.createdAt', orderDirection);
+        queryBuilder.orderBy("excursion.createdAt", orderDirection);
     }
 
     // Apply pagination
@@ -659,20 +659,20 @@ export class ExcursionsService {
 
     // Select specific fields to match your original query
     queryBuilder.select([
-      'excursion.id',
-      'excursion.slug',
-      'excursion.duration',
-      'excursion.distance',
-      'excursion.createdAt',
-      'excursion.type',
-      'excursion.travelMode',
-      'excursion.viewsCount',
-      'translations.title',
-      'translations.description',
-      'excursionPlaces.position',
-      'excursionPlaces.id',
-      'place.id',
-      'placeImages.url',
+      "excursion.id",
+      "excursion.slug",
+      "excursion.duration",
+      "excursion.distance",
+      "excursion.createdAt",
+      "excursion.type",
+      "excursion.travelMode",
+      "excursion.viewsCount",
+      "translations.title",
+      "translations.description",
+      "excursionPlaces.position",
+      "excursionPlaces.id",
+      "place.id",
+      "placeImages.url",
     ]);
 
     // Execute the query
@@ -694,25 +694,25 @@ export class ExcursionsService {
 
   async remove(id: number) {
     const deleted = await this.excursionsRepository.remove(
-      this.excursionsRepository.create({ id }),
+      this.excursionsRepository.create({ id })
     );
     return { id };
   }
 
   async getSlugs() {
     return this.excursionsRepository
-      .createQueryBuilder('excursion')
-      .where('excursion.status = :approvedStatus', {
+      .createQueryBuilder("excursion")
+      .where("excursion.status = :approvedStatus", {
         approvedStatus: ExcursionStatusesEnum.APPROVED,
       })
-      .select(['excursion.id', 'excursion.slug'])
+      .select(["excursion.id", "excursion.slug"])
       .getMany();
   }
 
   async updateSlug(id: number, slug: string) {
     const excursionExists = await this.checkExist(id);
     if (!excursionExists) {
-      throw new NotFoundException({ message: 'Excursion not exists' });
+      throw new NotFoundException({ message: "Excursion not exists" });
     }
     await this.excursionsRepository.save({
       id,
@@ -739,7 +739,7 @@ export class ExcursionsService {
     });
     if (!excursion)
       throw new NotFoundException({
-        message: 'Excursion not found',
+        message: "Excursion not found",
       });
 
     const updatedStatus = dto.accept
@@ -757,7 +757,7 @@ export class ExcursionsService {
     const excursionForEmail = await this.getExcursionForEmail(id);
     if (!excursionForEmail || !excursionForEmail.author.receiveEmails) return;
     const email = new ExcursionEmail(
-      new ExcursionForEmailDto(excursionForEmail),
+      new ExcursionForEmailDto(excursionForEmail)
     );
     this.mailingService.sendEmail(email);
   }
@@ -768,12 +768,12 @@ export class ExcursionsService {
       select: { id: true, status: true },
     });
     if (!excursion)
-      throw new NotFoundException({ message: 'Excursion not found' });
+      throw new NotFoundException({ message: "Excursion not found" });
 
     // update status
     excursion.status = dto.status;
     if (dto.status === ExcursionStatusesEnum.REJECTED)
-      excursion.moderationMessage = dto.message || '';
+      excursion.moderationMessage = dto.message || "";
     if (dto.status === ExcursionStatusesEnum.APPROVED)
       excursion.moderationMessage = null;
     await this.excursionsRepository.save(excursion);
@@ -786,7 +786,7 @@ export class ExcursionsService {
       new ExcursionForEmailDto({
         ...excursionForEmail,
         moderationMessage: dto.message,
-      }),
+      })
     );
     await this.mailingService.sendEmail(email);
   }
@@ -825,7 +825,7 @@ export class ExcursionsService {
   // create excursion translations
   private async createExcursionTranslations(
     sourceLangId: number,
-    dto: CreateExcursionDto,
+    dto: CreateExcursionDto
   ) {
     const allLanguages = await this.translationsService.getAllLanguages();
 
@@ -844,7 +844,7 @@ export class ExcursionsService {
               : await this.translationsService.createTranslation(
                   dto.title,
                   lang.code,
-                  sourceLangId,
+                  sourceLangId
                 ),
           description:
             lang.id === sourceLangId
@@ -852,13 +852,13 @@ export class ExcursionsService {
               : await this.translationsService.createTranslation(
                   dto.description,
                   lang.code,
-                  sourceLangId,
+                  sourceLangId
                 ),
           original: lang.id === sourceLangId,
         });
         translations.push(newTranslation);
         return;
-      }),
+      })
     );
 
     return translations;
@@ -869,14 +869,14 @@ export class ExcursionsService {
     sourceLangId: number,
     excursion: Excursion,
     dto: UpdateExcursionDto,
-    translateAll: boolean,
+    translateAll: boolean
   ) {
     const translations: ExcursionTranslation[] = [];
 
     // helper function to merge update translations
     const mergeUpdateTranslations = async (
       arrayToSave: ExcursionTranslation[],
-      translation: ExcursionTranslation,
+      translation: ExcursionTranslation
     ) => {
       const newTranslation = this.excursionTranslationsRepository.create({
         id: translation.id,
@@ -893,7 +893,7 @@ export class ExcursionsService {
             ? await this.translationsService.createTranslation(
                 dto.title,
                 translation.language.code,
-                sourceLangId,
+                sourceLangId
               )
             : translation.title,
         description:
@@ -903,7 +903,7 @@ export class ExcursionsService {
             ? await this.translationsService.createTranslation(
                 dto.description,
                 translation.language.code,
-                sourceLangId,
+                sourceLangId
               )
             : translation.description,
         original: translation.language.id === sourceLangId,
@@ -917,7 +917,7 @@ export class ExcursionsService {
         // translate excursion
         await mergeUpdateTranslations(translations, translation);
         return;
-      },
+      }
     );
 
     await Promise.all(updatedTranslations);
@@ -928,9 +928,9 @@ export class ExcursionsService {
   // create excursion place translations
   private async createExcursionPlaceTranslations(
     sourceLangId: number,
-    dto: CreateExcursionPlaceDto,
+    dto: CreateExcursionPlaceDto
   ) {
-    this.logger.log('CREATE: Excursion places translations started');
+    this.logger.log("CREATE: Excursion places translations started");
     const allLanguages = await this.translationsService.getAllLanguages();
     const shouldTranslate = dto.description?.length > 2;
 
@@ -946,18 +946,18 @@ export class ExcursionsService {
             },
             description:
               lang.id === sourceLangId || !shouldTranslate
-                ? dto.description || ''
+                ? dto.description || ""
                 : await this.translationsService.createTranslation(
                     dto.description,
                     lang.code,
-                    sourceLangId,
+                    sourceLangId
                   ),
             original: lang.id === sourceLangId,
-          },
+          }
         );
         translations.push(newTranslation);
         return;
-      }),
+      })
     );
 
     return translations;
@@ -968,15 +968,15 @@ export class ExcursionsService {
     sourceLangId: number,
     excursion: Excursion,
     dto: CreateExcursionPlaceDto,
-    translateAll: boolean,
+    translateAll: boolean
   ) {
-    this.logger.log('UPDATE: Excursion places translations started');
+    this.logger.log("UPDATE: Excursion places translations started");
     const translations: ExcursionPlaceTranslation[] = [];
 
     // helper function to merge update translations
     const mergeUpdateTranslations = async (
       arrayToSave: ExcursionPlaceTranslation[],
-      translation: ExcursionPlaceTranslation,
+      translation: ExcursionPlaceTranslation
     ) => {
       const { id, language } = translation;
       const { description: newDescription } = dto;
@@ -996,10 +996,10 @@ export class ExcursionsService {
           description = await this.translationsService.createTranslation(
             newDescription,
             language.code,
-            sourceLangId,
+            sourceLangId
           );
         } else {
-          description = dto.description || '';
+          description = dto.description || "";
         }
       } else if (!translateAll) {
         // Keep the existing description if translateAll is not enabled
@@ -1019,7 +1019,7 @@ export class ExcursionsService {
     };
 
     const oldExcursionPlace = excursion.excursionPlaces.find(
-      (excursionPlace) => excursionPlace.place.id === dto.id,
+      (excursionPlace) => excursionPlace.place.id === dto.id
     );
 
     // If place translations exist - update conditionally
@@ -1029,7 +1029,7 @@ export class ExcursionsService {
           // translate excursion
           await mergeUpdateTranslations(translations, translation);
           return;
-        },
+        }
       );
 
       await Promise.all(updatedTranslations);
@@ -1039,7 +1039,7 @@ export class ExcursionsService {
       // If place is new - create new translations
       const newTranslations = await this.createExcursionPlaceTranslations(
         sourceLangId,
-        dto,
+        dto
       );
       return newTranslations;
     }
