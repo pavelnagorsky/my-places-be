@@ -1,5 +1,5 @@
 export enum ExcursionsSearchOrderByEnum {
-  CreatedAt,
-  Rating,
-  Title,
+  CREATED_AT,
+  RATING,
+  TITLE,
 }
