@@ -1,38 +1,38 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { Exclude, Expose, Transform } from 'class-transformer';
-import { PlaceTranslation } from '../../places/entities/place-translation.entity';
-import { CoordinatesDto } from '../../places/dto/coordinates.dto';
-import { ExcursionPlace } from '../entities/excursion-place.entity';
-import { Image } from '../../images/entities/image.entity';
-import { ExcursionPlaceReviewDto } from './excursion-place-review.dto';
-import { Review } from '../../reviews/entities/review.entity';
+import { ApiProperty } from "@nestjs/swagger";
+import { Exclude, Expose, Transform } from "class-transformer";
+import { PlaceTranslation } from "../../places/entities/place-translation.entity";
+import { CoordinatesDto } from "../../places/dto/coordinates.dto";
+import { ExcursionPlace } from "../entities/excursion-place.entity";
+import { Image } from "../../images/entities/image.entity";
+import { ExcursionPlaceReviewDto } from "./excursion-place-review.dto";
+import { Review } from "../../reviews/entities/review.entity";
 
 export class ExcursionPlaceDto {
-  @ApiProperty({ title: 'Place id', type: Number })
+  @ApiProperty({ title: "Place id", type: Number })
   id: number;
 
-  @ApiProperty({ type: String, description: 'Place url path' })
+  @ApiProperty({ type: String, description: "Place url path" })
   slug: string;
 
-  @ApiProperty({ type: String, description: 'Place title' })
+  @ApiProperty({ type: String, description: "Place title" })
   @Expose()
   get title(): string {
-    return this.translations[0]?.title || '';
+    return this.translations[0]?.title || "";
   }
 
-  @ApiProperty({ type: String, description: 'Place address' })
+  @ApiProperty({ type: String, description: "Place address" })
   @Expose()
   get address(): string {
-    return this.translations[0]?.address || '';
+    return this.translations[0]?.address || "";
   }
 
   @ApiProperty({
-    title: 'Excursion leg view duration in minutes',
+    title: "Excursion leg view duration in minutes",
     type: Number,
   })
   excursionDuration: number;
 
-  @ApiProperty({ type: String, description: 'Excursion description by place' })
+  @ApiProperty({ type: String, description: "Excursion description by place" })
   excursionDescription: string;
 
   @Exclude()
@@ -40,38 +40,42 @@ export class ExcursionPlaceDto {
 
   @ApiProperty({
     type: Number,
-    description: 'Excursion leg movement duration in minutes',
+    description: "Excursion leg movement duration in minutes",
   })
   duration: number;
 
-  @ApiProperty({ type: Number, description: 'Excursion leg distance in km' })
+  @ApiProperty({ type: Number, description: "Excursion leg distance in km" })
   distance: number;
 
   @ApiProperty({
     type: CoordinatesDto,
-    description: 'Place coordinates [lat;lng]',
+    description: "Place coordinates [lat;lng]",
   })
   @Transform(({ value }: { value: string }) => new CoordinatesDto(value))
   coordinates: CoordinatesDto;
 
   @ApiProperty({
     type: String,
-    description: 'Place images',
+    description: "Place images",
     isArray: true,
   })
-  @Transform(
-    ({ value }: { value: Partial<Image>[] }) =>
-      value?.filter((v) => Boolean(v.url)).map((v) => v.url) ?? [],
-  )
+  @Transform(({ value }: { value: Partial<Image>[] }) => {
+    return (
+      value
+        ?.filter((image) => Boolean(image.url))
+        ?.sort((a, b) => (a.position || 0) - (b.position || 0)) // Sort by position ASC
+        .map((v) => v.url) ?? []
+    );
+  })
   images: string[];
 
   @ApiProperty({
     type: ExcursionPlaceReviewDto,
-    description: 'Place reviews',
+    description: "Place reviews",
     isArray: true,
   })
   @Transform(({ value }: { value: Partial<Review>[] }) =>
-    value.map((review) => new ExcursionPlaceReviewDto(review)),
+    value.map((review) => new ExcursionPlaceReviewDto(review))
   )
   reviews: ExcursionPlaceReviewDto[];
 
@@ -81,9 +85,9 @@ export class ExcursionPlaceDto {
     this.duration = partial.duration || 0;
     this.excursionDuration = partial.excursionDuration || 0;
     if (partial?.translations) {
-      this.excursionDescription = partial.translations[0]?.description || '';
+      this.excursionDescription = partial.translations[0]?.description || "";
     } else {
-      this.excursionDescription = '';
+      this.excursionDescription = "";
     }
   }
 }

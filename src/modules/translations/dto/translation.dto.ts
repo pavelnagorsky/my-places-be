@@ -1,32 +1,32 @@
-import { TranslationBaseEntity } from '../entities/translation-base.entity';
-import { ApiProperty } from '@nestjs/swagger';
-import { Transform } from 'class-transformer';
+import { TranslationBaseEntity } from "../entities/translation-base.entity";
+import { ApiProperty } from "@nestjs/swagger";
+import { Transform } from "class-transformer";
 
 export class TranslationDto {
-  @ApiProperty({ title: 'Translation id', type: Number })
+  @ApiProperty({ title: "Translation id", type: Number })
   id: number;
 
-  @ApiProperty({ title: 'TextID', type: Number })
+  @ApiProperty({ title: "TextID", type: Number })
   textId: number;
 
-  @ApiProperty({ title: 'Text', type: String })
+  @ApiProperty({ title: "Text", type: String })
   text: string;
 
   @ApiProperty({
-    title: 'Is original',
+    title: "Is original",
     type: Boolean,
   })
   original: boolean;
 
-  @ApiProperty({ title: 'Language id', type: Number })
+  @ApiProperty({ title: "Language id", type: Number })
   @Transform(({ value }) => {
-    if (typeof value === 'number') return value;
+    if (typeof value === "number") return value;
     if (value?.id) return value.id;
     return null;
   })
   language: number;
 
-  constructor(partial: Partial<TranslationBaseEntity>) {
+  constructor(partial: Partial<TranslationBaseEntity & any>) {
     Object.assign(this, partial);
   }
 }

@@ -1,28 +1,28 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { Exclude, Expose, Transform } from 'class-transformer';
-import { ExcursionTranslation } from '../entities/excursion-translation.entity';
-import { ExcursionPlace } from '../entities/excursion-place.entity';
-import { ExcursionTypesEnum } from '../enums/excursion-types.enum';
-import { TravelModesEnum } from 'src/modules/routes/enums/travel-modes.enum';
-import { Excursion } from '../entities/excursion.entity';
+import { ApiProperty } from "@nestjs/swagger";
+import { Exclude, Expose, Transform } from "class-transformer";
+import { ExcursionTranslation } from "../entities/excursion-translation.entity";
+import { ExcursionPlace } from "../entities/excursion-place.entity";
+import { ExcursionTypesEnum } from "../enums/excursion-types.enum";
+import { TravelModesEnum } from "src/modules/routes/enums/travel-modes.enum";
+import { Excursion } from "../entities/excursion.entity";
 
 export class ExcursionsSearchItemDto {
-  @ApiProperty({ title: 'Excursion id', type: Number })
+  @ApiProperty({ title: "Excursion id", type: Number })
   id: number;
 
-  @ApiProperty({ type: String, description: 'Excursion url path' })
+  @ApiProperty({ type: String, description: "Excursion url path" })
   slug: string;
 
-  @ApiProperty({ type: String, description: 'Excursion title' })
+  @ApiProperty({ type: String, description: "Excursion title" })
   @Expose()
   get title(): string {
-    return this.translations[0]?.title || '';
+    return this.translations[0]?.title || "";
   }
 
-  @ApiProperty({ type: String, description: 'Excursion description' })
+  @ApiProperty({ type: String, description: "Excursion description" })
   @Expose()
   get description(): string {
-    return this.translations[0]?.description || '';
+    return this.translations[0]?.description || "";
   }
 
   @Exclude()
@@ -30,23 +30,23 @@ export class ExcursionsSearchItemDto {
 
   @ApiProperty({
     type: Number,
-    description: 'Excursion movement duration in minutes',
+    description: "Excursion movement duration in minutes",
   })
   duration: number;
 
-  @ApiProperty({ type: Number, description: 'Excursion distance in km' })
+  @ApiProperty({ type: Number, description: "Excursion distance in km" })
   distance: number;
 
   @ApiProperty({
     type: Number,
-    description: 'Excursion places count',
+    description: "Excursion places count",
   })
   placesCount: number;
 
   @ApiProperty({
     type: Number,
     isArray: true,
-    description: 'Excursion places images',
+    description: "Excursion places images",
   })
   images: string[];
 
@@ -55,31 +55,35 @@ export class ExcursionsSearchItemDto {
 
   @ApiProperty({
     type: Date,
-    description: 'created at',
+    description: "created at",
   })
   createdAt: Date;
 
   @ApiProperty({
     enum: ExcursionTypesEnum,
-    description: 'Excursion type',
+    description: "Excursion type",
   })
   type: ExcursionTypesEnum;
 
   @ApiProperty({
     enum: TravelModesEnum,
-    description: 'Travel mode',
+    description: "Travel mode",
   })
   travelMode: TravelModesEnum;
 
-  @ApiProperty({ title: 'Views count', type: Number })
+  @ApiProperty({ title: "Views count", type: Number })
   viewsCount: number;
 
   constructor(partial: Partial<Excursion>) {
     Object.assign(this, partial);
     const excursionPlaces = partial.excursionPlaces ?? [];
     excursionPlaces.sort((a, b) => a.position - b.position);
-    this.images = excursionPlaces
-      .map((excursionPlace) => excursionPlace.place?.images?.[0]?.url)
-      .filter(Boolean);
+    this.images = excursionPlaces.flatMap((ep) =>
+      [...(ep.place.images || [])] // Clone array to avoid mutation
+        .sort((a, b) => (a.position || 0) - (b.position || 0))
+        .slice(0, 1) // Take first image
+        .map((img) => img.url)
+        .filter(Boolean)
+    );
   }
 }

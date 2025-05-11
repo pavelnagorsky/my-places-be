@@ -1,15 +1,16 @@
-import { ITranslation } from '../../translations/interfaces/translation.interface';
-import { Column, Entity, ManyToOne } from 'typeorm';
-import { Language } from '../../languages/entities/language.entity';
-import { TranslationBaseEntity } from '../../translations/entities/translation-base.entity';
-import { ExcursionPlace } from './excursion-place.entity';
+import { ITranslation } from "../../translations/interfaces/translation.interface";
+import { Column, Entity, Index, ManyToOne } from "typeorm";
+import { Language } from "../../languages/entities/language.entity";
+import { TranslationBaseEntity } from "../../translations/entities/translation-base.entity";
+import { ExcursionPlace } from "./excursion-place.entity";
 
 @Entity()
 export class ExcursionPlaceTranslation
   extends TranslationBaseEntity
   implements ITranslation
 {
-  @Column({ type: 'text', nullable: true })
+  @Index()
+  @Column({ type: "varchar", length: 700, nullable: true })
   description: string;
 
   @ManyToOne(() => Language, (language) => language.reviewTranslations)
@@ -19,8 +20,8 @@ export class ExcursionPlaceTranslation
     () => ExcursionPlace,
     (excursionPlace) => excursionPlace.translations,
     {
-      onDelete: 'CASCADE',
-    },
+      onDelete: "CASCADE",
+    }
   )
   excursionPlace: ExcursionPlace;
 }

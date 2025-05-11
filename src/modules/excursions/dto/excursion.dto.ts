@@ -92,9 +92,13 @@ export class ExcursionDto {
   })
   @Expose()
   get images(): string[] {
-    return this.excursionPlaces
-      .map((excursionPlace) => excursionPlace.place.images[0]?.url)
-      .filter(Boolean);
+    return this.excursionPlaces.flatMap((ep) =>
+      [...(ep.place.images || [])] // Clone array to avoid mutation
+        .sort((a, b) => (a.position || 0) - (b.position || 0))
+        .slice(0, 1) // Take first image
+        .map((img) => img.url)
+        .filter(Boolean)
+    );
   }
 
   @ApiProperty({

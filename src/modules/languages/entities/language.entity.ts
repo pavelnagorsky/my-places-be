@@ -4,24 +4,25 @@ import {
   PrimaryGeneratedColumn,
   OneToMany,
   PrimaryColumn,
-} from 'typeorm';
-import { PlaceTypeTranslation } from '../../place-types/entities/place-type-translation.entity';
-import { PlaceCategoryTranslation } from '../../place-categories/entities/place-category-translation.entity';
-import { PlaceTranslation } from '../../places/entities/place-translation.entity';
-import { ReviewTranslation } from '../../reviews/entities/review-translation.entity';
-import { User } from '../../users/entities/user.entity';
-import { Place } from '../../places/entities/place.entity';
-import { LanguageIdEnum } from '../enums/language-id.enum';
+} from "typeorm";
+import { PlaceTypeTranslation } from "../../place-types/entities/place-type-translation.entity";
+import { PlaceCategoryTranslation } from "../../place-categories/entities/place-category-translation.entity";
+import { PlaceTranslation } from "../../places/entities/place-translation.entity";
+import { ReviewTranslation } from "../../reviews/entities/review-translation.entity";
+import { User } from "../../users/entities/user.entity";
+import { Place } from "../../places/entities/place.entity";
+import { LanguageIdEnum } from "../enums/language-id.enum";
+import { RegionTranslation } from "../../regions/entities/region-translation.entity";
 
 @Entity()
 export class Language {
   @PrimaryColumn()
   id: LanguageIdEnum;
 
-  @Column({ type: 'varchar', length: 25 })
+  @Column({ type: "varchar", length: 25 })
   title: string;
 
-  @Column({ type: 'varchar', length: 10 })
+  @Column({ type: "varchar", length: 10 })
   code: string;
 
   @OneToMany(() => PlaceTypeTranslation, (translation) => translation.language)
@@ -29,7 +30,7 @@ export class Language {
 
   @OneToMany(
     () => PlaceCategoryTranslation,
-    (translation) => translation.language,
+    (translation) => translation.language
   )
   placeCategoryTranslations: PlaceCategoryTranslation[];
 
@@ -44,4 +45,7 @@ export class Language {
 
   @OneToMany(() => Place, (place) => place.originalLanguage)
   places: Place[];
+
+  @OneToMany(() => RegionTranslation, (translation) => translation.language)
+  regionTranslations: RegionTranslation[];
 }

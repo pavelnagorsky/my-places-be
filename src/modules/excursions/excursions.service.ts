@@ -597,6 +597,12 @@ export class ExcursionsService {
       });
     }
 
+    if (dto.regionIds?.length) {
+      subQuery.andWhere("excursion.regionId IN (:...regionIds)", {
+        regionIds: dto.regionIds,
+      });
+    }
+
     // Add search conditions to the subquery only
     if (dto.search?.length) {
       const searchTerm = `%${dto.search}%`;
@@ -672,7 +678,9 @@ export class ExcursionsService {
       "excursionPlaces.position",
       "excursionPlaces.id",
       "place.id",
+      "placeImages.id",
       "placeImages.url",
+      "placeImages.position",
     ]);
 
     // Execute the query

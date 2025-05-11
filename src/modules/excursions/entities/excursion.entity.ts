@@ -5,14 +5,15 @@ import {
   ManyToOne,
   OneToMany,
   PrimaryGeneratedColumn,
-} from 'typeorm';
-import { BaseEntity } from '../../../shared/entities/base.entity';
-import { User } from '../../users/entities/user.entity';
-import { TravelModesEnum } from '../../routes/enums/travel-modes.enum';
-import { ExcursionPlace } from './excursion-place.entity';
-import { ExcursionTranslation } from './excursion-translation.entity';
-import { ExcursionStatusesEnum } from '../enums/excursion-statuses.enum';
-import { ExcursionTypesEnum } from '../enums/excursion-types.enum';
+} from "typeorm";
+import { BaseEntity } from "../../../shared/entities/base.entity";
+import { User } from "../../users/entities/user.entity";
+import { TravelModesEnum } from "../../routes/enums/travel-modes.enum";
+import { ExcursionPlace } from "./excursion-place.entity";
+import { ExcursionTranslation } from "./excursion-translation.entity";
+import { ExcursionStatusesEnum } from "../enums/excursion-statuses.enum";
+import { ExcursionTypesEnum } from "../enums/excursion-types.enum";
+import { Region } from "../../regions/entities/region.entity";
 
 @Entity()
 export class Excursion extends BaseEntity {
@@ -28,7 +29,7 @@ export class Excursion extends BaseEntity {
     (translation) => translation.excursion,
     {
       cascade: true,
-    },
+    }
   )
   translations: ExcursionTranslation[];
 
@@ -37,7 +38,7 @@ export class Excursion extends BaseEntity {
     (excursionPlace) => excursionPlace.excursion,
     {
       cascade: true,
-    },
+    }
   )
   excursionPlaces: ExcursionPlace[];
 
@@ -48,11 +49,11 @@ export class Excursion extends BaseEntity {
   type: ExcursionTypesEnum;
 
   // KM
-  @Column({ type: 'float', default: 0 })
+  @Column({ type: "float", default: 0 })
   distance: number;
 
   // Minutes
-  @Column({ type: 'float', default: 0 })
+  @Column({ type: "float", default: 0 })
   duration: number;
 
   @Column({ default: TravelModesEnum.DRIVING })
@@ -67,6 +68,9 @@ export class Excursion extends BaseEntity {
   @Column({ default: ExcursionStatusesEnum.MODERATION })
   status: ExcursionStatusesEnum;
 
-  @Column({ type: 'varchar', length: 1500, nullable: true, default: null })
+  @ManyToOne(() => Region, (region) => region.excursions, { nullable: true })
+  region: Region | null;
+
+  @Column({ type: "varchar", length: 1500, nullable: true, default: null })
   moderationMessage: string | null;
 }
