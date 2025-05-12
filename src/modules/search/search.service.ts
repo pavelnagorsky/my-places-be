@@ -5,26 +5,33 @@ import {
   Logger,
   NotFoundException,
   OnModuleInit,
-} from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Place } from '../places/entities/place.entity';
-import { ILike, IsNull, Not, Repository, SelectQueryBuilder } from 'typeorm';
-import { PlaceStatusesEnum } from '../places/enums/place-statuses.enum';
-import { CACHE_MANAGER } from '@nestjs/cache-manager';
-import { Cache } from 'cache-manager';
-import { SearchRequestDto } from './dto/search-request.dto';
-import { Interval } from '@nestjs/schedule';
-import { SearchPlacesOrderByEnum } from './enums/search-places-order-by.enum';
-import { booleanPointInPolygon, distance, point } from '@turf/turf';
-import { Review } from '../reviews/entities/review.entity';
-import { OptionsSearchRequestDto } from './dto/options-search-request.dto';
-import { PaginationRequestDto } from '../../shared/dto/pagination-request.dto';
-import { GoogleMapsService } from '../google-maps/google-maps.service';
+} from "@nestjs/common";
+import { InjectRepository } from "@nestjs/typeorm";
+import { Place } from "../places/entities/place.entity";
+import {
+  Brackets,
+  ILike,
+  IsNull,
+  Not,
+  Repository,
+  SelectQueryBuilder,
+} from "typeorm";
+import { PlaceStatusesEnum } from "../places/enums/place-statuses.enum";
+import { CACHE_MANAGER } from "@nestjs/cache-manager";
+import { Cache } from "cache-manager";
+import { SearchRequestDto } from "./dto/search-request.dto";
+import { Interval } from "@nestjs/schedule";
+import { SearchPlacesOrderByEnum } from "./enums/search-places-order-by.enum";
+import { booleanPointInPolygon, distance, point } from "@turf/turf";
+import { Review } from "../reviews/entities/review.entity";
+import { OptionsSearchRequestDto } from "./dto/options-search-request.dto";
+import { PaginationRequestDto } from "../../shared/dto/pagination-request.dto";
+import { GoogleMapsService } from "../google-maps/google-maps.service";
 
 @Injectable()
 export class SearchService implements OnModuleInit {
-  private readonly logger = new Logger('Search service');
-  private readonly placesSearchCacheKey = 'placesSearch';
+  private readonly logger = new Logger("Search service");
+  private readonly placesSearchCacheKey = "placesSearch";
   // 12 hours TTL
   private readonly placesCacheTTL = 12 * 60 * 60 * 1000;
   private isCacheCreationActive = false;
@@ -35,7 +42,7 @@ export class SearchService implements OnModuleInit {
     private placesRepository: Repository<Place>,
     @InjectRepository(Review)
     private reviewsRepository: Repository<Review>,
-    private readonly googleMapsService: GoogleMapsService,
+    private readonly googleMapsService: GoogleMapsService
   ) {}
 
   async onModuleInit() {
@@ -44,7 +51,7 @@ export class SearchService implements OnModuleInit {
   }
 
   private getLatLng(coordinates: string) {
-    const latLng = coordinates.split(';');
+    const latLng = coordinates.split(";");
     const lat = latLng[0] ? +latLng[0] : 1;
     const lng = latLng[1] ? +latLng[1] : 1;
     return {
@@ -57,77 +64,77 @@ export class SearchService implements OnModuleInit {
     placeCoordinates: string,
     searchCoordinates: string,
     // radius of search in KM
-    radius: number,
+    radius: number
   ): boolean {
     const origin = this.getLatLng(placeCoordinates);
     const search = this.getLatLng(searchCoordinates);
     const originPoint = point([origin.lng, origin.lat]);
     const searchPoint = point([search.lng, search.lat]);
     const distanceInKm = distance(originPoint, searchPoint, {
-      units: 'kilometers',
+      units: "kilometers",
     });
     return distanceInKm <= radius;
   }
 
   private selectPlacesForSearchQuery(
-    qb: SelectQueryBuilder<Place>,
+    qb: SelectQueryBuilder<Place>
   ): SelectQueryBuilder<Place> {
     return qb
-      .where('place.status = :approvedStatus', {
+      .where("place.status = :approvedStatus", {
         approvedStatus: PlaceStatusesEnum.APPROVED,
       })
-      .leftJoinAndSelect('place.categories', 'categories')
-      .leftJoinAndSelect('categories.titles', 'categoriesTitles')
+      .leftJoinAndSelect("place.categories", "categories")
+      .leftJoinAndSelect("categories.titles", "categoriesTitles")
       .leftJoinAndMapOne(
-        'categoriesTitles.language',
-        'categoriesTitles.language',
-        'categories_titles_language',
-        'categoriesTitles.language = categories_titles_language.id',
+        "categoriesTitles.language",
+        "categoriesTitles.language",
+        "categories_titles_language",
+        "categoriesTitles.language = categories_titles_language.id"
       )
-      .leftJoinAndSelect('place.type', 'type')
-      .leftJoinAndSelect('type.titles', 'typeTitles')
+      .leftJoinAndSelect("place.type", "type")
+      .leftJoinAndSelect("type.titles", "typeTitles")
       .leftJoinAndMapOne(
-        'typeTitles.language',
-        'typeTitles.language',
-        'type_titles_language',
-        'typeTitles.language = type_titles_language.id',
-      )
-      .leftJoinAndMapOne(
-        'place.images',
-        'image',
-        'place_image',
-        'place_image.place = place.id AND place_image.position = :position',
-        { position: 0 },
+        "typeTitles.language",
+        "typeTitles.language",
+        "type_titles_language",
+        "typeTitles.language = type_titles_language.id"
       )
       .leftJoinAndMapOne(
-        'type.image',
-        'image',
-        'type_image',
-        'type.image = type_image.id',
+        "place.images",
+        "image",
+        "place_image",
+        "place_image.place = place.id AND place_image.position = :position",
+        { position: 0 }
       )
       .leftJoinAndMapOne(
-        'type.image2',
-        'image',
-        'type_image2',
-        'type.image2 = type_image2.id',
+        "type.image",
+        "image",
+        "type_image",
+        "type.image = type_image.id"
       )
       .leftJoinAndMapOne(
-        'categories.image',
-        'image',
-        'categories_image',
-        'categories.image = categories_image.id',
+        "type.image2",
+        "image",
+        "type_image2",
+        "type.image2 = type_image2.id"
       )
-      .leftJoinAndSelect('place.translations', 'placeTranslations')
       .leftJoinAndMapOne(
-        'placeTranslations.language',
-        'placeTranslations.language',
-        'place_translations_language',
-        'placeTranslations.language = place_translations_language.id',
+        "categories.image",
+        "image",
+        "categories_image",
+        "categories.image = categories_image.id"
+      )
+      .leftJoinAndSelect("place.translations", "placeTranslations")
+      .leftJoinAndMapOne(
+        "placeTranslations.language",
+        "placeTranslations.language",
+        "place_translations_language",
+        "placeTranslations.language = place_translations_language.id"
       )
       .orderBy({
-        'place.createdAt': 'DESC',
-        'place.likesCount': 'DESC',
-        'place.viewsCount': 'DESC',
+        "place.createdAt": "DESC",
+        "place.likesCount": "DESC",
+        "place.viewsCount": "DESC",
       });
   }
 
@@ -136,7 +143,7 @@ export class SearchService implements OnModuleInit {
   private applyOrderBy(
     places: Place[],
     orderBy: SearchPlacesOrderByEnum,
-    langId: number,
+    langId: number
   ) {
     let sortedPlaces = places;
     if (orderBy === SearchPlacesOrderByEnum.CreatedAt) {
@@ -144,7 +151,7 @@ export class SearchService implements OnModuleInit {
         .slice()
         .sort(
           (a, b) =>
-            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
         );
     }
     if (orderBy === SearchPlacesOrderByEnum.Rating) {
@@ -158,14 +165,14 @@ export class SearchService implements OnModuleInit {
     if (orderBy === SearchPlacesOrderByEnum.Title) {
       sortedPlaces = places.slice().sort((a, b) => {
         const aTranslations = a.translations.find(
-          (tr) => tr.language.id === langId,
+          (tr) => tr.language.id === langId
         );
         const bTranslations = b.translations.find(
-          (tr) => tr.language.id === langId,
+          (tr) => tr.language.id === langId
         );
 
         if (!aTranslations || !bTranslations) {
-          console.error('Translation not found for one of the items:', a, b);
+          console.error("Translation not found for one of the items:", a, b);
           return 0; // Keep original order if translation is missing
         }
 
@@ -173,8 +180,8 @@ export class SearchService implements OnModuleInit {
         const bTitle = bTranslations.title;
 
         // Check if titles contain the character «
-        const aContainsSpecialChar = aTitle.startsWith('«');
-        const bContainsSpecialChar = bTitle.startsWith('«');
+        const aContainsSpecialChar = aTitle.startsWith("«");
+        const bContainsSpecialChar = bTitle.startsWith("«");
 
         if (aContainsSpecialChar && !bContainsSpecialChar) {
           return 1; // Place a after b
@@ -184,7 +191,7 @@ export class SearchService implements OnModuleInit {
         }
 
         return aTitle.localeCompare(bTitle, undefined, {
-          sensitivity: 'base',
+          sensitivity: "base",
         });
       });
     }
@@ -205,98 +212,93 @@ export class SearchService implements OnModuleInit {
   private filterPlacesByTitle(
     places: Place[],
     searchText: string,
-    langId: number,
+    langId: number
   ): Place[] {
     const lowerSearchText = searchText.toLowerCase();
     return places.filter((place) => {
       const placeTranslation = place.translations.find(
-        (tr) => tr.language.id === langId,
+        (tr) => tr.language.id === langId
       );
       if (!placeTranslation) return false;
       return placeTranslation.title.toLowerCase().includes(lowerSearchText);
     });
   }
 
-  private async filterPlacesByDescription(
+  private async filterPlacesByText(
     places: Place[],
     searchText: string,
-    langId: number,
+    langId: number
   ): Promise<Place[]> {
     const lowerSearchText = searchText.toLowerCase();
-    // Find reviews with matched substring in description
-    const reviews = await this.reviewsRepository.find({
-      select: {
-        place: { id: true },
-        id: true,
-      },
-      relations: ['place'],
-      where: {
-        translations: {
-          description: ILike(`%${searchText}%`),
-          language: {
-            id: langId,
-          },
-        },
-        place: {
-          id: Not(IsNull()),
-        },
-      },
-    });
-    const placeIdsFromMatchedReviews = reviews.map((review) => review.place.id);
-    // Find places with matched substring in description
-    const matchedPlaceIds = places
-      .filter((place) => {
-        const placeTranslation = place.translations.find(
-          (tr) => tr.language.id === langId,
-        );
-        if (!placeTranslation) return false;
-        return placeTranslation.description
-          .toLowerCase()
-          .includes(lowerSearchText);
+
+    const results = await this.placesRepository
+      .createQueryBuilder("place")
+      .select("DISTINCT(place.id)", "id")
+      .leftJoin("place.translations", "translation")
+      .leftJoin("place.reviews", "review")
+      .leftJoin("review.translations", "reviewTranslation")
+      .where("place.status = :approvedStatus", {
+        approvedStatus: PlaceStatusesEnum.APPROVED,
       })
-      .map((place) => place.id);
+      .andWhere(
+        new Brackets((qb) => {
+          qb.where(
+            new Brackets((subQb) => {
+              subQb.where("translation.languageId = :langId").andWhere(
+                new Brackets((innerQb) => {
+                  innerQb
+                    .where("translation.description LIKE :search")
+                    .orWhere("translation.title LIKE :search");
+                })
+              );
+            })
+          ).orWhere(
+            new Brackets((subQb) => {
+              subQb
+                .where("reviewTranslation.languageId = :langId")
+                .andWhere("reviewTranslation.description LIKE :search");
+            })
+          );
+        })
+      )
+      .setParameters({
+        langId,
+        search: `%${lowerSearchText}%`,
+      })
+      .getRawMany();
 
-    const filteredPlaceIds = [
-      ...new Set([...placeIdsFromMatchedReviews, ...matchedPlaceIds]),
-    ];
-
+    const filteredPlaceIds = results.map((r) => r.id);
     return places.filter((place) => filteredPlaceIds.includes(place.id));
   }
 
   private async searchFromCache(
     dto: SearchRequestDto,
     langId: number,
-    places: Place[],
+    places: Place[]
   ): Promise<[Place[], number]> {
     let resultPlaces = places;
 
-    const hasSearchByTitle = dto.title?.length > 0;
-    // if search is by place titles
-    if (hasSearchByTitle) {
-      resultPlaces = this.filterPlacesByTitle(resultPlaces, dto.title, langId);
-    }
-
-    const hasSearchBySubstring = dto.description?.length > 0;
-    // if search is by place descriptions and review descriptions
-    if (hasSearchBySubstring) {
-      resultPlaces = await this.filterPlacesByDescription(
+    const hasSearch = dto.search?.length > 0;
+    // if has search filter
+    if (hasSearch) {
+      resultPlaces = await this.filterPlacesByText(
         resultPlaces,
-        dto.description,
-        langId,
+        dto.search,
+        langId
       );
     }
 
     // if there is place type filter with > 0 items
     if (dto.typesIds && dto.typesIds.length > 0) {
       resultPlaces = resultPlaces.filter((place) =>
-        dto.typesIds.includes(place.type.id),
+        dto.typesIds.includes(place.type.id)
       );
     }
     // if there is place categories filter - check if at least one of them matches filter
     if (dto.categoriesIds && dto.categoriesIds.length > 0) {
       resultPlaces = resultPlaces.filter((place) => {
         return place.categories.some((category) =>
-          dto.categoriesIds.includes(category.id),
+          dto.categoriesIds.includes(category.id)
         );
       });
     }
@@ -306,8 +308,8 @@ export class SearchService implements OnModuleInit {
         this.filterByCoordinates(
           place.coordinates,
           dto.searchStartCoordinates as string,
-          dto.radius,
-        ),
+          dto.radius
+        )
       );
     }
     // if there is search route
@@ -315,10 +317,10 @@ export class SearchService implements OnModuleInit {
       const polygon = await this.googleMapsService.createRoutePolygon(
         dto.searchStartCoordinates,
         dto.searchEndCoordinates,
-        dto.radius,
+        dto.radius
       );
       if (!polygon)
-        throw new BadRequestException({ message: 'Invalid request route' });
+        throw new BadRequestException({ message: "Invalid request route" });
       resultPlaces = resultPlaces.filter((place) => {
         const placeLatLng = this.getLatLng(place.coordinates);
         const coordinateToCheck = [placeLatLng.lng, placeLatLng.lat];
@@ -332,7 +334,7 @@ export class SearchService implements OnModuleInit {
     const orderedResult = this.applyOrderBy(
       resultPlaces,
       dto.orderBy ?? SearchPlacesOrderByEnum.CreatedAt,
-      langId,
+      langId
     );
     const paginationResult = this.applyPagination(orderedResult, dto);
     return [paginationResult, orderedResult.length];
@@ -340,10 +342,10 @@ export class SearchService implements OnModuleInit {
 
   public async search(
     dto: SearchRequestDto,
-    langId: number,
+    langId: number
   ): Promise<[Place[], number]> {
     const cachedPlaces = await this.cacheManager.get<Place[]>(
-      this.placesSearchCacheKey,
+      this.placesSearchCacheKey
     );
     if (!cachedPlaces) {
       this.handleCreateCacheCron();
@@ -353,20 +355,20 @@ export class SearchService implements OnModuleInit {
   }
 
   private async createSearchCache() {
-    const initialQb = this.placesRepository.createQueryBuilder('place');
+    const initialQb = this.placesRepository.createQueryBuilder("place");
     const places = await this.selectPlacesForSearchQuery(initialQb).getMany();
     // Cache TTL 12 hours
     await this.cacheManager.set(
       this.placesSearchCacheKey,
       places,
-      this.placesCacheTTL,
+      this.placesCacheTTL
     );
   }
 
   private async selectPlaceSearchItem(placeId: number) {
-    const initialQb = this.placesRepository.createQueryBuilder('place');
+    const initialQb = this.placesRepository.createQueryBuilder("place");
     const place = await this.selectPlacesForSearchQuery(initialQb)
-      .andWhere('place.id = :id', { id: placeId })
+      .andWhere("place.id = :id", { id: placeId })
       .getOne();
     return place;
   }
@@ -376,7 +378,7 @@ export class SearchService implements OnModuleInit {
     try {
       // select cached places
       const cachedPlaces = await this.cacheManager.get<Place[]>(
-        this.placesSearchCacheKey,
+        this.placesSearchCacheKey
       );
       // if no cache -> create cache
       if (!cachedPlaces) return this.createSearchCache();
@@ -387,7 +389,7 @@ export class SearchService implements OnModuleInit {
         await this.cacheManager.set(
           this.placesSearchCacheKey,
           cachedPlaces.filter((p) => p.id !== placeId),
-          this.placesCacheTTL,
+          this.placesCacheTTL
         );
         return;
       }
@@ -403,7 +405,7 @@ export class SearchService implements OnModuleInit {
             }
             return p;
           }),
-          this.placesCacheTTL,
+          this.placesCacheTTL
         );
         return;
       } else {
@@ -411,23 +413,23 @@ export class SearchService implements OnModuleInit {
         cachedPlaces.push(place);
         // apply order by createdAt date
         const orderedCache = cachedPlaces.sort(
-          (a, b) => b.createdAt.getTime() - a.createdAt.getTime(),
+          (a, b) => b.createdAt.getTime() - a.createdAt.getTime()
         );
         await this.cacheManager.set(
           this.placesSearchCacheKey,
           orderedCache,
-          this.placesCacheTTL,
+          this.placesCacheTTL
         );
         return;
       }
     } catch (e) {
-      this.logger.error('Failed to modify search cache:', e?.message);
+      this.logger.error("Failed to modify search cache:", e?.message);
     }
   }
 
   async searchPlacesByIds(ids: number[]) {
     const cachedPlaces = await this.cacheManager.get<Place[]>(
-      this.placesSearchCacheKey,
+      this.placesSearchCacheKey
     );
     // if no cache -> create cache
     if (!cachedPlaces) return [];
@@ -438,10 +440,10 @@ export class SearchService implements OnModuleInit {
 
   async searchPlaceOptions(
     dto: OptionsSearchRequestDto,
-    langId: number,
+    langId: number
   ): Promise<[Place[], number]> {
     let places = await this.cacheManager.get<Place[]>(
-      this.placesSearchCacheKey,
+      this.placesSearchCacheKey
     );
     if (!places) return [[], 0];
     if (!!dto.excludeIds && dto.excludeIds?.length > 0) {
@@ -453,7 +455,7 @@ export class SearchService implements OnModuleInit {
     const orderedResult = this.applyOrderBy(
       places,
       dto.orderBy ?? SearchPlacesOrderByEnum.CreatedAt,
-      langId,
+      langId
     );
     const paginationResult = this.applyPagination(orderedResult, dto);
     return [paginationResult, orderedResult.length];
@@ -467,13 +469,13 @@ export class SearchService implements OnModuleInit {
     }
     this.isCacheCreationActive = true;
     try {
-      this.logger.log('Search cache creation CRON JOB runs');
+      this.logger.log("Search cache creation CRON JOB runs");
       await this.createSearchCache();
-      this.logger.log('Search cache creation CRON JOB completes successfully');
+      this.logger.log("Search cache creation CRON JOB completes successfully");
       this.isCacheCreationActive = false;
     } catch (e) {
       this.isCacheCreationActive = false;
-      this.logger.error('Cache creation CRON JOB failed:', e?.message);
+      this.logger.error("Cache creation CRON JOB failed:", e?.message);
     }
   }
 }

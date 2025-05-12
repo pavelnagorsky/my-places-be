@@ -13,6 +13,7 @@ import {
   Equal,
   ILike,
   In,
+  IsNull,
   LessThanOrEqual,
   MoreThanOrEqual,
   Not,
@@ -119,6 +120,7 @@ export class ExcursionsService {
       author: user,
       type: dto.type,
       travelMode: dto.travelMode,
+      region: { id: dto.regionId },
     });
 
     const { id } = await this.excursionsRepository.save(excursion);
@@ -247,6 +249,7 @@ export class ExcursionsService {
       excursionPlaces: excursionPlaces,
       type: dto.type,
       travelMode: dto.travelMode,
+      region: { id: dto.regionId },
     });
     if (!byAdmin) {
       excursion.status = ExcursionStatusesEnum.MODERATION;
@@ -362,6 +365,9 @@ export class ExcursionsService {
     const res = await this.excursionsRepository.findOne({
       relations: {
         translations: true,
+        region: {
+          translations: true,
+        },
         author: true,
         excursionPlaces: {
           translations: true,
@@ -395,6 +401,10 @@ export class ExcursionsService {
         author: { id: true, firstName: true, lastName: true },
         moderationMessage: true,
         status: true,
+        region: {
+          id: true,
+          translations: { title: true },
+        },
         excursionPlaces: {
           position: true,
           id: true,
@@ -429,6 +439,12 @@ export class ExcursionsService {
             id: langId,
           },
         },
+        region: [
+          { id: IsNull() },
+          {
+            translations: { language: { id: langId } },
+          },
+        ],
         excursionPlaces: {
           translations: {
             language: {
