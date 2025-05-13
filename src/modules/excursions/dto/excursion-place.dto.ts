@@ -11,6 +11,12 @@ export class ExcursionPlaceDto {
   @ApiProperty({ title: "Place id", type: Number })
   id: number;
 
+  @ApiProperty({
+    title: "Excursion Place id",
+    type: Number,
+  })
+  excursionPlaceId: number;
+
   @ApiProperty({ type: String, description: "Place url path" })
   slug: string;
 
@@ -69,6 +75,9 @@ export class ExcursionPlaceDto {
   })
   images: string[];
 
+  @ApiProperty({ type: Boolean, description: "Is primary place" })
+  isPrimary: boolean;
+
   @ApiProperty({
     type: ExcursionPlaceReviewDto,
     description: "Place reviews",
@@ -81,6 +90,8 @@ export class ExcursionPlaceDto {
 
   constructor(partial: Partial<ExcursionPlace>) {
     Object.assign(this, partial.place);
+    this.isPrimary = partial.isPrimary ?? false;
+    this.excursionPlaceId = partial.id as number;
     this.distance = partial.distance || 0;
     this.duration = partial.duration || 0;
     this.excursionDuration = partial.excursionDuration || 0;

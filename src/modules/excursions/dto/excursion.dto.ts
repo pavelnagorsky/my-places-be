@@ -101,13 +101,21 @@ export class ExcursionDto {
   })
   @Expose()
   get images(): string[] {
-    return this.excursionPlaces.flatMap((ep) =>
-      [...(ep.place.images || [])] // Clone array to avoid mutation
-        .sort((a, b) => (a.position || 0) - (b.position || 0))
-        .slice(0, 1) // Take first image
-        .map((img) => img.url)
-        .filter(Boolean)
-    );
+    return this.excursionPlaces
+      .flatMap((ep) =>
+        [...(ep.place.images ?? [])] // Ensure it's always an array
+          .map((img) => ({
+            url: img.url,
+            position: img.position ?? 0,
+            isPrimary: Boolean(ep.isPrimary), // Capture primary flag
+          }))
+      )
+      .sort(
+        (a, b) =>
+          Number(b.isPrimary) - Number(a.isPrimary) || a.position - b.position
+      )
+      .map((img) => img.url)
+      .filter(Boolean);
   }
 
   @ApiProperty({

@@ -411,6 +411,7 @@ export class ExcursionsService {
           duration: true,
           distance: true,
           excursionDuration: true,
+          isPrimary: true,
           translations: { description: true },
           place: {
             slug: true,
@@ -692,6 +693,7 @@ export class ExcursionsService {
       "translations.title",
       "translations.description",
       "excursionPlaces.position",
+      "excursionPlaces.isPrimary",
       "excursionPlaces.id",
       "place.id",
       "placeImages.id",
@@ -742,6 +744,29 @@ export class ExcursionsService {
       id,
       slug,
     });
+  }
+
+  async setExcursionPrimaryPlace(
+    excursionId: number,
+    excursionPlaceId: number
+  ) {
+    await this.excursionPlacesRepository.update(
+      {
+        excursion: { id: Equal(excursionId) },
+      },
+      this.excursionPlacesRepository.create({
+        isPrimary: false,
+      })
+    );
+
+    await this.excursionPlacesRepository.update(
+      {
+        id: Equal(excursionPlaceId),
+      },
+      this.excursionPlacesRepository.create({
+        isPrimary: true,
+      })
+    );
   }
 
   private async checkExist(excursionId: number): Promise<boolean> {

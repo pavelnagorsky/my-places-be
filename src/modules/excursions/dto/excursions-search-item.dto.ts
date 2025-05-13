@@ -78,12 +78,22 @@ export class ExcursionsSearchItemDto {
     Object.assign(this, partial);
     const excursionPlaces = partial.excursionPlaces ?? [];
     excursionPlaces.sort((a, b) => a.position - b.position);
-    this.images = excursionPlaces.flatMap((ep) =>
-      [...(ep.place.images || [])] // Clone array to avoid mutation
-        .sort((a, b) => (a.position || 0) - (b.position || 0))
-        .slice(0, 1) // Take first image
-        .map((img) => img.url)
-        .filter(Boolean)
-    );
+    this.images = excursionPlaces
+      .flatMap((ep) =>
+        [...(ep.place.images || [])] // Clone array to avoid mutation
+          .map((img) => ({
+            url: img.url,
+            position: img.position || 0,
+            isPrimary: ep.isPrimary || false, // Capture the primary flag
+          }))
+      )
+      .sort((a, b) => {
+        // Sort by `isPrimary` first (descending), then by `position` (ascending)
+        return (
+          Number(b.isPrimary) - Number(a.isPrimary) || a.position - b.position
+        );
+      })
+      .map((img) => img.url)
+      .filter(Boolean);
   }
 }

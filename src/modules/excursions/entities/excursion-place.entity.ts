@@ -4,10 +4,10 @@ import {
   ManyToOne,
   OneToMany,
   PrimaryGeneratedColumn,
-} from 'typeorm';
-import { Place } from '../../places/entities/place.entity';
-import { Excursion } from './excursion.entity';
-import { ExcursionPlaceTranslation } from './excursion-place-translation.entity';
+} from "typeorm";
+import { Place } from "../../places/entities/place.entity";
+import { Excursion } from "./excursion.entity";
+import { ExcursionPlaceTranslation } from "./excursion-place-translation.entity";
 
 @Entity()
 export class ExcursionPlace {
@@ -19,32 +19,36 @@ export class ExcursionPlace {
     (translation) => translation.excursionPlace,
     {
       cascade: true,
-    },
+    }
   )
   translations: ExcursionPlaceTranslation[];
 
-  @Column({ type: 'tinyint', default: 0 })
+  @Column({ type: "tinyint", default: 0 })
   position: number;
 
   // KM
-  @Column({ type: 'float', default: 0 })
+  @Column({ type: "float", default: 0 })
   distance: number;
 
   // Minutes for travelling to place
-  @Column({ type: 'float', default: 0 })
+  @Column({ type: "float", default: 0 })
   duration: number;
 
   // Minutes of excursion on place
-  @Column({ type: 'float', default: 0 })
+  @Column({ type: "float", default: 0 })
   excursionDuration: number;
 
+  // Primary place photo goes first in excursion presentation
+  @Column({ default: false })
+  isPrimary: boolean;
+
   @ManyToOne(() => Place, (place) => place.excursionPlaces, {
-    onDelete: 'CASCADE',
+    onDelete: "CASCADE",
   })
   place: Place;
 
   @ManyToOne(() => Excursion, (excursion) => excursion.excursionPlaces, {
-    onDelete: 'CASCADE',
+    onDelete: "CASCADE",
   })
   excursion: Excursion;
 }
