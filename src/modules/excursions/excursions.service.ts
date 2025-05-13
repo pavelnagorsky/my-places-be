@@ -456,6 +456,7 @@ export class ExcursionsService {
             translations: {
               language: { id: langId },
             },
+            images: { position: Equal(0) },
             reviews: {
               status: Equal(ReviewStatusesEnum.APPROVED),
               translations: {
@@ -655,7 +656,8 @@ export class ExcursionsService {
       .innerJoin("excursionPlaces.place", "place")
       .innerJoinAndSelect("place.images", "placeImages")
       .where("excursion.id IN (" + subQuery.getQuery() + ")") // Filter excursions using the subquery
-      .setParameters(subQuery.getParameters());
+      .setParameters(subQuery.getParameters())
+      .andWhere("placeImages.position = 0");
 
     // Add count of excursionPlaces
     queryBuilder.loadRelationCountAndMap(
