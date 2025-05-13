@@ -13,6 +13,7 @@ import {
   Equal,
   ILike,
   In,
+  IsNull,
   LessThanOrEqual,
   MoreThanOrEqual,
   Not,
@@ -119,6 +120,7 @@ export class ExcursionsService {
       author: user,
       type: dto.type,
       travelMode: dto.travelMode,
+      region: { id: dto.regionId },
     });
 
     const { id } = await this.excursionsRepository.save(excursion);
@@ -247,6 +249,7 @@ export class ExcursionsService {
       excursionPlaces: excursionPlaces,
       type: dto.type,
       travelMode: dto.travelMode,
+      region: { id: dto.regionId },
     });
     if (!byAdmin) {
       excursion.status = ExcursionStatusesEnum.MODERATION;
@@ -362,6 +365,9 @@ export class ExcursionsService {
     const res = await this.excursionsRepository.findOne({
       relations: {
         translations: true,
+        region: {
+          translations: true,
+        },
         author: true,
         excursionPlaces: {
           translations: true,
@@ -395,12 +401,17 @@ export class ExcursionsService {
         author: { id: true, firstName: true, lastName: true },
         moderationMessage: true,
         status: true,
+        region: {
+          id: true,
+          translations: { title: true },
+        },
         excursionPlaces: {
           position: true,
           id: true,
           duration: true,
           distance: true,
           excursionDuration: true,
+          isPrimary: true,
           translations: { description: true },
           place: {
             slug: true,
@@ -429,6 +440,12 @@ export class ExcursionsService {
             id: langId,
           },
         },
+        region: [
+          { id: IsNull() },
+          {
+            translations: { language: { id: langId } },
+          },
+        ],
         excursionPlaces: {
           translations: {
             language: {
@@ -439,6 +456,7 @@ export class ExcursionsService {
             translations: {
               language: { id: langId },
             },
+            images: { position: Equal(0) },
             reviews: {
               status: Equal(ReviewStatusesEnum.APPROVED),
               translations: {
@@ -597,6 +615,12 @@ export class ExcursionsService {
       });
     }
 
+    if (dto.regionIds?.length) {
+      subQuery.andWhere("excursion.regionId IN (:...regionIds)", {
+        regionIds: dto.regionIds,
+      });
+    }
+
     // Add search conditions to the subquery only
     if (dto.search?.length) {
       const searchTerm = `%${dto.search}%`;
@@ -632,7 +656,8 @@ export class ExcursionsService {
       .innerJoin("excursionPlaces.place", "place")
       .innerJoinAndSelect("place.images", "placeImages")
       .where("excursion.id IN (" + subQuery.getQuery() + ")") // Filter excursions using the subquery
-      .setParameters(subQuery.getParameters());
+      .setParameters(subQuery.getParameters())
+      .andWhere("placeImages.position = 0");
 
     // Add count of excursionPlaces
     queryBuilder.loadRelationCountAndMap(
@@ -670,9 +695,12 @@ export class ExcursionsService {
       "translations.title",
       "translations.description",
       "excursionPlaces.position",
+      "excursionPlaces.isPrimary",
       "excursionPlaces.id",
       "place.id",
+      "placeImages.id",
       "placeImages.url",
+      "placeImages.position",
     ]);
 
     // Execute the query
@@ -718,6 +746,29 @@ export class ExcursionsService {
       id,
       slug,
     });
+  }
+
+  async setExcursionPrimaryPlace(
+    excursionId: number,
+    excursionPlaceId: number
+  ) {
+    await this.excursionPlacesRepository.update(
+      {
+        excursion: { id: Equal(excursionId) },
+      },
+      this.excursionPlacesRepository.create({
+        isPrimary: false,
+      })
+    );
+
+    await this.excursionPlacesRepository.update(
+      {
+        id: Equal(excursionPlaceId),
+      },
+      this.excursionPlacesRepository.create({
+        isPrimary: true,
+      })
+    );
   }
 
   private async checkExist(excursionId: number): Promise<boolean> {

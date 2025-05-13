@@ -13,10 +13,10 @@ import {
   Put,
   Query,
   UseInterceptors,
-} from '@nestjs/common';
-import { ExcursionsService } from './excursions.service';
-import { CreateExcursionDto } from './dto/create-excursion.dto';
-import { UpdateExcursionDto } from './dto/update-excursion.dto';
+} from "@nestjs/common";
+import { ExcursionsService } from "./excursions.service";
+import { CreateExcursionDto } from "./dto/create-excursion.dto";
+import { UpdateExcursionDto } from "./dto/update-excursion.dto";
 import {
   ApiBadRequestResponse,
   ApiBody,
@@ -27,47 +27,47 @@ import {
   ApiQuery,
   ApiTags,
   PickType,
-} from '@nestjs/swagger';
-import { ValidationExceptionDto } from '../../shared/validation/validation-exception.dto';
-import { Auth } from '../auth/decorators/auth.decorator';
-import { Excursion } from './entities/excursion.entity';
-import { TokenPayload } from '../auth/decorators/token-payload.decorator';
-import { UserFromTokenPipe } from '../auth/pipes/user-from-token.pipe';
-import { User } from '../users/entities/user.entity';
-import { RoleNamesEnum } from '../roles/enums/role-names.enum';
-import { AccessTokenPayloadDto } from '../auth/dto/access-token-payload.dto';
-import { ExcursionsListRequestDto } from './dto/excursions-list-request.dto';
-import { ExcursionsListResponseDto } from './dto/excursions-list-response.dto';
-import { ExcursionDto } from './dto/excursion.dto';
-import { CacheInterceptor } from '@nestjs/cache-manager';
-import { ExcursionSlugDto } from './dto/excursion-slug.dto';
-import { ExcursionsModerationListResponseDto } from './dto/excursions-moderation-list-response.dto';
-import { ExcursionsModerationListRequestDto } from './dto/excursions-moderation-list-request.dto';
-import { ModerationDto } from '../places/dto/moderation.dto';
-import { UpdateSlugDto } from './dto/update-slug.dto';
-import { ValidateSlugDto } from './dto/validate-slug.dto';
-import { ChangeExcursionStatusDto } from './dto/change-excursion-status.dto';
-import { ExcursionsSearchResponseDto } from './dto/excursions-search-response.dto';
-import { ExcursionsSearchRequestDto } from './dto/excursions-search-request.dto';
+} from "@nestjs/swagger";
+import { ValidationExceptionDto } from "../../shared/validation/validation-exception.dto";
+import { Auth } from "../auth/decorators/auth.decorator";
+import { Excursion } from "./entities/excursion.entity";
+import { TokenPayload } from "../auth/decorators/token-payload.decorator";
+import { UserFromTokenPipe } from "../auth/pipes/user-from-token.pipe";
+import { User } from "../users/entities/user.entity";
+import { RoleNamesEnum } from "../roles/enums/role-names.enum";
+import { AccessTokenPayloadDto } from "../auth/dto/access-token-payload.dto";
+import { ExcursionsListRequestDto } from "./dto/excursions-list-request.dto";
+import { ExcursionsListResponseDto } from "./dto/excursions-list-response.dto";
+import { ExcursionDto } from "./dto/excursion.dto";
+import { CacheInterceptor } from "@nestjs/cache-manager";
+import { ExcursionSlugDto } from "./dto/excursion-slug.dto";
+import { ExcursionsModerationListResponseDto } from "./dto/excursions-moderation-list-response.dto";
+import { ExcursionsModerationListRequestDto } from "./dto/excursions-moderation-list-request.dto";
+import { ModerationDto } from "../places/dto/moderation.dto";
+import { UpdateSlugDto } from "./dto/update-slug.dto";
+import { ValidateSlugDto } from "./dto/validate-slug.dto";
+import { ChangeExcursionStatusDto } from "./dto/change-excursion-status.dto";
+import { ExcursionsSearchResponseDto } from "./dto/excursions-search-response.dto";
+import { ExcursionsSearchRequestDto } from "./dto/excursions-search-request.dto";
 
-@ApiTags('Excursions')
-@Controller('excursions')
+@ApiTags("Excursions")
+@Controller("excursions")
 export class ExcursionsController {
   constructor(private readonly excursionsService: ExcursionsService) {}
 
-  @ApiOperation({ summary: 'Create Excursion' })
+  @ApiOperation({ summary: "Create Excursion" })
   @ApiOkResponse({
-    description: 'OK',
-    type: PickType(Excursion, ['id']),
+    description: "OK",
+    type: PickType(Excursion, ["id"]),
   })
   @ApiBadRequestResponse({
-    description: 'Validation failed',
+    description: "Validation failed",
     type: ValidationExceptionDto,
   })
   @ApiQuery({
-    name: 'lang',
+    name: "lang",
     type: Number,
-    description: 'The ID of the language',
+    description: "The ID of the language",
   })
   @ApiBody({
     type: CreateExcursionDto,
@@ -76,43 +76,43 @@ export class ExcursionsController {
   @Auth()
   @Post()
   async create(
-    @Query('lang', ParseIntPipe) langId: number,
+    @Query("lang", ParseIntPipe) langId: number,
     @Body() createExcursionDto: CreateExcursionDto,
-    @TokenPayload(UserFromTokenPipe) user: User,
+    @TokenPayload(UserFromTokenPipe) user: User
   ) {
     return await this.excursionsService.create(
       createExcursionDto,
       langId,
-      user,
+      user
     );
   }
 
-  @ApiOperation({ summary: 'Find my excursions' })
+  @ApiOperation({ summary: "Find my excursions" })
   @ApiOkResponse({
-    description: 'OK',
+    description: "OK",
     type: ExcursionsListResponseDto,
   })
   @ApiBody({
     type: ExcursionsListRequestDto,
   })
   @ApiQuery({
-    name: 'lang',
+    name: "lang",
     type: Number,
-    description: 'The ID of the language',
+    description: "The ID of the language",
   })
   @UseInterceptors(ClassSerializerInterceptor)
   @Auth()
-  @Post('personal-list')
+  @Post("personal-list")
   async findMyExcursions(
-    @Query('lang', ParseIntPipe) langId: number,
+    @Query("lang", ParseIntPipe) langId: number,
     @Body() dto: ExcursionsListRequestDto,
     @TokenPayload()
-    tokenPayload: AccessTokenPayloadDto,
+    tokenPayload: AccessTokenPayloadDto
   ) {
     const [excursions, total] = await this.excursionsService.findExcursions(
       dto,
       langId,
-      tokenPayload.id,
+      tokenPayload.id
     );
 
     return new ExcursionsListResponseDto(excursions, {
@@ -122,29 +122,29 @@ export class ExcursionsController {
     });
   }
 
-  @ApiOperation({ summary: 'Find excursions for administration' })
+  @ApiOperation({ summary: "Find excursions for administration" })
   @ApiOkResponse({
-    description: 'OK',
+    description: "OK",
     type: ExcursionsListResponseDto,
   })
   @ApiBody({
     type: ExcursionsListRequestDto,
   })
   @ApiQuery({
-    name: 'lang',
+    name: "lang",
     type: Number,
-    description: 'The ID of the language',
+    description: "The ID of the language",
   })
   @UseInterceptors(ClassSerializerInterceptor)
   @Auth(RoleNamesEnum.ADMIN)
-  @Post('administration-list')
+  @Post("administration-list")
   async findAdministrationExcursions(
-    @Query('lang', ParseIntPipe) langId: number,
-    @Body() dto: ExcursionsListRequestDto,
+    @Query("lang", ParseIntPipe) langId: number,
+    @Body() dto: ExcursionsListRequestDto
   ) {
     const [excursions, total] = await this.excursionsService.findExcursions(
       dto,
-      langId,
+      langId
     );
 
     return new ExcursionsListResponseDto(excursions, {
@@ -154,28 +154,28 @@ export class ExcursionsController {
     });
   }
 
-  @ApiOperation({ summary: 'Search excursions' })
+  @ApiOperation({ summary: "Search excursions" })
   @ApiOkResponse({
-    description: 'OK',
+    description: "OK",
     type: ExcursionsSearchResponseDto,
   })
   @ApiBody({
     type: ExcursionsSearchRequestDto,
   })
   @ApiQuery({
-    name: 'lang',
+    name: "lang",
     type: Number,
-    description: 'The ID of the language',
+    description: "The ID of the language",
   })
   @UseInterceptors(ClassSerializerInterceptor)
-  @Post('search')
+  @Post("search")
   async searchExcursions(
-    @Query('lang', ParseIntPipe) langId: number,
-    @Body() dto: ExcursionsSearchRequestDto,
+    @Query("lang", ParseIntPipe) langId: number,
+    @Body() dto: ExcursionsSearchRequestDto
   ) {
     const [excursions, total] = await this.excursionsService.searchExcursions(
       dto,
-      langId,
+      langId
     );
 
     return new ExcursionsSearchResponseDto(excursions, {
@@ -185,98 +185,98 @@ export class ExcursionsController {
     });
   }
 
-  @ApiOperation({ summary: 'Get excursion by slug and language id' })
+  @ApiOperation({ summary: "Get excursion by slug and language id" })
   @ApiOkResponse({
-    description: 'OK',
+    description: "OK",
     type: ExcursionDto,
   })
   @ApiNotFoundResponse({
-    description: 'Not found',
+    description: "Not found",
   })
   @ApiParam({
-    name: 'slug',
+    name: "slug",
     type: String,
-    description: 'The slug of the excursion',
+    description: "The slug of the excursion",
   })
   @ApiQuery({
-    name: 'lang',
+    name: "lang",
     type: Number,
-    description: 'The ID of the language',
+    description: "The ID of the language",
   })
   @UseInterceptors(ClassSerializerInterceptor)
-  @Get('slug/:slug')
+  @Get("slug/:slug")
   async findOneBySlug(
-    @Param('slug') slug: string,
-    @Query('lang', ParseIntPipe) langId: number,
+    @Param("slug") slug: string,
+    @Query("lang", ParseIntPipe) langId: number
   ) {
     const excursion = await this.excursionsService.findOne(slug, langId);
     if (!excursion)
-      throw new NotFoundException({ message: 'Excursion not found' });
+      throw new NotFoundException({ message: "Excursion not found" });
     this.excursionsService.addView(excursion.id);
     return new ExcursionDto(excursion);
   }
 
-  @ApiOperation({ summary: 'Get excursions slugs' })
+  @ApiOperation({ summary: "Get excursions slugs" })
   @ApiOkResponse({
-    description: 'OK',
+    description: "OK",
     type: ExcursionSlugDto,
     isArray: true,
   })
   @UseInterceptors(CacheInterceptor)
-  @Get('slugs')
+  @Get("slugs")
   async getSlugs() {
     const slugs = await this.excursionsService.getSlugs();
     return slugs;
   }
 
-  @ApiOperation({ summary: 'Get excursion by id and language id' })
+  @ApiOperation({ summary: "Get excursion by id and language id" })
   @ApiOkResponse({
-    description: 'OK',
+    description: "OK",
     type: ExcursionDto,
   })
   @ApiNotFoundResponse({
-    description: 'Not found',
+    description: "Not found",
   })
   @ApiParam({
-    name: 'id',
+    name: "id",
     type: Number,
-    description: 'The ID of the excursion',
+    description: "The ID of the excursion",
   })
   @ApiQuery({
-    name: 'lang',
+    name: "lang",
     type: Number,
-    description: 'The ID of the language',
+    description: "The ID of the language",
   })
   @UseInterceptors(ClassSerializerInterceptor)
-  @Get(':id')
+  @Get(":id")
   async findOneById(
-    @Param('id', ParseIntPipe) id: number,
-    @Query('lang', ParseIntPipe) langId: number,
+    @Param("id", ParseIntPipe) id: number,
+    @Query("lang", ParseIntPipe) langId: number
   ) {
     const excursion = await this.excursionsService.findOne(id, langId);
     if (!excursion)
-      throw new NotFoundException({ message: 'Excursion not found' });
+      throw new NotFoundException({ message: "Excursion not found" });
     return new ExcursionDto(excursion);
   }
 
-  @ApiOperation({ summary: 'Validate excursion slug' })
+  @ApiOperation({ summary: "Validate excursion slug" })
   @ApiOkResponse({
-    description: 'OK',
+    description: "OK",
   })
   @ApiBadRequestResponse({
-    description: 'Validation failed',
+    description: "Validation failed",
     type: ValidationExceptionDto,
   })
   @ApiBody({
     type: ValidateSlugDto,
   })
-  @Post('slugs/validate')
+  @Post("slugs/validate")
   async checkSlugValidity(@Body() createSlugDto: ValidateSlugDto) {
     const slugExists = await this.excursionsService.validateSlugExists(
       createSlugDto.slug,
-      createSlugDto.id,
+      createSlugDto.id
     );
-    const existsMessage = 'SLUG_EXISTS';
+    const existsMessage = "SLUG_EXISTS";
     if (slugExists)
       throw new BadRequestException({
         message: existsMessage,
@@ -284,36 +284,36 @@ export class ExcursionsController {
     return;
   }
 
-  @ApiOperation({ summary: 'Update Excursion' })
+  @ApiOperation({ summary: "Update Excursion" })
   @ApiOkResponse({
-    description: 'OK',
-    type: PickType(Excursion, ['id']),
+    description: "OK",
+    type: PickType(Excursion, ["id"]),
   })
   @ApiBadRequestResponse({
-    description: 'Validation failed',
+    description: "Validation failed",
     type: ValidationExceptionDto,
   })
   @ApiParam({
-    name: 'id',
+    name: "id",
     type: Number,
-    description: 'The ID of the excursion',
+    description: "The ID of the excursion",
   })
   @ApiQuery({
-    name: 'lang',
+    name: "lang",
     type: Number,
-    description: 'The ID of the language',
+    description: "The ID of the language",
   })
   @ApiBody({
     type: UpdateExcursionDto,
   })
   @UseInterceptors(ClassSerializerInterceptor)
   @Auth()
-  @Put(':id')
+  @Put(":id")
   async update(
-    @Query('lang', ParseIntPipe) langId: number,
-    @Param('id', ParseIntPipe) id: number,
+    @Query("lang", ParseIntPipe) langId: number,
+    @Param("id", ParseIntPipe) id: number,
     @TokenPayload() tokenDto: AccessTokenPayloadDto,
-    @Body() updateExcursionDto: UpdateExcursionDto,
+    @Body() updateExcursionDto: UpdateExcursionDto
   ) {
     const isAdmin = tokenDto.roles
       .map((r) => r.name)
@@ -322,29 +322,29 @@ export class ExcursionsController {
       id,
       updateExcursionDto,
       langId,
-      isAdmin,
+      isAdmin
     );
   }
 
-  @ApiOperation({ summary: 'Get excursions for moderation' })
+  @ApiOperation({ summary: "Get excursions for moderation" })
   @ApiOkResponse({
-    description: 'OK',
+    description: "OK",
     type: ExcursionsModerationListResponseDto,
   })
   @ApiBody({
     type: ExcursionsModerationListRequestDto,
   })
   @ApiQuery({
-    name: 'lang',
+    name: "lang",
     type: Number,
-    description: 'The ID of the language',
+    description: "The ID of the language",
   })
   @UseInterceptors(ClassSerializerInterceptor)
   @Auth(RoleNamesEnum.MODERATOR, RoleNamesEnum.ADMIN)
-  @Post('moderation-list')
+  @Post("moderation-list")
   async getExcursionsForModeration(
-    @Query('lang', ParseIntPipe) langId: number,
-    @Body() dto: ExcursionsModerationListRequestDto,
+    @Query("lang", ParseIntPipe) langId: number,
+    @Body() dto: ExcursionsModerationListRequestDto
   ) {
     const [excursions, total] =
       await this.excursionsService.findModerationExcursions(dto, langId);
@@ -355,105 +355,131 @@ export class ExcursionsController {
     });
   }
 
-  @ApiOperation({ summary: 'Moderate excursion' })
+  @ApiOperation({ summary: "Update excursion primary place" })
   @ApiOkResponse({
-    description: 'OK',
+    description: "OK",
   })
   @ApiParam({
-    name: 'id',
+    name: "id",
     type: Number,
-    description: 'The id of the excursion',
+    description: "The id of the excursion",
+  })
+  @ApiParam({
+    name: "placeId",
+    type: Number,
+    description: "The id of the excursion place",
+  })
+  @Auth(RoleNamesEnum.MODERATOR, RoleNamesEnum.ADMIN)
+  @Put(":id/places/:placeId/set-primary")
+  async updateExcursionPrimaryPlace(
+    @Param("id", ParseIntPipe) id: number,
+    @Param("placeId", ParseIntPipe) excursionPlaceId: number
+  ) {
+    return await this.excursionsService.setExcursionPrimaryPlace(
+      id,
+      excursionPlaceId
+    );
+  }
+
+  @ApiOperation({ summary: "Moderate excursion" })
+  @ApiOkResponse({
+    description: "OK",
+  })
+  @ApiParam({
+    name: "id",
+    type: Number,
+    description: "The id of the excursion",
   })
   @ApiBody({
     type: ModerationDto,
   })
   @UseInterceptors(ClassSerializerInterceptor)
   @Auth(RoleNamesEnum.MODERATOR, RoleNamesEnum.ADMIN)
-  @Post(':id/moderation')
+  @Post(":id/moderation")
   async moderateExcursion(
-    @Param('id', ParseIntPipe) id: number,
+    @Param("id", ParseIntPipe) id: number,
     @Body() dto: ModerationDto,
-    @TokenPayload(UserFromTokenPipe) moderator: User,
+    @TokenPayload(UserFromTokenPipe) moderator: User
   ) {
     await this.excursionsService.moderateExcursion(id, dto, moderator);
     return;
   }
 
-  @ApiOperation({ summary: 'Delete excursion' })
+  @ApiOperation({ summary: "Delete excursion" })
   @ApiOkResponse({
-    description: 'OK',
-    type: PickType(Excursion, ['id']),
+    description: "OK",
+    type: PickType(Excursion, ["id"]),
   })
   @ApiParam({
-    name: 'id',
+    name: "id",
     type: Number,
-    description: 'The ID of the excursion',
+    description: "The ID of the excursion",
   })
   @Auth()
-  @Delete(':id')
+  @Delete(":id")
   async remove(
-    @Param('id', ParseIntPipe) id: number,
-    @TokenPayload() tokenPayload: AccessTokenPayloadDto,
+    @Param("id", ParseIntPipe) id: number,
+    @TokenPayload() tokenPayload: AccessTokenPayloadDto
   ) {
     const userIsAuthor = await this.excursionsService.checkUserRelation(
       tokenPayload.id,
-      id,
+      id
     );
     const isAdmin = !!tokenPayload.roles.find(
-      (role) => role.name === RoleNamesEnum.ADMIN,
+      (role) => role.name === RoleNamesEnum.ADMIN
     );
     if (!userIsAuthor && !isAdmin)
       throw new ForbiddenException({
-        message: 'Forbidden, user is not author',
+        message: "Forbidden, user is not author",
       });
     const data = await this.excursionsService.remove(id);
     return data;
   }
 
-  @ApiOperation({ summary: 'Update excursion slug' })
+  @ApiOperation({ summary: "Update excursion slug" })
   @ApiOkResponse({
-    description: 'OK',
+    description: "OK",
   })
   @ApiBadRequestResponse({
-    description: 'Validation failed',
+    description: "Validation failed",
     type: ValidationExceptionDto,
   })
   @ApiParam({
-    name: 'id',
+    name: "id",
     type: Number,
-    description: 'The id of the excursion',
+    description: "The id of the excursion",
   })
   @ApiBody({
     type: UpdateSlugDto,
   })
   @Auth(RoleNamesEnum.ADMIN)
-  @Put(':id/slug')
+  @Put(":id/slug")
   async updateSlug(
-    @Param('id', ParseIntPipe) id: number,
-    @Body() dto: UpdateSlugDto,
+    @Param("id", ParseIntPipe) id: number,
+    @Body() dto: UpdateSlugDto
   ) {
     await this.excursionsService.updateSlug(id, dto.slug);
     return;
   }
 
-  @ApiOperation({ summary: 'Change excursion status' })
+  @ApiOperation({ summary: "Change excursion status" })
   @ApiOkResponse({
-    description: 'OK',
+    description: "OK",
   })
   @ApiParam({
-    name: 'id',
+    name: "id",
     type: Number,
-    description: 'The id of the excursion',
+    description: "The id of the excursion",
   })
   @ApiBody({
     type: ChangeExcursionStatusDto,
   })
   @UseInterceptors(ClassSerializerInterceptor)
   @Auth(RoleNamesEnum.ADMIN)
-  @Post(':id/change-status')
+  @Post(":id/change-status")
   async changeStatus(
-    @Param('id', ParseIntPipe) id: number,
-    @Body() dto: ChangeExcursionStatusDto,
+    @Param("id", ParseIntPipe) id: number,
+    @Body() dto: ChangeExcursionStatusDto
   ) {
     await this.excursionsService.changeStatus(id, dto);
     return;

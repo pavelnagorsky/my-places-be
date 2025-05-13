@@ -8,6 +8,7 @@ import { TravelModesEnum } from "src/modules/routes/enums/travel-modes.enum";
 import { Excursion } from "../entities/excursion.entity";
 import { User } from "../../users/entities/user.entity";
 import { ExcursionStatusesEnum } from "../enums/excursion-statuses.enum";
+import { RegionDto } from "../../regions/dto/region.dto";
 
 export class ExcursionDto {
   @ApiProperty({ title: "Excursion id", type: Number })
@@ -82,6 +83,14 @@ export class ExcursionDto {
   })
   travelMode: TravelModesEnum;
 
+  @ApiProperty({
+    type: RegionDto,
+    description: "excursion region",
+    nullable: true,
+  })
+  @Transform(({ value }) => (value ? new RegionDto(value) : null))
+  region: RegionDto | null;
+
   @ApiProperty({ title: "Views count", type: Number })
   viewsCount: number;
 
@@ -93,7 +102,19 @@ export class ExcursionDto {
   @Expose()
   get images(): string[] {
     return this.excursionPlaces
-      .map((excursionPlace) => excursionPlace.place.images[0]?.url)
+      .flatMap((ep) =>
+        [...(ep.place.images ?? [])] // Ensure it's always an array
+          .map((img) => ({
+            url: img.url,
+            position: img.position ?? 0,
+            isPrimary: Boolean(ep.isPrimary), // Capture primary flag
+          }))
+      )
+      .sort(
+        (a, b) =>
+          Number(b.isPrimary) - Number(a.isPrimary) || a.position - b.position
+      )
+      .map((img) => img.url)
       .filter(Boolean);
   }
 
