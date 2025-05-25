@@ -5,27 +5,33 @@ import {
   Logger,
   NotFoundException,
   UnauthorizedException,
-} from '@nestjs/common';
-import { CreateUserDto } from '../users/dto/create-user.dto';
-import { UsersService } from '../users/users.service';
-import { JwtService } from '@nestjs/jwt';
-import { hash, compare, compareSync } from 'bcrypt';
-import { User } from '../users/entities/user.entity';
-import { LoginDto } from './dto/login.dto';
-import { AccessTokenPayloadDto } from './dto/access-token-payload.dto';
-import { MailingService } from '../mailing/mailing.service';
-import LoginErrorEnum from './enums/login-error.enum';
-import { ConfigService } from '@nestjs/config';
-import { IFrontendConfig, IJwtConfig } from '../../config/configuration';
-import { ITokens } from './interfaces/interfaces';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Equal, LessThan, Repository } from 'typeorm';
-import { RefreshTokenEntity } from './entities/refresh-token.entity';
-import { LoginException } from './exceptions/login.exception';
-import { ConfirmEmail } from '../mailing/emails/confirm.email';
-import { ResetPasswordDto } from './dto/reset-password.dto';
-import { ResetPasswordRequestDto } from './dto/reset-password-request.dto';
-import { ResetPasswordEmail } from '../mailing/emails/reset-password.email';
+} from "@nestjs/common";
+import { CreateUserDto } from "../users/dto/create-user.dto";
+import { UsersService } from "../users/users.service";
+import { JwtService } from "@nestjs/jwt";
+import { hash, compare, compareSync } from "bcrypt";
+import { User } from "../users/entities/user.entity";
+import { LoginDto } from "./dto/login.dto";
+import { AccessTokenPayloadDto } from "./dto/access-token-payload.dto";
+import { MailingService } from "../mailing/mailing.service";
+import LoginErrorEnum from "./enums/login-error.enum";
+import { ConfigService } from "@nestjs/config";
+import {
+  IFrontendConfig,
+  IGoogleCloudConfig,
+  IJwtConfig,
+} from "../../config/configuration";
+import { ITokens } from "./interfaces/interfaces";
+import { InjectRepository } from "@nestjs/typeorm";
+import { Equal, LessThan, Repository } from "typeorm";
+import { RefreshTokenEntity } from "./entities/refresh-token.entity";
+import { LoginException } from "./exceptions/login.exception";
+import { ConfirmEmail } from "../mailing/emails/confirm.email";
+import { ResetPasswordDto } from "./dto/reset-password.dto";
+import { ResetPasswordRequestDto } from "./dto/reset-password-request.dto";
+import { ResetPasswordEmail } from "../mailing/emails/reset-password.email";
+import { GoogleOAuthDto } from "./dto/google-oauth.dto";
+import { OAuth2Client, TokenPayload } from "google-auth-library";
 
 @Injectable()
 export class AuthService {
@@ -37,7 +43,7 @@ export class AuthService {
     private readonly mailingService: MailingService,
     private readonly config: ConfigService,
     @InjectRepository(RefreshTokenEntity)
-    private readonly refreshTokensRepository: Repository<RefreshTokenEntity>,
+    private readonly refreshTokensRepository: Repository<RefreshTokenEntity>
   ) {}
 
   // register logic:
@@ -51,7 +57,7 @@ export class AuthService {
     const alreadyExists = await this.usersService.findUserByEmail(dto.email);
     if (alreadyExists)
       throw new UnauthorizedException({
-        message: 'User with this email already exists',
+        message: "User with this email already exists",
       });
     // hash password
     const hashedPassword = await hash(dto.password, 8);
@@ -61,7 +67,7 @@ export class AuthService {
     this.logger.log(`SIGNUP success! ID ${user.id}, Email: ${user.email}`);
     // generate email token
     const emailToken = await this.generateEmailToken(user);
-    const domain = this.config.get<IFrontendConfig>('frontend')
+    const domain = this.config.get<IFrontendConfig>("frontend")
       ?.domain as string;
     const confirmLink = `${domain}/auth/confirm/${emailToken}`;
     // send confirmation email
@@ -83,7 +89,7 @@ export class AuthService {
     const savedToken = await this.saveRefreshToken(
       user.id,
       tokens.refreshToken,
-      userAgent,
+      userAgent
     );
     // if count of refresh tokens in db > 10 delete previous tokens
     const totalUserTokens = await this.refreshTokensRepository.count({
@@ -95,7 +101,7 @@ export class AuthService {
     });
     if (totalUserTokens > 10) {
       this.logger.warn(
-        `LOGIN warning! User has more than 10 refresh tokens (${totalUserTokens}). ID: ${user.id}, Refresh token: ${tokens.refreshToken}`,
+        `LOGIN warning! User has more than 10 refresh tokens (${totalUserTokens}). ID: ${user.id}, Refresh token: ${tokens.refreshToken}`
       );
       await this.refreshTokensRepository.delete({
         user: {
@@ -106,7 +112,7 @@ export class AuthService {
     }
 
     this.logger.log(
-      `LOGIN success! ID: ${user.id}, Access Token: ${tokens.accessToken}`,
+      `LOGIN success! ID: ${user.id}, Access Token: ${tokens.accessToken}`
     );
     return tokens;
   }
@@ -116,7 +122,7 @@ export class AuthService {
   async logout(userId: number, refreshToken: string) {
     const tokenForDeletion = await this.findUserRefreshToken(
       userId,
-      refreshToken,
+      refreshToken
     );
     if (!tokenForDeletion) return;
     await this.refreshTokensRepository.remove([tokenForDeletion]);
@@ -134,14 +140,14 @@ export class AuthService {
     // find user refresh token in db
     const userRefreshToken = await this.findUserRefreshToken(
       user.id,
-      refreshToken,
+      refreshToken
     );
     if (!userRefreshToken) {
       // throw 401 if no token
       this.logger.error(
-        `TOKEN REFRESH error: No token found with equal value. Requested with value: ${refreshToken} by user ${user.id}`,
+        `TOKEN REFRESH error: No token found with equal value. Requested with value: ${refreshToken} by user ${user.id}`
       );
-      throw new UnauthorizedException({ message: 'Invalid refresh token' });
+      throw new UnauthorizedException({ message: "Invalid refresh token" });
     }
     // generate a new pair of tokens
     const tokens = await this.generateTokens(user);
@@ -153,7 +159,7 @@ export class AuthService {
     this.cleanExpiredTokens(user.id);
 
     this.logger.log(
-      `TOKEN REFRESH success: ID: ${user.id}, Email: ${user.email}, Access Token: ${tokens.accessToken}`,
+      `TOKEN REFRESH success: ID: ${user.id}, Email: ${user.email}, Access Token: ${tokens.accessToken}`
     );
     return tokens;
   }
@@ -166,11 +172,11 @@ export class AuthService {
     const user = await this.usersService.findUserByEmail(dto.email);
     if (!user)
       throw new BadRequestException({
-        message: 'User with this email not found',
+        message: "User with this email not found",
       });
     // generate token
     const token = await this.generateRefreshPasswordToken(user);
-    const domain = this.config.get<IFrontendConfig>('frontend')
+    const domain = this.config.get<IFrontendConfig>("frontend")
       ?.domain as string;
     const confirmLink = `${domain}/auth/reset-password/${token}`;
     // send confirmation email
@@ -201,24 +207,24 @@ export class AuthService {
     const user = await this.usersService.findUserByEmail(loginDto.email);
     if (!user)
       throw new LoginException({
-        message: 'No users with this email found',
+        message: "No users with this email found",
         loginError: LoginErrorEnum.INVALID_DATA,
       });
     if (!user.isEmailConfirmed)
       throw new LoginException({
-        message: 'Email is not confirmed',
+        message: "Email is not confirmed",
         loginError: LoginErrorEnum.EMAIL_NOT_CONFIRMED,
       });
     if (user.blockedUntil && user.blockedUntil.getTime() > new Date().getTime())
       throw new LoginException({
-        message: 'User is blocked',
+        message: "User is blocked",
         loginError: LoginErrorEnum.USER_BLOCKED,
         blockedUntil: user.blockedUntil,
       });
     const passwordEquals = await compare(loginDto.password, user.password);
     if (!passwordEquals)
       throw new LoginException({
-        message: 'Incorrect password',
+        message: "Incorrect password",
         loginError: LoginErrorEnum.INVALID_DATA,
       });
     return user;
@@ -247,7 +253,7 @@ export class AuthService {
   private async saveRefreshToken(
     userId: number,
     token: string,
-    userAgent: string | null,
+    userAgent: string | null
   ) {
     const expiryDate = this.prepareRefreshTokenExpiryDate();
     return await this.refreshTokensRepository.save({
@@ -261,20 +267,20 @@ export class AuthService {
   }
 
   private prepareRefreshTokenExpiryDate() {
-    const expirationFromConfig = this.config.get<IJwtConfig>('jwt')
+    const expirationFromConfig = this.config.get<IJwtConfig>("jwt")
       ?.refreshTokenExpiration as string; // as 10s or 10d
     const parseToMilliseconds = (msStr: string): number => {
       const numberPart = +msStr.slice(0, -1);
       const typePart = msStr.substring(msStr.length - 1);
-      if (typePart === 's') {
+      if (typePart === "s") {
         return numberPart * 1000;
       }
-      if (typePart === 'd') return numberPart * 1000 * 86400;
+      if (typePart === "d") return numberPart * 1000 * 86400;
       return numberPart;
     };
     const expirationInMilliseconds = parseToMilliseconds(expirationFromConfig);
     const expirationDate = new Date(
-      new Date().getTime() + expirationInMilliseconds,
+      new Date().getTime() + expirationInMilliseconds
     );
     return expirationDate;
   }
@@ -306,9 +312,9 @@ export class AuthService {
       roles: user.roles,
     };
     return this.jwtService.signAsync(payload, {
-      expiresIn: this.config.get<IJwtConfig>('jwt')
+      expiresIn: this.config.get<IJwtConfig>("jwt")
         ?.emailTokenExpiration as string,
-      secret: this.config.get<IJwtConfig>('jwt')?.emailTokenSecret as string,
+      secret: this.config.get<IJwtConfig>("jwt")?.emailTokenSecret as string,
     });
   }
 
@@ -319,9 +325,9 @@ export class AuthService {
       roles: user.roles,
     };
     return this.jwtService.signAsync(payload, {
-      expiresIn: this.config.get<IJwtConfig>('jwt')
+      expiresIn: this.config.get<IJwtConfig>("jwt")
         ?.resetPasswordTokenExpiration as string,
-      secret: this.config.get<IJwtConfig>('jwt')
+      secret: this.config.get<IJwtConfig>("jwt")
         ?.resetPasswordTokenSecret as string,
     });
   }
@@ -333,9 +339,9 @@ export class AuthService {
       roles: user.roles,
     };
     return this.jwtService.signAsync(payload, {
-      expiresIn: this.config.get<IJwtConfig>('jwt')
+      expiresIn: this.config.get<IJwtConfig>("jwt")
         ?.accessTokenExpiration as string,
-      secret: this.config.get<IJwtConfig>('jwt')?.accessTokenSecret as string,
+      secret: this.config.get<IJwtConfig>("jwt")?.accessTokenSecret as string,
     });
   }
 
@@ -346,9 +352,45 @@ export class AuthService {
       roles: user.roles,
     };
     return this.jwtService.signAsync(payload, {
-      expiresIn: this.config.get<IJwtConfig>('jwt')
+      expiresIn: this.config.get<IJwtConfig>("jwt")
         ?.refreshTokenExpiration as string,
-      secret: this.config.get<IJwtConfig>('jwt')?.refreshTokenSecret as string,
+      secret: this.config.get<IJwtConfig>("jwt")?.refreshTokenSecret as string,
     });
+  }
+
+  async googleOAuth(dto: GoogleOAuthDto) {
+    const oauthClient = new OAuth2Client(
+      this.config.get<IGoogleCloudConfig>("googleCloud")?.clientId,
+      this.config.get<IGoogleCloudConfig>("googleCloud")?.clientSecret
+    );
+
+    // 1. Exchange code for tokens
+    const { tokens } = await oauthClient.getToken({
+      code: dto.authCode,
+      client_id: this.config.get<IGoogleCloudConfig>("googleCloud")?.clientId,
+      redirect_uri: "postmessage", // Required for auth-code flow
+    });
+
+    // 2. Verify ID token
+    const ticket = await oauthClient.verifyIdToken({
+      idToken: tokens.id_token!,
+      audience: this.config.get<IGoogleCloudConfig>("googleCloud")?.clientId,
+    });
+
+    const payload = ticket.getPayload() as TokenPayload;
+
+    return {
+      user: {
+        id: payload?.sub,
+        email: payload?.email,
+        firstName: payload?.given_name,
+        lastName: payload.family_name,
+        picture: payload?.picture,
+      },
+      tokens: {
+        access_token: tokens.access_token,
+        refresh_token: tokens.refresh_token, // Only on first login
+      },
+    };
   }
 }
