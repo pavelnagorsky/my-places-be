@@ -12,8 +12,8 @@ import { TypeOrmModule } from "@nestjs/typeorm";
 import { RefreshTokenEntity } from "./entities/refresh-token.entity";
 import { JwtEmailTokenStrategy } from "./strategy/jwt-email-token.strategy";
 import { JwtResetPasswordStrategy } from "./strategy/jwt-reset-password.strategy";
-import { GoogleOAuthOneTapStrategy } from "./strategy/google-one-tap.strategy";
 import { GoogleOAuthStrategy } from "./strategy/google.strategy";
+import { GoogleOneTapStrategy } from "./strategy/google-one-tap.strategy";
 
 @Global()
 @Module({
@@ -32,7 +32,7 @@ import { GoogleOAuthStrategy } from "./strategy/google.strategy";
     JwtAccessTokenStrategy,
     JwtEmailTokenStrategy,
     JwtResetPasswordStrategy,
-    GoogleOAuthOneTapStrategy,
+    GoogleOneTapStrategy,
     GoogleOAuthStrategy,
   ],
   exports: [AuthService, JwtModule, UserFromTokenPipe, UsersModule],

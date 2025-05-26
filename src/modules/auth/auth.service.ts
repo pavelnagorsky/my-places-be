@@ -30,8 +30,9 @@ import { ConfirmEmail } from "../mailing/emails/confirm.email";
 import { ResetPasswordDto } from "./dto/reset-password.dto";
 import { ResetPasswordRequestDto } from "./dto/reset-password-request.dto";
 import { ResetPasswordEmail } from "../mailing/emails/reset-password.email";
-import { GoogleOAuthDto } from "./dto/google-oauth.dto";
+import { GoogleOauthRequestDto } from "./dto/google-oauth-request.dto";
 import { OAuth2Client, TokenPayload } from "google-auth-library";
+import { OAuthResponseDto } from "./dto/oauth-response.dto";
 
 @Injectable()
 export class AuthService {
@@ -91,30 +92,34 @@ export class AuthService {
       tokens.refreshToken,
       userAgent
     );
-    // if count of refresh tokens in db > 10 delete previous tokens
-    const totalUserTokens = await this.refreshTokensRepository.count({
-      where: {
-        user: {
-          id: user.id,
-        },
-      },
-    });
-    if (totalUserTokens > 10) {
-      this.logger.warn(
-        `LOGIN warning! User has more than 10 refresh tokens (${totalUserTokens}). ID: ${user.id}, Refresh token: ${tokens.refreshToken}`
-      );
-      await this.refreshTokensRepository.delete({
-        user: {
-          id: user.id,
-        },
-        id: LessThan(savedToken.id),
-      });
-    }
+    this.revalidateRefreshTokens(user.id, savedToken.id);
 
     this.logger.log(
       `LOGIN success! ID: ${user.id}, Access Token: ${tokens.accessToken}`
     );
     return tokens;
+  }
+
+  private async revalidateRefreshTokens(userId: number, newTokenId: number) {
+    // if count of refresh tokens in db > 10 delete previous tokens
+    const totalUserTokens = await this.refreshTokensRepository.count({
+      where: {
+        user: {
+          id: userId,
+        },
+      },
+    });
+    if (totalUserTokens > 10) {
+      this.logger.warn(
+        `LOGIN warning! User has more than 10 refresh tokens (${totalUserTokens}). ID: ${userId}, Refresh token id: ${newTokenId}`
+      );
+      await this.refreshTokensRepository.delete({
+        user: {
+          id: userId,
+        },
+        id: LessThan(newTokenId),
+      });
+    }
   }
 
   // logout logic:
@@ -358,39 +363,26 @@ export class AuthService {
     });
   }
 
-  async googleOAuth(dto: GoogleOAuthDto) {
-    const oauthClient = new OAuth2Client(
-      this.config.get<IGoogleCloudConfig>("googleCloud")?.clientId,
-      this.config.get<IGoogleCloudConfig>("googleCloud")?.clientSecret
-    );
+  async handleOAuth(dto: OAuthResponseDto, userAgent?: string) {
+    console.log(dto);
 
-    // 1. Exchange code for tokens
-    const { tokens } = await oauthClient.getToken({
-      code: dto.authCode,
-      client_id: this.config.get<IGoogleCloudConfig>("googleCloud")?.clientId,
-      redirect_uri: "postmessage", // Required for auth-code flow
-    });
+    // Step 1: Look Up the User by Email
+    const user = await this.usersService.findUserByEmail(dto.email);
+    // TODO: If the user isn’t found via email, check for a matching Google sub ID.
 
-    // 2. Verify ID token
-    const ticket = await oauthClient.verifyIdToken({
-      idToken: tokens.id_token!,
-      audience: this.config.get<IGoogleCloudConfig>("googleCloud")?.clientId,
-    });
-
-    const payload = ticket.getPayload() as TokenPayload;
-
-    return {
-      user: {
-        id: payload?.sub,
-        email: payload?.email,
-        firstName: payload?.given_name,
-        lastName: payload.family_name,
-        picture: payload?.picture,
-      },
-      tokens: {
-        access_token: tokens.access_token,
-        refresh_token: tokens.refresh_token, // Only on first login
-      },
-    };
+    // Step 2: If user found, sign tokens
+    if (user) {
+      // generate tokens
+      const tokens = await this.generateTokens(user);
+      // save refresh token in db
+      const savedToken = await this.saveRefreshToken(
+        user.id,
+        tokens.refreshToken,
+        userAgent ?? null
+      );
+      this.revalidateRefreshTokens(user.id, savedToken.id);
+    } else {
+      // Step 3: Handle User registration
+    }
   }
 }

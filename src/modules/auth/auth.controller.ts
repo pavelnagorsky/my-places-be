@@ -32,14 +32,14 @@ import { JwtRefreshGuard } from "./guards/jwt-refresh.guard";
 import { UserFromTokenPipe } from "./pipes/user-from-token.pipe";
 import { User } from "../users/entities/user.entity";
 import { JwtEmailGuard } from "./guards/jwt-email.guard";
-import { LoginException } from "./exceptions/login.exception";
 import { LoginFailureDto } from "./dto/login-failure.dto";
 import { JwtResetPasswordGuard } from "./guards/jwt-reset-password.guard";
 import { ResetPasswordDto } from "./dto/reset-password.dto";
 import { ResetPasswordRequestDto } from "./dto/reset-password-request.dto";
 import { GoogleDynamicAuthGuard } from "./guards/google-dynamic-oauth.guard";
-import { GoogleOAuthDto } from "./dto/google-oauth.dto";
-import { GoogleOAuthPayload } from "./decorators/google-oauth-payload.decorator";
+import { GoogleOauthRequestDto } from "./dto/google-oauth-request.dto";
+import { OAuthData } from "./decorators/oauth-data.decorator";
+import { OAuthResponseDto } from "./dto/oauth-response.dto";
 
 @ApiTags("Authentication")
 @Controller("auth")
@@ -195,12 +195,16 @@ export class AuthController {
     description: "Invalid credentials",
   })
   @ApiBody({
-    type: GoogleOAuthDto,
+    type: GoogleOauthRequestDto,
   })
+  @UseInterceptors(ClassSerializerInterceptor)
+  @UseGuards(GoogleDynamicAuthGuard)
   @Post("google")
-  async googleOAuth(@Body() dto: GoogleOAuthDto) {
-    const profile = await this.authService.googleOAuth(dto);
-    console.log("controller", profile);
+  async googleOAuth(
+    @OAuthData() dto: OAuthResponseDto,
+    @UserAgent() userAgent: string | null
+  ) {
+    await this.authService.handleOAuth(dto);
     return;
   }
 }
