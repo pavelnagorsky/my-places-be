@@ -65,7 +65,7 @@ export class GoogleOAuthStrategy extends PassportStrategy(
     } catch (error) {
       console.log("google oauth strategy error", error?.message);
       throw new UnauthorizedException({
-        message: "Invalid authorization code",
+        message: error?.message ?? "Invalid authorization code",
       });
     }
   }

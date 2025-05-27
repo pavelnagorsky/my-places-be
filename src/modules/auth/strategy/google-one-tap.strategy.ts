@@ -58,7 +58,7 @@ export class GoogleOneTapStrategy extends PassportStrategy(
     } catch (error) {
       console.log("google one-tap strategy error", error?.message);
       throw new UnauthorizedException({
-        message: "Invalid authorization code",
+        message: error?.message ?? "Invalid authorization code",
       });
     }
   }

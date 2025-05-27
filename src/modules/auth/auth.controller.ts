@@ -40,6 +40,8 @@ import { GoogleDynamicAuthGuard } from "./guards/google-dynamic-oauth.guard";
 import { GoogleOauthRequestDto } from "./dto/google-oauth-request.dto";
 import { OAuthData } from "./decorators/oauth-data.decorator";
 import { OAuthResponseDto } from "./dto/oauth-response.dto";
+import { VkOauthRequestDto } from "./dto/vk-oauth-request.dto";
+import { VKOAuthGuard } from "./guards/vk-oauth.guard";
 
 @ApiTags("Authentication")
 @Controller("auth")
@@ -200,10 +202,30 @@ export class AuthController {
   @UseInterceptors(ClassSerializerInterceptor)
   @UseGuards(GoogleDynamicAuthGuard)
   @Post("google")
-  async googleOAuth(
-    @OAuthData() dto: OAuthResponseDto,
-    @UserAgent() userAgent: string | null
-  ) {
+  async googleOAuth(@OAuthData() dto: OAuthResponseDto) {
+    await this.authService.handleOAuth(dto);
+    return;
+  }
+
+  @ApiOperation({ summary: "OAuth with VK" })
+  @ApiOkResponse({
+    description: "token response",
+    type: AuthDto,
+  })
+  @ApiBadRequestResponse({
+    description: "Validation failed",
+    type: ValidationExceptionDto,
+  })
+  @ApiUnauthorizedResponse({
+    description: "Invalid credentials",
+  })
+  @ApiBody({
+    type: VkOauthRequestDto,
+  })
+  @UseInterceptors(ClassSerializerInterceptor)
+  @UseGuards(VKOAuthGuard)
+  @Post("vk")
+  async vkOAuth(@OAuthData() dto: OAuthResponseDto) {
     await this.authService.handleOAuth(dto);
     return;
   }

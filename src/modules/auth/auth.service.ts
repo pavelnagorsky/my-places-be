@@ -370,19 +370,19 @@ export class AuthService {
     const user = await this.usersService.findUserByEmail(dto.email);
     // TODO: If the user isn’t found via email, check for a matching Google sub ID.
 
-    // Step 2: If user found, sign tokens
-    if (user) {
-      // generate tokens
-      const tokens = await this.generateTokens(user);
-      // save refresh token in db
-      const savedToken = await this.saveRefreshToken(
-        user.id,
-        tokens.refreshToken,
-        userAgent ?? null
-      );
-      this.revalidateRefreshTokens(user.id, savedToken.id);
-    } else {
-      // Step 3: Handle User registration
-    }
+    // // Step 2: If user found, sign tokens
+    // if (user) {
+    //   // generate tokens
+    //   const tokens = await this.generateTokens(user);
+    //   // save refresh token in db
+    //   const savedToken = await this.saveRefreshToken(
+    //     user.id,
+    //     tokens.refreshToken,
+    //     userAgent ?? null
+    //   );
+    //   this.revalidateRefreshTokens(user.id, savedToken.id);
+    // } else {
+    //   // Step 3: Handle User registration
+    // }
   }
 }

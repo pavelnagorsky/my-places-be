@@ -14,6 +14,8 @@ import { JwtEmailTokenStrategy } from "./strategy/jwt-email-token.strategy";
 import { JwtResetPasswordStrategy } from "./strategy/jwt-reset-password.strategy";
 import { GoogleOAuthStrategy } from "./strategy/google.strategy";
 import { GoogleOneTapStrategy } from "./strategy/google-one-tap.strategy";
+import { VkOauthStrategy } from "./strategy/vk.strategy";
+import { HttpModule } from "@nestjs/axios";
 
 @Global()
 @Module({
@@ -22,6 +24,7 @@ import { GoogleOneTapStrategy } from "./strategy/google-one-tap.strategy";
     MailingModule,
     JwtModule.register({ global: true }),
     TypeOrmModule.forFeature([RefreshTokenEntity]),
+    HttpModule,
   ],
   controllers: [AuthController],
   providers: [
@@ -34,6 +37,7 @@ import { GoogleOneTapStrategy } from "./strategy/google-one-tap.strategy";
     JwtResetPasswordStrategy,
     GoogleOneTapStrategy,
     GoogleOAuthStrategy,
+    VkOauthStrategy,
   ],
   exports: [AuthService, JwtModule, UserFromTokenPipe, UsersModule],
 })

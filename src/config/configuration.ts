@@ -12,6 +12,10 @@ export default () => {
     yandexCloud: {
       apiKey: process.env["YANDEX_API_KEY"],
     },
+    vk: {
+      clientId: process.env["VK_CLIENT_ID"],
+      codeVerifier: process.env["VK_CODE_VERIFIER"],
+    },
     database: {
       host: process.env["DATABASE_HOST"],
       name: process.env["DATABASE_NAME"],
@@ -51,6 +55,11 @@ export interface IGoogleCloudConfig {
 
 export interface IYandexCloudConfig {
   apiKey: string;
+}
+
+export interface IVKConfig {
+  clientId: string;
+  codeVerifier: string;
 }
 
 export interface IDatabaseConfig {
