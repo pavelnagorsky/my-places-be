@@ -16,6 +16,7 @@ import { GoogleOAuthStrategy } from "./strategy/google.strategy";
 import { GoogleOneTapStrategy } from "./strategy/google-one-tap.strategy";
 import { VkOauthStrategy } from "./strategy/vk.strategy";
 import { HttpModule } from "@nestjs/axios";
+import { YandexOauthStrategy } from "./strategy/yandex.strategy";
 
 @Global()
 @Module({
@@ -38,6 +39,7 @@ import { HttpModule } from "@nestjs/axios";
     GoogleOneTapStrategy,
     GoogleOAuthStrategy,
     VkOauthStrategy,
+    YandexOauthStrategy,
   ],
   exports: [AuthService, JwtModule, UserFromTokenPipe, UsersModule],
 })

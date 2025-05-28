@@ -11,6 +11,8 @@ export default () => {
     },
     yandexCloud: {
       apiKey: process.env["YANDEX_API_KEY"],
+      clientId: process.env["YANDEX_CLIENT_ID"],
+      clientSecret: process.env["YANDEX_CLIENT_SECRET"],
     },
     vk: {
       clientId: process.env["VK_CLIENT_ID"],
@@ -55,6 +57,8 @@ export interface IGoogleCloudConfig {
 
 export interface IYandexCloudConfig {
   apiKey: string;
+  clientId: string;
+  clientSecret: string;
 }
 
 export interface IVKConfig {

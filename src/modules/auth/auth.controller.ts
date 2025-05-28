@@ -42,6 +42,8 @@ import { OAuthData } from "./decorators/oauth-data.decorator";
 import { OAuthResponseDto } from "./dto/oauth-response.dto";
 import { VkOauthRequestDto } from "./dto/vk-oauth-request.dto";
 import { VKOAuthGuard } from "./guards/vk-oauth.guard";
+import { YandexOauthRequestDto } from "./dto/yandex-oauth-request.dto";
+import { YandexOAuthGuard } from "./guards/yandex-oauth.guard";
 
 @ApiTags("Authentication")
 @Controller("auth")
@@ -226,6 +228,29 @@ export class AuthController {
   @UseGuards(VKOAuthGuard)
   @Post("vk")
   async vkOAuth(@OAuthData() dto: OAuthResponseDto) {
+    await this.authService.handleOAuth(dto);
+    return;
+  }
+
+  @ApiOperation({ summary: "OAuth with yandex" })
+  @ApiOkResponse({
+    description: "token response",
+    type: AuthDto,
+  })
+  @ApiBadRequestResponse({
+    description: "Validation failed",
+    type: ValidationExceptionDto,
+  })
+  @ApiUnauthorizedResponse({
+    description: "Invalid credentials",
+  })
+  @ApiBody({
+    type: YandexOauthRequestDto,
+  })
+  @UseInterceptors(ClassSerializerInterceptor)
+  @UseGuards(YandexOAuthGuard)
+  @Post("yandex")
+  async yandexOAuth(@OAuthData() dto: OAuthResponseDto) {
     await this.authService.handleOAuth(dto);
     return;
   }
