@@ -52,7 +52,7 @@ export class VkOauthStrategy extends PassportStrategy(Strategy, "vk-oauth") {
             device_id: dto.deviceId,
             state: dto.state,
             code_verifier: this.config.get<IVKConfig>("vk")?.codeVerifier,
-            redirect_uri: `http://${
+            redirect_uri: `https://${
               this.config.get<IFrontendConfig>("frontend")?.domain
             }/auth/oauth/callback`,
           },
@@ -70,23 +70,25 @@ export class VkOauthStrategy extends PassportStrategy(Strategy, "vk-oauth") {
 
       // 3. Fetch profile
       const profileResponse = await firstValueFrom(
-        this.httpService.get<IVkUserResponse[]>(
-          `https://api.vk.com/method/users.get`,
+        this.httpService.post<IVkUserResponse>(
+          `https://id.vk.com/oauth2/user_info`,
           {
-            params: {
-              user_ids: tokensResponse.data.user_id,
-              fields: "first_name,last_name,email",
-              access_token: tokensResponse.data.access_token,
-              v: "5.199",
+            client_id: this.config.get<IVKConfig>("vk")?.clientId || "",
+            access_token: tokensResponse.data.access_token,
+          },
+          {
+            headers: {
+              "Content-Type": "application/x-www-form-urlencoded",
             },
           }
         )
       );
-      if (!profileResponse.data?.length || !profileResponse.data[0]?.email)
+
+      if (!profileResponse.data?.user || !profileResponse.data?.user?.email)
         throw new BadRequestException({
           message: `No user or no user email`,
         });
-      const user = profileResponse.data[0];
+      const user = profileResponse.data.user;
 
       return new OAuthResponseDto({
         providerId: `${tokensResponse.data.user_id}`,
