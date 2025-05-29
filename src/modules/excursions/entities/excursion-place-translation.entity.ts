@@ -9,8 +9,7 @@ export class ExcursionPlaceTranslation
   extends TranslationBaseEntity
   implements ITranslation
 {
-  @Index()
-  @Column({ type: "varchar", length: 700, nullable: true })
+  @Column({ type: "varchar", length: 1300, nullable: true })
   description: string;
 
   @ManyToOne(() => Language, (language) => language.reviewTranslations)

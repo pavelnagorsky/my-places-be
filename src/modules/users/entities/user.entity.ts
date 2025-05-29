@@ -10,34 +10,34 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   ManyToOne,
-} from 'typeorm';
+} from "typeorm";
 
-import { Place } from '../../places/entities/place.entity';
-import { Moderator } from './moderator.entity';
-import { Like } from '../../likes/entities/like.entity';
-import { Comment } from '../../comments/entities/comment.entity';
-import { Role } from '../../roles/entities/role.entity';
-import { Image } from '../../images/entities/image.entity';
-import { Review } from '../../reviews/entities/review.entity';
-import { Report } from '../../reports/entities/report.entity';
-import { Language } from '../../languages/entities/language.entity';
-import { Favourite } from '../../favourites/entities/favourite.entity';
-import { RefreshTokenEntity } from '../../auth/entities/refresh-token.entity';
-import { Route } from '../../routes/entities/route.entity';
-import { Excursion } from '../../excursions/entities/excursion.entity';
+import { Place } from "../../places/entities/place.entity";
+import { Moderator } from "./moderator.entity";
+import { Like } from "../../likes/entities/like.entity";
+import { Comment } from "../../comments/entities/comment.entity";
+import { Role } from "../../roles/entities/role.entity";
+import { Image } from "../../images/entities/image.entity";
+import { Review } from "../../reviews/entities/review.entity";
+import { Report } from "../../reports/entities/report.entity";
+import { Language } from "../../languages/entities/language.entity";
+import { Favourite } from "../../favourites/entities/favourite.entity";
+import { RefreshTokenEntity } from "../../auth/entities/refresh-token.entity";
+import { Route } from "../../routes/entities/route.entity";
+import { Excursion } from "../../excursions/entities/excursion.entity";
 
 @Entity()
 export class User {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column({ type: 'varchar', length: 30 })
+  @Column({ type: "varchar", length: 30 })
   firstName: string;
 
-  @Column({ type: 'varchar', length: 30 })
+  @Column({ type: "varchar", length: 30 })
   lastName: string;
 
-  @Column({ type: 'varchar', length: 60 })
+  @Column({ type: "varchar", length: 60 })
   email: string;
 
   @Column({ default: false })
@@ -46,13 +46,22 @@ export class User {
   @Column({ default: true })
   receiveEmails: boolean;
 
-  @Column({ type: 'varchar' })
+  @Column({ type: "varchar", length: 100, nullable: true, default: null })
+  googleUserId: string;
+
+  @Column({ type: "varchar", length: 100, nullable: true, default: null })
+  yandexUserId: string;
+
+  @Column({ type: "varchar", length: 100, nullable: true, default: null })
+  vkUserId: string;
+
+  @Column({ type: "varchar" })
   password: string;
 
-  @Column({ default: null, type: 'datetime', nullable: true })
+  @Column({ default: null, type: "datetime", nullable: true })
   blockedUntil: null | Date;
 
-  @Column({ default: null, type: 'varchar', length: 300, nullable: true })
+  @Column({ default: null, type: "varchar", length: 300, nullable: true })
   blockReason: null | string;
 
   @OneToMany(() => Place, (place) => place.author)
@@ -70,7 +79,7 @@ export class User {
   @OneToOne(() => Moderator, (moderator) => moderator.user, {
     nullable: true,
     cascade: true,
-    onDelete: 'SET NULL',
+    onDelete: "SET NULL",
   })
   @JoinColumn()
   moderator: Moderator | null;
