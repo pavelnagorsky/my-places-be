@@ -204,9 +204,18 @@ export class AuthController {
   @UseInterceptors(ClassSerializerInterceptor)
   @UseGuards(GoogleDynamicAuthGuard)
   @Post("google")
-  async googleOAuth(@OAuthData() dto: OAuthResponseDto) {
-    await this.authService.handleOAuth(dto);
-    return;
+  async googleOAuth(
+    @OAuthData() dto: OAuthResponseDto,
+    @Res({ passthrough: true }) response: Response,
+    @UserAgent() userAgent: string | null
+  ) {
+    const tokens = await this.authService.handleOAuth(dto, userAgent);
+    response.cookie(
+      CookiesEnum.REFRESH_TOKEN,
+      tokens.refreshToken,
+      cookieConfig
+    );
+    return new AuthDto(tokens.accessToken);
   }
 
   @ApiOperation({ summary: "OAuth with VK" })
@@ -227,9 +236,18 @@ export class AuthController {
   @UseInterceptors(ClassSerializerInterceptor)
   @UseGuards(VKOAuthGuard)
   @Post("vk")
-  async vkOAuth(@OAuthData() dto: OAuthResponseDto) {
-    await this.authService.handleOAuth(dto);
-    return;
+  async vkOAuth(
+    @OAuthData() dto: OAuthResponseDto,
+    @Res({ passthrough: true }) response: Response,
+    @UserAgent() userAgent: string | null
+  ) {
+    const tokens = await this.authService.handleOAuth(dto, userAgent);
+    response.cookie(
+      CookiesEnum.REFRESH_TOKEN,
+      tokens.refreshToken,
+      cookieConfig
+    );
+    return new AuthDto(tokens.accessToken);
   }
 
   @ApiOperation({ summary: "OAuth with yandex" })
@@ -250,8 +268,17 @@ export class AuthController {
   @UseInterceptors(ClassSerializerInterceptor)
   @UseGuards(YandexOAuthGuard)
   @Post("yandex")
-  async yandexOAuth(@OAuthData() dto: OAuthResponseDto) {
-    await this.authService.handleOAuth(dto);
-    return;
+  async yandexOAuth(
+    @OAuthData() dto: OAuthResponseDto,
+    @Res({ passthrough: true }) response: Response,
+    @UserAgent() userAgent: string | null
+  ) {
+    const tokens = await this.authService.handleOAuth(dto, userAgent);
+    response.cookie(
+      CookiesEnum.REFRESH_TOKEN,
+      tokens.refreshToken,
+      cookieConfig
+    );
+    return new AuthDto(tokens.accessToken);
   }
 }

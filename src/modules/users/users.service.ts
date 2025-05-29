@@ -2,10 +2,10 @@ import {
   Injectable,
   NotFoundException,
   UnauthorizedException,
-} from '@nestjs/common';
-import { CreateUserDto } from './dto/create-user.dto';
-import { UpdateUserDto } from './dto/update-user.dto';
-import { InjectRepository } from '@nestjs/typeorm';
+} from "@nestjs/common";
+import { CreateUserDto } from "./dto/create-user.dto";
+import { UpdateUserDto } from "./dto/update-user.dto";
+import { InjectRepository } from "@nestjs/typeorm";
 import {
   And,
   Between,
@@ -17,22 +17,23 @@ import {
   MoreThanOrEqual,
   Not,
   Repository,
-} from 'typeorm';
-import { User } from './entities/user.entity';
-import { RolesService } from '../roles/roles.service';
-import { RoleNamesEnum } from '../roles/enums/role-names.enum';
-import { UsersRequestDto } from './dto/users-request.dto';
-import { Moderator } from './entities/moderator.entity';
-import { LanguagesService } from '../languages/languages.service';
-import { SaveModeratorDto } from './dto/save-moderator.dto';
-import { BlockUserDto } from './dto/block-user.dto';
-import { RefreshTokenEntity } from '../auth/entities/refresh-token.entity';
-import { MailingService } from '../mailing/mailing.service';
-import { ConfirmEmail } from '../mailing/emails/confirm.email';
-import { EmailDto } from './dto/email.dto';
-import { CustomEmail } from '../mailing/emails/custom.email';
-import { BlockUserEmail } from '../mailing/emails/block-user.email';
-import { Cron, CronExpression } from '@nestjs/schedule';
+} from "typeorm";
+import { User } from "./entities/user.entity";
+import { RolesService } from "../roles/roles.service";
+import { RoleNamesEnum } from "../roles/enums/role-names.enum";
+import { UsersRequestDto } from "./dto/users-request.dto";
+import { Moderator } from "./entities/moderator.entity";
+import { LanguagesService } from "../languages/languages.service";
+import { SaveModeratorDto } from "./dto/save-moderator.dto";
+import { BlockUserDto } from "./dto/block-user.dto";
+import { RefreshTokenEntity } from "../auth/entities/refresh-token.entity";
+import { MailingService } from "../mailing/mailing.service";
+import { EmailDto } from "./dto/email.dto";
+import { CustomEmail } from "../mailing/emails/custom.email";
+import { BlockUserEmail } from "../mailing/emails/block-user.email";
+import { Cron, CronExpression } from "@nestjs/schedule";
+import { OAuthResponseDto } from "../auth/dto/oauth-response.dto";
+import { OauthProviderTypesEnum } from "../auth/enums/oauth-provider-types.enum";
 
 @Injectable()
 export class UsersService {
@@ -45,23 +46,23 @@ export class UsersService {
     private readonly refreshTokensRepository: Repository<RefreshTokenEntity>,
     private readonly rolesService: RolesService,
     private readonly languagesService: LanguagesService,
-    private readonly mailingService: MailingService,
+    private readonly mailingService: MailingService
   ) {}
 
   async create(createUserDto: CreateUserDto) {
     const user = this.usersRepository.create(createUserDto);
     const defaultRole = await this.rolesService.getRoleByName(
-      RoleNamesEnum.USER,
+      RoleNamesEnum.USER
     );
     if (!defaultRole)
-      throw new UnauthorizedException({ message: 'No default role found' });
+      throw new UnauthorizedException({ message: "No default role found" });
     user.roles = [defaultRole];
     return await this.usersRepository.save(user);
   }
 
   async confirmEmail(userId: number) {
     const user = await this.findOneById(userId);
-    if (!user) throw new NotFoundException({ message: 'User was not found' });
+    if (!user) throw new NotFoundException({ message: "User was not found" });
     user.isEmailConfirmed = true;
     await this.usersRepository.save(user);
     return;
@@ -75,6 +76,24 @@ export class UsersService {
       where: {
         email: Equal(email),
       },
+    });
+  }
+
+  async findOAuthUser(dto: OAuthResponseDto) {
+    const { email, providerType, providerId } = dto;
+    const getEntityProviderIdField = () => {
+      if (providerType === OauthProviderTypesEnum.Yandex) return "yandexUserId";
+      if (providerType === OauthProviderTypesEnum.VK) return "vkUserId";
+      if (providerType === OauthProviderTypesEnum.Google) return "googleUserId";
+      return "";
+    };
+
+    return await this.usersRepository.findOne({
+      relations: { roles: true },
+      where: [
+        { email: Equal(email) },
+        { [getEntityProviderIdField()]: Equal(dto.providerId) },
+      ],
     });
   }
 
@@ -95,7 +114,7 @@ export class UsersService {
       skip: dto.page * dto.pageSize,
       take: dto.pageSize,
       order: {
-        id: 'desc',
+        id: "desc",
       },
       where: {
         blockedUntil:
@@ -139,7 +158,7 @@ export class UsersService {
         id: Equal(userId),
       },
     });
-    if (!user) throw new NotFoundException({ message: 'User was not found' });
+    if (!user) throw new NotFoundException({ message: "User was not found" });
     // delete roles
     user.roles = user.roles.filter((r) => r.name !== RoleNamesEnum.MODERATOR);
     // delete associated info
@@ -160,7 +179,7 @@ export class UsersService {
         id: Equal(userId),
       },
     });
-    if (!user) throw new NotFoundException({ message: 'User was not found' });
+    if (!user) throw new NotFoundException({ message: "User was not found" });
     user.blockedUntil = new Date(dto.blockEnd);
     user.blockReason = dto.reason;
     await this.refreshTokensRepository.remove(user.refreshTokens);
@@ -168,20 +187,38 @@ export class UsersService {
     await this.usersRepository.save(user);
     if (!user.receiveEmails) return;
     this.mailingService.sendEmail(
-      new BlockUserEmail({ blocked: true, comment: dto.reason }, user),
+      new BlockUserEmail({ blocked: true, comment: dto.reason }, user)
     );
     return;
   }
 
   async unblockUser(userId: number) {
     const user = await this.findOneById(userId);
-    if (!user) throw new NotFoundException({ message: 'User was not found' });
+    if (!user) throw new NotFoundException({ message: "User was not found" });
     user.blockedUntil = null;
     user.blockReason = null;
     await this.usersRepository.save(user);
     if (!user.receiveEmails) return;
     this.mailingService.sendEmail(new BlockUserEmail({ blocked: false }, user));
     return;
+  }
+
+  async updateUserOAuthData(userId: number, dto: OAuthResponseDto) {
+    return await this.usersRepository.save({
+      id: userId,
+      googleUserId:
+        dto.providerType === OauthProviderTypesEnum.Google
+          ? dto.providerId
+          : undefined,
+      vkUserId:
+        dto.providerType === OauthProviderTypesEnum.VK
+          ? dto.providerId
+          : undefined,
+      yandexUserId:
+        dto.providerType === OauthProviderTypesEnum.Yandex
+          ? dto.providerId
+          : undefined,
+    });
   }
 
   async saveModerator(userId: number, dto: SaveModeratorDto) {
@@ -194,7 +231,7 @@ export class UsersService {
         roles: true,
       },
     });
-    if (!user) throw new NotFoundException({ message: 'User was not found' });
+    if (!user) throw new NotFoundException({ message: "User was not found" });
     const updatedModerator = this.moderatorsRepository.create({
       id: user.moderator?.id,
       phone: dto.phone || user.moderator?.phone,
@@ -205,10 +242,10 @@ export class UsersService {
       user.roles.findIndex((r) => r.name === RoleNamesEnum.MODERATOR) === -1
     ) {
       const moderatorRole = await this.rolesService.getRoleByName(
-        RoleNamesEnum.MODERATOR,
+        RoleNamesEnum.MODERATOR
       );
       if (!moderatorRole)
-        throw new NotFoundException({ message: 'Moderator role not found' });
+        throw new NotFoundException({ message: "Moderator role not found" });
       user.roles.push(moderatorRole);
     }
     await this.usersRepository.save(user);
@@ -242,10 +279,10 @@ export class UsersService {
         id: Equal(id),
       },
     });
-    if (!user) throw new NotFoundException({ message: 'User was not found' });
+    if (!user) throw new NotFoundException({ message: "User was not found" });
     if (updateUserDto.preferredLanguageId) {
       const language = await this.languagesService.findOneById(
-        updateUserDto.preferredLanguageId,
+        updateUserDto.preferredLanguageId
       );
       user.preferredLanguage = language;
     } else {

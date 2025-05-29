@@ -54,7 +54,7 @@ export class GoogleOAuthStrategy extends PassportStrategy(
       const payload = ticket.getPayload() as TokenPayload;
 
       return new OAuthResponseDto({
-        providerId: payload.sub,
+        providerId: `${payload.sub}`,
         providerType: OauthProviderTypesEnum.Google,
         email: payload.email,
         firstName: payload.given_name,

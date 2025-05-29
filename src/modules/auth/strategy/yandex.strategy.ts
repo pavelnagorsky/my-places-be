@@ -23,6 +23,7 @@ import {
   IVkOAuthTokensResponse,
   IVkUserResponse,
   IYandexOAuthTokensResponse,
+  IYandexUserResponse,
 } from "../interfaces/interfaces";
 import { YandexOauthRequestDto } from "../dto/yandex-oauth-request.dto";
 
@@ -38,6 +39,7 @@ export class YandexOauthStrategy extends PassportStrategy(
     super();
   }
 
+  // Notice: API requests won't work in local environment. To be called only from https + domain
   async validate(req: Request): Promise<OAuthResponseDto> {
     try {
       // 1. Convert and validate request body
@@ -46,7 +48,6 @@ export class YandexOauthStrategy extends PassportStrategy(
       if (errors.length > 0) {
         throw new BadRequestException();
       }
-      console.log(dto);
 
       // 2. Exchange code for tokens
       const clientId =
@@ -56,7 +57,6 @@ export class YandexOauthStrategy extends PassportStrategy(
       const authHeader = Buffer.from(`${clientId}:${clientSecret}`).toString(
         "base64"
       );
-
       const tokensResponse = await firstValueFrom(
         this.httpService.post<IYandexOAuthTokensResponse>(
           `https://oauth.yandex.ru/token`,
@@ -72,7 +72,6 @@ export class YandexOauthStrategy extends PassportStrategy(
           }
         )
       );
-      console.log("tokens fetched", tokensResponse, tokensResponse.status);
       if (tokensResponse.data.error)
         throw new BadRequestException({
           message: tokensResponse.data.error_description,
@@ -80,16 +79,16 @@ export class YandexOauthStrategy extends PassportStrategy(
 
       // 3. Fetch profile
       const profileResponse = await firstValueFrom(
-        this.httpService.get<IVkUserResponse>(`https://login.yandex.ru/info`, {
-          // params: {
-          //   // oauth_token: tokensResponse.data.access_token,
-          // },
-          headers: {
-            Authorization: `OAuth ${dto.authCode}`,
-          },
-        })
+        this.httpService.get<IYandexUserResponse>(
+          `https://login.yandex.ru/info`,
+          {
+            headers: {
+              Authorization: `OAuth ${tokensResponse.data.access_token}`,
+            },
+          }
+        )
       );
-      console.log("profile", profileResponse.data, profileResponse.status);
+
       if (!profileResponse.data)
         throw new BadRequestException({
           message: `No user or no user email`,
@@ -97,13 +96,13 @@ export class YandexOauthStrategy extends PassportStrategy(
       const user = profileResponse.data;
 
       return new OAuthResponseDto({
-        providerId: ``,
+        providerId: `${user.id}`,
         providerType: OauthProviderTypesEnum.Yandex,
-        email: "",
-        firstName: "",
-        lastName: "",
-        accessToken: null,
-        refreshToken: null,
+        email: user.default_email,
+        firstName: user.first_name,
+        lastName: user.last_name,
+        accessToken: tokensResponse.data.access_token,
+        refreshToken: tokensResponse.data.refresh_token,
       });
     } catch (error) {
       console.log(

@@ -84,19 +84,26 @@ export class AuthService {
   // 4) if count of refresh tokens in db > 10 delete previous tokens
   async login(loginDto: LoginDto, userAgent: string | null): Promise<ITokens> {
     const user = await this.validateUser(loginDto);
+    // handle tokens
+    const tokens = await this.handleUserTokens(user, userAgent);
+
+    this.logger.log(
+      `LOGIN success! ID: ${user.id}, Access Token: ${tokens.accessToken}`
+    );
+    return tokens;
+  }
+
+  private async handleUserTokens(user: User, userAgent?: string | null) {
     // generate tokens
     const tokens = await this.generateTokens(user);
     // save refresh token in db
     const savedToken = await this.saveRefreshToken(
       user.id,
       tokens.refreshToken,
-      userAgent
+      userAgent ?? null
     );
     this.revalidateRefreshTokens(user.id, savedToken.id);
 
-    this.logger.log(
-      `LOGIN success! ID: ${user.id}, Access Token: ${tokens.accessToken}`
-    );
     return tokens;
   }
 
@@ -363,26 +370,37 @@ export class AuthService {
     });
   }
 
-  async handleOAuth(dto: OAuthResponseDto, userAgent?: string) {
-    console.log(dto);
+  async handleOAuth(dto: OAuthResponseDto, userAgent?: string | null) {
+    // Step 1: Look Up the User by Email and provider id
+    const user = await this.usersService.findOAuthUser(dto);
 
-    // Step 1: Look Up the User by Email
-    const user = await this.usersService.findUserByEmail(dto.email);
-    // TODO: If the user isn’t found via email, check for a matching Google sub ID.
-
-    // // Step 2: If user found, sign tokens
-    // if (user) {
-    //   // generate tokens
-    //   const tokens = await this.generateTokens(user);
-    //   // save refresh token in db
-    //   const savedToken = await this.saveRefreshToken(
-    //     user.id,
-    //     tokens.refreshToken,
-    //     userAgent ?? null
-    //   );
-    //   this.revalidateRefreshTokens(user.id, savedToken.id);
-    // } else {
-    //   // Step 3: Handle User registration
-    // }
+    // Step 2: If user found, sign tokens
+    if (user) {
+      // update user oauth provider data
+      await this.usersService.updateUserOAuthData(user.id, dto);
+      this.logger.log(
+        `OAUTH LOGIN success! ID ${user.id}, Email: ${user.email}`
+      );
+      // handle tokens
+      const tokens = await this.handleUserTokens(user, userAgent);
+      // Return tokens
+      return tokens;
+    } else {
+      // Step 3: Handle User registration
+      const user = await this.usersService.create({
+        firstName: dto.firstName,
+        lastName: dto.lastName,
+        email: dto.email,
+        password: "",
+        isEmailConfirmed: true,
+      });
+      this.logger.log(
+        `OAUTH SIGNUP success! ID ${user.id}, Email: ${user.email}`
+      );
+      // handle tokens
+      const tokens = await this.handleUserTokens(user, userAgent);
+      // Return tokens
+      return tokens;
+    }
   }
 }

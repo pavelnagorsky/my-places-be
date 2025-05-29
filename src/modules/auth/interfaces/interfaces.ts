@@ -32,3 +32,17 @@ export interface IYandexOAuthTokensResponse {
   error?: string;
   error_description?: string;
 }
+
+export interface IYandexUserResponse {
+  id: string;
+  login: string;
+  client_id: string;
+  display_name: string;
+  real_name: string;
+  first_name: string;
+  last_name: string;
+  sex: "male" | "female";
+  default_email: string;
+  emails: string[];
+  psuid: string;
+}
