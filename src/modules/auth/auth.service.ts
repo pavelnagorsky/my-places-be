@@ -233,6 +233,11 @@ export class AuthService {
         loginError: LoginErrorEnum.USER_BLOCKED,
         blockedUntil: user.blockedUntil,
       });
+    if (!user.password)
+      throw new LoginException({
+        message: "Password is not set, update it by clicking Reset password",
+        loginError: LoginErrorEnum.PASSWORD_NOT_SET,
+      });
     const passwordEquals = await compare(loginDto.password, user.password);
     if (!passwordEquals)
       throw new LoginException({
@@ -394,6 +399,8 @@ export class AuthService {
         password: "",
         isEmailConfirmed: true,
       });
+      // update user oauth provider data
+      await this.usersService.updateUserOAuthData(user.id, dto);
       this.logger.log(
         `OAUTH SIGNUP success! ID ${user.id}, Email: ${user.email}`
       );
