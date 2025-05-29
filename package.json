@@ -20,10 +20,10 @@
     "test:e2e": "jest --config ./test/jest-e2e.json",
     "typeorm": "npm run build && ts-node ./node_modules/typeorm/cli",
     "migration:create": "npm run typeorm -- migration:create",
-    "migration:generate": "npm run typeorm -- migration:generate -d dist/src/database/typeorm.config.js",
-    "migration:run": "npm run typeorm -- migration:run -d dist/src/database/typeorm.config.js",
-    "migration:run-fake": "npm run typeorm -- migration:run --fake -d dist/src/database/typeorm.config.js",
-    "migration:revert": "npm run typeorm -- migration:revert -d dist/src/database/typeorm.config.js"
+    "migration:generate": "npm run typeorm -- migration:generate -d dist/database/typeorm.config.js",
+    "migration:run": "npm run typeorm -- migration:run -d dist/database/typeorm.config.js",
+    "migration:run-fake": "npm run typeorm -- migration:run --fake -d dist/database/typeorm.config.js",
+    "migration:revert": "npm run typeorm -- migration:revert -d dist/database/typeorm.config.js"
   },
   "dependencies": {
     "@google-cloud/storage": "^7.16.0",
@@ -47,10 +47,12 @@
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.0",
     "cookie-parser": "^1.4.6",
+    "google-auth-library": "^9.15.1",
     "handlebars": "^4.7.8",
     "mysql2": "^3.14.1",
     "nodemailer": "^7.0.3",
     "passport": "^0.7.0",
+    "passport-custom": "^1.1.1",
     "passport-jwt": "^4.0.1",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.2.0",
