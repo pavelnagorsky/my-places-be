@@ -39,7 +39,7 @@ jobs:
         run: |
           DEPLOY_DIR="/var/www/www-root/data/www/prod-api.my-places.by"
           # sudo mkdir -p $DEPLOY_DIR
-          # sudo chown -R $USER:$USER $DEPLOY_DIR
+          sudo chown -R www-root:www-root dist/ public/ package.json package-lock.json tsconfig*.json nest-cli.json
           
           # Copy necessary files
           cp -R dist/ $DEPLOY_DIR/
