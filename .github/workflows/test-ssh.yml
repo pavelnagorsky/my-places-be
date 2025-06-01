@@ -10,10 +10,10 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          ssh-key: ${{ secrets.SSH_PRIVATE_KEY }}  # Используем приватный ключ из Secrets
+#      - name: Checkout code
+#        uses: actions/checkout@v4
+#        with:
+#          ssh-key: ${{ secrets.SSH_PRIVATE_KEY }}  # Используем приватный ключ из Secrets
 
       - name: Setup SSH
         run: |
