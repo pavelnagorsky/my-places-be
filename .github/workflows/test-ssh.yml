@@ -37,10 +37,13 @@ jobs:
       # 5. Copy files to deployment directory
       - name: Prepare deployment
         run: |
+          CURRENT_DIR="$(pwd)"
           DEPLOY_DIR="/var/www/www-root/data/www/prod-api.my-places.by"
           # sudo mkdir -p $DEPLOY_DIR
           # sudo chown -R www-root:www-root dist/ public/ package.json package-lock.json tsconfig*.json nest-cli.json
-          
+          cd $DEPLOY_DIR
+          sudo rm -rf dist/ public/ package.json package-lock.json tsconfig*.json nest-cli.json
+          cd $CURRENT_DIR
           # Copy necessary files
           sudo cp -R dist/ $DEPLOY_DIR/
           sudo cp package.json package-lock.json $DEPLOY_DIR/
