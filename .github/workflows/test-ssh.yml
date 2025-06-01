@@ -38,8 +38,6 @@ jobs:
       - name: Prepare deployment
         run: |
           DEPLOY_DIR="/var/www/www-root/data/www/prod-api.my-places.by"
-#          sudo mkdir -p $DEPLOY_DIR
-#          sudo chown -R $USER:$USER $DEPLOY_DIR
           
           # Copy necessary files
           cp -R dist/ $DEPLOY_DIR/
