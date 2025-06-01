@@ -38,6 +38,8 @@ jobs:
       - name: Prepare deployment
         run: |
           DEPLOY_DIR="/var/www/www-root/data/www/prod-api.my-places.by"
+          # sudo mkdir -p $DEPLOY_DIR
+          # sudo chown -R $USER:$USER $DEPLOY_DIR
           
           # Copy necessary files
           cp -R dist/ $DEPLOY_DIR/
@@ -50,8 +52,4 @@ jobs:
         run: |
           # Using PM2 (install first: npm install -g pm2)
           pm2 restart prod-api.my-places.by || \
-          pm2 start npm --name "prod-api.my-places.by" -- start --prefix /var/www/www-root/data/www/prod-api.my-places.by    
-
-
-#      - name: Test SSH Connection to GitHub
-#        run: ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_ed25519 user@my-places.by "touch ~/1"
+          pm2 start npm --name "prod-api.my-places.by" -- start --prefix /var/www/www-root/data/www/prod-api.my-places.by
