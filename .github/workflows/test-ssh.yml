@@ -42,10 +42,10 @@ jobs:
           sudo chown -R www-root:www-root dist/ public/ package.json package-lock.json tsconfig*.json nest-cli.json
           
           # Copy necessary files
-          cp -R dist/ $DEPLOY_DIR/
-          cp package.json package-lock.json $DEPLOY_DIR/
-          cp -R public/ $DEPLOY_DIR/  # If you have public folder
-          cp tsconfig*.json nest-cli.json $DEPLOY_DIR/  # Config files
+          sudo cp -R dist/ $DEPLOY_DIR/
+          sudo cp package.json package-lock.json $DEPLOY_DIR/
+          sudo cp -R public/ $DEPLOY_DIR/  # If you have public folder
+          sudo cp tsconfig*.json nest-cli.json $DEPLOY_DIR/  # Config files
 
       # 6. Restart application
       - name: Restart application
