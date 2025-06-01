@@ -50,6 +50,7 @@ jobs:
       # 6. Restart application
       - name: Restart application
         run: |
+          PATH=$PATH:/var/www/www-root/data/.nvm/versions/node/v23.11.0/bin:/var/www/www-root/data/.nvm/versions/node/v23.11.0/bin
           # Using PM2 (install first: npm install -g pm2)
           pm2 restart prod-api.my-places.by || \
           pm2 start npm --name "prod-api.my-places.by" -- start --prefix /var/www/www-root/data/www/prod-api.my-places.by
