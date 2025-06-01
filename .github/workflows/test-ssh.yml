@@ -38,9 +38,7 @@ jobs:
       - name: Prepare deployment
         run: |
           CURRENT_DIR="$(pwd)"
-          DEPLOY_DIR="/var/www/www-root/data/www/prod-api.my-places.by"
-          # sudo mkdir -p $DEPLOY_DIR
-          # sudo chown -R www-root:www-root dist/ public/ package.json package-lock.json tsconfig*.json nest-cli.json
+          DEPLOY_DIR="/var/www/www-root/data/www/prod-api.my-places.by"      
           cd $DEPLOY_DIR
           sudo rm -rf dist/ public/ package.json package-lock.json tsconfig*.json nest-cli.json
           cd $CURRENT_DIR
@@ -49,11 +47,13 @@ jobs:
           sudo cp package.json package-lock.json $DEPLOY_DIR/
           sudo cp -R public/ $DEPLOY_DIR/  # If you have public folder
           sudo cp tsconfig*.json nest-cli.json $DEPLOY_DIR/  # Config files
+          cd $DEPLOY_DIR
+          sudo chown -R www-root:www-root dist/ public/ package.json package-lock.json tsconfig*.json nest-cli.json
 
       # 6. Restart application
       - name: Restart application
         run: |
+          su - www-root
           PATH=$PATH:/var/www/www-root/data/.nvm/versions/node/v23.11.0/bin:/var/www/www-root/data/.nvm/versions/node/v23.11.0/bin
           # Using PM2 (install first: npm install -g pm2)
-          pm2 restart prod-api.my-places.by || \
-          pm2 start npm --name "prod-api.my-places.by" -- start --prefix /var/www/www-root/data/www/prod-api.my-places.by
+          pm2 restart prod-api.my-places.by
