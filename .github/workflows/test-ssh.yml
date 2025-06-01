@@ -1,0 +1,26 @@
+name: Test SSH Connection
+
+on:
+  workflow_dispatch:  # Manual trigger
+  push:
+    branches: [ git_actions ]
+
+jobs:
+  test-ssh:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ssh-key: ${{ secrets.SSH_PRIVATE_KEY }}  # Используем приватный ключ из Secrets
+
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan my-places.by >> ~/.ssh/known_hosts
+
+      - name: Test SSH Connection to GitHub
+        run: ssh -T user@my-places.by
