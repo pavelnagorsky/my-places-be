@@ -31,7 +31,7 @@ jobs:
           chmod 600 ~/.ssh/id_ed25519
           ssh-keygen -l -f ~/.ssh/id_ed25519
           # Проверка, что ключ читается
-          ssh-keygen -y -f ~/.ssh/id_ed25519         
+#          ssh-keygen -y -f ~/.ssh/id_ed25519
 
       - name: Test SSH Connection to GitHub
         run: ssh -T user@my-places.by
