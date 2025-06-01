@@ -33,4 +33,4 @@ jobs:
           # Проверка, что ключ читается
 
       - name: Test SSH Connection to GitHub
-        run: ssh -i ~/.ssh/id_ed25519 user@my-places.by "touch ~/1"
+        run: ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_ed25519 user@my-places.by "touch ~/1"
