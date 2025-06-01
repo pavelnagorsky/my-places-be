@@ -53,7 +53,7 @@ jobs:
 #          NODE_ENV: production
 
       - name: Test
-        run: echo "hello world"
+        run: touch ~/test
 
 
 #      - name: Test SSH Connection to GitHub
