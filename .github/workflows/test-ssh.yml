@@ -10,50 +10,27 @@ jobs:
     runs-on: self-hosted
 
     steps:
-#      - name: Checkout code
-#        uses: actions/checkout@v4
-#        with:
-#          ssh-key: ${{ secrets.SSH_PRIVATE_KEY }}  # Используем приватный ключ из Secrets
-
-#      - name: Setup SSH
-#        run: |
-#          mkdir -p ~/.ssh
-#          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
-#          chmod 600 ~/.ssh/id_ed25519
-#          ssh-keyscan my-places.by >> ~/.ssh/known_hosts
-
-#      - name: Setup SSH key
-#        env:
-#          PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
-#        run: |
-#          mkdir -p ~/.ssh
-#          echo "$PRIVATE_KEY" > ~/.ssh/id_ed25519
-#          chmod 600 ~/.ssh/id_ed25519
-
       # CI
 
-#      # 1. Checkout code
-#      - name: Checkout repository
-#        uses: actions/checkout@v4
-#
-#      # 2. Setup Node.js
-#      - name: Setup Node.js
-#        uses: actions/setup-node@v4
-#        with:
-#          node-version: '22' # or your preferred version
-#
-#      # 3. Install dependencies
-#      - name: Install dependencies
-#        run: npm i
-#
-#      # 4. Build production code
-#      - name: Build production bundle
-#        run: npm run build
-#        env:
-#          NODE_ENV: production
+      # 1. Checkout code
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-      - name: Test
-        run: touch ~/test
+      # 2. Setup Node.js
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22' # or your preferred version
+
+      # 3. Install dependencies
+      - name: Install dependencies
+        run: npm i
+
+      # 4. Build production code
+      - name: Build production bundle
+        run: npm run build
+        env:
+          NODE_ENV: production
 
 
 #      - name: Test SSH Connection to GitHub
