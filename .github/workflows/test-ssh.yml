@@ -15,12 +15,20 @@ jobs:
 #        with:
 #          ssh-key: ${{ secrets.SSH_PRIVATE_KEY }}  # Используем приватный ключ из Secrets
 
-      - name: Setup SSH
+#      - name: Setup SSH
+#        run: |
+#          mkdir -p ~/.ssh
+#          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
+#          chmod 600 ~/.ssh/id_ed25519
+#          ssh-keyscan my-places.by >> ~/.ssh/known_hosts
+
+      - name: Validate SSH Key
         run: |
           mkdir -p ~/.ssh
           echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
           chmod 600 ~/.ssh/id_ed25519
-          ssh-keyscan my-places.by >> ~/.ssh/known_hosts
+          # Проверка, что ключ читается
+          ssh-keygen -y -f ~/.ssh/id_ed25519         
 
       - name: Test SSH Connection to GitHub
         run: ssh -T user@my-places.by
