@@ -598,6 +598,7 @@ export class ExcursionsService {
         "placeTranslations.languageId = :langId",
         { langId }
       )
+      .innerJoin("place.type", "placeType")
       .select("excursion.id") // Only select the ID for the IN clause
       .where("excursion.status = :status", {
         status: ExcursionStatusesEnum.APPROVED,
@@ -618,6 +619,12 @@ export class ExcursionsService {
     if (dto.regionIds?.length) {
       subQuery.andWhere("excursion.regionId IN (:...regionIds)", {
         regionIds: dto.regionIds,
+      });
+    }
+
+    if (dto.placeTypeIds?.length) {
+      subQuery.andWhere("placeType.id IN (:...placeTypeIds)", {
+        placeTypeIds: dto.placeTypeIds,
       });
     }
 
