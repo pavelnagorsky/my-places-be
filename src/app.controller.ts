@@ -15,7 +15,7 @@ export class AppController {
   })
   @Get("status")
   getStatus(): string {
-    return "OK";
+    return "OK.";
   }
 
   @ApiOperation({ summary: "Drop all cache" })

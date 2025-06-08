@@ -56,4 +56,7 @@ jobs:
           sudo su - www-root
           PATH=$PATH:/var/www/www-root/data/.nvm/versions/node/v23.11.0/bin:/var/www/www-root/data/.nvm/versions/node/v23.11.0/bin
           # Using PM2 (install first: npm install -g pm2)
-          pm2 restart prod-api.my-places.by
+          pm2 list
+          pm2 restart prod-api.my-places.by --update-env -- run start:prod || \
+          pm2 start npm --name 'prod-api.my-places.by' -- run start:prod
+          pm2 save
