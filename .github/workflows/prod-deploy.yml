@@ -3,7 +3,7 @@ name: Prod deploy
 on:
   workflow_dispatch:  # Manual trigger
   push:
-    branches: [ git_actions ]
+    branches: [ prod ]
 
 jobs:
   prod-deploy:
