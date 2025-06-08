@@ -11,11 +11,11 @@ export class AppController {
 
   @ApiOperation({ summary: "Check server status" })
   @ApiOkResponse({
-    description: "Server is working.",
+    description: "Server is working!",
   })
   @Get("status")
   getStatus(): string {
-    return "OK.";
+    return "OK";
   }
 
   @ApiOperation({ summary: "Drop all cache" })
