@@ -1,4 +1,4 @@
-name: Test SSH Connection
+name: Prod deploy
 
 on:
   workflow_dispatch:  # Manual trigger
