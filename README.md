@@ -40,6 +40,7 @@ $ npm install
 
 ## ➤ Migration
 
+
 ```bash
 # ➤ generate
 $ npm run migration:generate migrations/migration-name
