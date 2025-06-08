@@ -1,0 +1,59 @@
+name: Prod deploy
+
+on:
+  workflow_dispatch:  # Manual trigger
+  push:
+    branches: [ git_actions ]
+
+jobs:
+  test-ssh:
+    runs-on: self-hosted
+
+    steps:
+      # CI
+
+      # 1. Checkout code
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # 2. Setup Node.js
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22' # or your preferred version
+
+      # 3. Install dependencies
+      - name: Install dependencies
+        run: npm i
+
+      # 4. Build production code
+      - name: Build production bundle
+        run: npm run build
+        env:
+          NODE_ENV: production
+
+      # CD
+
+      # 5. Copy files to deployment directory
+      - name: Prepare deployment
+        run: |
+          CURRENT_DIR="$(pwd)"
+          DEPLOY_DIR="/var/www/www-root/data/www/prod-api.my-places.by"      
+          cd $DEPLOY_DIR
+          sudo rm -rf dist/ public/ package.json package-lock.json tsconfig*.json nest-cli.json
+          cd $CURRENT_DIR
+          # Copy necessary files
+          sudo cp -R dist/ $DEPLOY_DIR/
+          sudo cp package.json package-lock.json $DEPLOY_DIR/
+          sudo cp -R public/ $DEPLOY_DIR/  # If you have public folder
+          sudo cp tsconfig*.json nest-cli.json $DEPLOY_DIR/  # Config files
+          cd $DEPLOY_DIR
+          sudo chown -R www-root:www-root dist/ public/ package.json package-lock.json tsconfig*.json nest-cli.json
+
+      # 6. Restart application
+      - name: Restart application
+        run: |
+          sudo -u www-root env PATH=$PATH:/var/www/www-root/data/.nvm/versions/node/v23.11.0/bin \
+          pm2 restart prod-api.my-places.by --update-env -- run start:prod || \
+          sudo -u www-root env PATH=$PATH:/var/www/www-root/data/.nvm/versions/node/v23.11.0/bin \
+          pm2 start npm --name 'prod-api.my-places.by' -- run start:prod
