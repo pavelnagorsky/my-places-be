@@ -6,7 +6,7 @@ on:
     branches: [ git_actions ]
 
 jobs:
-  test-ssh:
+  prod-deploy:
     runs-on: self-hosted
 
     steps:
