@@ -1,7 +1,7 @@
-import { BadRequestException, Injectable, Logger } from '@nestjs/common';
-import { CreateRouteDto } from './dto/create-route.dto';
-import { UpdateRouteDto } from './dto/update-route.dto';
-import { InjectRepository } from '@nestjs/typeorm';
+import { BadRequestException, Injectable, Logger } from "@nestjs/common";
+import { CreateRouteDto } from "./dto/create-route.dto";
+import { UpdateRouteDto } from "./dto/update-route.dto";
+import { InjectRepository } from "@nestjs/typeorm";
 import {
   Between,
   Equal,
@@ -10,25 +10,25 @@ import {
   LessThanOrEqual,
   MoreThanOrEqual,
   Repository,
-} from 'typeorm';
-import { Route } from './entities/route.entity';
-import { User } from '../users/entities/user.entity';
-import { AccessTokenPayloadDto } from '../auth/dto/access-token-payload.dto';
-import { RoutesListRequestDto } from './dto/routes-list-request.dto';
-import { RoutesListOrderByEnum } from './enums/routes-list-order-by.enum';
-import { RoutePlace } from './entities/route-place.entity';
-import { IGoogleCloudConfig } from '../../config/configuration';
-import { firstValueFrom } from 'rxjs';
-import { IGoogleDirectionsApiResponse } from '../search/interfaces/interfaces';
-import { HttpService } from '@nestjs/axios';
+} from "typeorm";
+import { Route } from "./entities/route.entity";
+import { User } from "../users/entities/user.entity";
+import { AccessTokenPayloadDto } from "../auth/dto/access-token-payload.dto";
+import { RoutesListRequestDto } from "./dto/routes-list-request.dto";
+import { RoutesListOrderByEnum } from "./enums/routes-list-order-by.enum";
+import { RoutePlace } from "./entities/route-place.entity";
+import { IGoogleCloudConfig } from "../../config/configuration";
+import { firstValueFrom } from "rxjs";
+import { IGoogleDirectionsApiResponse } from "../search/interfaces/interfaces";
+import { HttpService } from "@nestjs/axios";
 
-import { Place } from '../places/entities/place.entity';
-import { PlaceStatusesEnum } from '../places/enums/place-statuses.enum';
-import { GoogleMapsService } from '../google-maps/google-maps.service';
+import { Place } from "../places/entities/place.entity";
+import { PlaceStatusesEnum } from "../places/enums/place-statuses.enum";
+import { GoogleMapsService } from "../google-maps/google-maps.service";
 
 @Injectable()
 export class RoutesService {
-  private readonly logger = new Logger('Search service');
+  private readonly logger = new Logger("Search service");
   constructor(
     @InjectRepository(Route)
     private routesRepository: Repository<Route>,
@@ -36,7 +36,7 @@ export class RoutesService {
     private routesPlacesRepository: Repository<RoutePlace>,
     @InjectRepository(Place)
     private placesRepository: Repository<Place>,
-    private readonly googleMapsService: GoogleMapsService,
+    private readonly googleMapsService: GoogleMapsService
   ) {}
 
   async create(dto: CreateRouteDto, user: User) {
@@ -45,15 +45,15 @@ export class RoutesService {
       dto.coordinatesStart,
       dto.coordinatesEnd,
       places.map((p) => p.coordinates),
-      dto.travelMode,
+      dto.travelMode
     );
     const routePlaces = await this.routesPlacesRepository.save(
       dto.placeIds.map((id, index) => ({
         place: { id: id },
         distance: routeDetails.distanceLegs[index] ?? 0,
-        duration: routeDetails.durationLegs[index],
+        duration: routeDetails.durationLegs[index] ?? 0,
         position: index,
-      })),
+      }))
     );
     const route = this.routesRepository.create({
       coordinatesStart: dto.coordinatesStart,
@@ -75,9 +75,9 @@ export class RoutesService {
   async findMyRoutes(
     dto: RoutesListRequestDto,
     langId: number,
-    tokenPayload: AccessTokenPayloadDto,
+    tokenPayload: AccessTokenPayloadDto
   ) {
-    const orderDirection = dto.orderAsc ? 'ASC' : 'DESC';
+    const orderDirection = dto.orderAsc ? "ASC" : "DESC";
 
     const getDateWhereOption = () => {
       if (!!dto.dateFrom && !!dto.dateTo)
@@ -108,7 +108,7 @@ export class RoutesService {
           dto.orderBy === RoutesListOrderByEnum.DURATION
             ? orderDirection
             : undefined,
-        routePlaces: { position: 'asc' },
+        routePlaces: { position: "asc" },
       },
       select: {
         routePlaces: {
@@ -167,7 +167,7 @@ export class RoutesService {
           },
         },
       },
-      order: { routePlaces: { position: 'asc' } },
+      order: { routePlaces: { position: "asc" } },
       where: {
         id: id,
         routePlaces: {
@@ -189,7 +189,7 @@ export class RoutesService {
       dto.coordinatesStart,
       dto.coordinatesEnd,
       places.map((p) => p.coordinates),
-      dto.travelMode,
+      dto.travelMode
     );
 
     const routePlaces = await this.routesPlacesRepository.save(
@@ -197,9 +197,9 @@ export class RoutesService {
         route: { id },
         place: { id: placeId },
         distance: routeDetails.distanceLegs[index] ?? 0,
-        duration: routeDetails.durationLegs[index],
+        duration: routeDetails.durationLegs[index] ?? 0,
         position: index,
-      })),
+      }))
     );
     const route = this.routesRepository.create({
       id,
@@ -220,7 +220,7 @@ export class RoutesService {
 
   async remove(id: number) {
     const deleted = await this.routesRepository.remove(
-      this.routesRepository.create({ id }),
+      this.routesRepository.create({ id })
     );
     return { id };
   }

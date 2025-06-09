@@ -91,10 +91,8 @@ export class ExcursionsService {
     );
     const excursionPlaces = await this.excursionPlacesRepository.save(
       dto.places.map((placeDto, index) => {
-        const distance =
-          index === 0 ? 0 : routeDetails.distanceLegs[index - 1] ?? 0;
-        const duration =
-          index === 0 ? 0 : routeDetails.durationLegs[index - 1] ?? 0;
+        const distance = routeDetails.distanceLegs[index] ?? 0;
+        const duration = routeDetails.durationLegs[index] ?? 0;
         return {
           place: { id: placeDto.id },
           excursionDuration: placeDto.excursionDuration,
@@ -236,8 +234,8 @@ export class ExcursionsService {
         place: { id: placeDto.id },
         excursionDuration: placeDto.excursionDuration,
         translations: excursionPlacesTranslations[index],
-        distance: routeDetails.distanceLegs[index + 1] ?? 0,
-        duration: routeDetails.durationLegs[index + 1] ?? 0,
+        distance: routeDetails.distanceLegs[index] ?? 0,
+        duration: routeDetails.durationLegs[index] ?? 0,
         position: index,
       }))
     );
