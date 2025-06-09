@@ -40,8 +40,6 @@ export class SearchService implements OnModuleInit {
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
     @InjectRepository(Place)
     private placesRepository: Repository<Place>,
-    @InjectRepository(Review)
-    private reviewsRepository: Repository<Review>,
     private readonly googleMapsService: GoogleMapsService
   ) {}
 
