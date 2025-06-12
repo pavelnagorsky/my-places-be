@@ -118,7 +118,7 @@ export class ExcursionsService {
       author: user,
       type: dto.type,
       travelMode: dto.travelMode,
-      region: { id: dto.regionId },
+      region: dto.regionId ? { id: dto.regionId } : null,
     });
 
     const { id } = await this.excursionsRepository.save(excursion);
@@ -247,7 +247,7 @@ export class ExcursionsService {
       excursionPlaces: excursionPlaces,
       type: dto.type,
       travelMode: dto.travelMode,
-      region: { id: dto.regionId },
+      region: dto.regionId ? { id: dto.regionId } : null,
     });
     if (!byAdmin) {
       excursion.status = ExcursionStatusesEnum.MODERATION;

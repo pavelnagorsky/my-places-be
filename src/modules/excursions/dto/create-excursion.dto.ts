@@ -6,6 +6,7 @@ import {
   IsDateString,
   IsEnum,
   IsNumber,
+  IsOptional,
   IsString,
   MaxLength,
 } from "class-validator";
@@ -52,7 +53,12 @@ export class CreateExcursionDto {
   @IsEnum(ExcursionTypesEnum)
   type: ExcursionTypesEnum;
 
-  @ApiProperty({ type: Number, description: "Excursion region ID" })
+  @ApiProperty({
+    type: Number,
+    nullable: true,
+    description: "Excursion region ID",
+  })
+  @IsOptional()
   @IsNumber()
-  regionId: number;
+  regionId: number | null;
 }
