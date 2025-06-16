@@ -459,6 +459,23 @@ export class SearchService implements OnModuleInit {
     return [paginationResult, orderedResult.length];
   }
 
+  async getPlacesCountByTypes() {
+    const cachedPlaces =
+      (await this.cacheManager.get<Place[]>(this.placesSearchCacheKey)) || [];
+    const museumPlaceTypeId = 2;
+    const churchPlaceTypeId = 6;
+    let museumsCount = 0;
+    let churchesCount = 0;
+
+    for (const place of cachedPlaces) {
+      const typeId = place.type?.id;
+      if (typeId === museumPlaceTypeId) museumsCount++;
+      else if (typeId === churchPlaceTypeId) churchesCount++;
+    }
+
+    return { museumsCount, churchesCount };
+  }
+
   // Cron job to recreate search cache every 4 hours
   @Interval(4 * 60 * 60 * 10000)
   private async handleCreateCacheCron() {

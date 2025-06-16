@@ -24,6 +24,7 @@ import { SearchRequestDto } from "./dto/search-request.dto";
 import { SearchPlaceDto } from "./dto/search-place.dto";
 import { OptionsSearchResponseDto } from "./dto/options-search-response.dto";
 import { OptionsSearchRequestDto } from "./dto/options-search-request.dto";
+import { PlacesCountByTypesDto } from "./dto/places-count-by-types.dto";
 
 @ApiTags("Search")
 @Controller("search")
@@ -121,5 +122,17 @@ export class SearchController {
       pageSize: dto.pageSize,
       totalItems: total,
     });
+  }
+
+  @ApiOperation({ summary: "Get places count by popular types" })
+  @ApiOkResponse({
+    description: "OK",
+    type: PlacesCountByTypesDto,
+  })
+  @UseInterceptors(ClassSerializerInterceptor)
+  @Get("places-count")
+  async getPlacesCountByTypes() {
+    const data = await this.searchService.getPlacesCountByTypes();
+    return new PlacesCountByTypesDto(data);
   }
 }
