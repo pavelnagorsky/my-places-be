@@ -1,13 +1,18 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { IsNumber, IsString, MaxLength } from 'class-validator';
+import { ApiProperty } from "@nestjs/swagger";
+import { IsEnum, IsNumber, IsString, MaxLength } from "class-validator";
+import { StatisticEntitiesEnum } from "../enums/statistic-entities.enum";
 
 export class CreateReportDto {
-  @ApiProperty({ title: 'Text', type: String })
+  @ApiProperty({ title: "Text", type: String })
   @IsString()
   @MaxLength(500)
   text: string;
 
-  @ApiProperty({ title: 'Place id', type: Number })
+  @ApiProperty({ title: "Entity id", type: Number })
   @IsNumber()
-  placeId: number;
+  entityId: number;
+
+  @ApiProperty({ title: "Entity type", enum: StatisticEntitiesEnum })
+  @IsEnum(StatisticEntitiesEnum)
+  entityType: StatisticEntitiesEnum;
 }

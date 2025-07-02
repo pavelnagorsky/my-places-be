@@ -14,8 +14,8 @@ import {
 
 import { Place } from "../../places/entities/place.entity";
 import { Moderator } from "./moderator.entity";
-import { Like } from "../../likes/entities/like.entity";
-import { Comment } from "../../comments/entities/comment.entity";
+import { PlaceLike } from "../../places/modules/place-likes/entities/place-like.entity";
+import { PlaceComment } from "../../places/modules/place-comments/entities/place-comment.entity";
 import { Role } from "../../roles/entities/role.entity";
 import { Image } from "../../images/entities/image.entity";
 import { Review } from "../../reviews/entities/review.entity";
@@ -88,14 +88,14 @@ export class User {
   @JoinTable()
   roles: Role[];
 
-  @OneToMany(() => Like, (like) => like.user)
-  likes: Like[];
+  @OneToMany(() => PlaceLike, (like) => like.user)
+  likes: PlaceLike[];
 
   @OneToMany(() => Image, (image) => image.user)
   images: Image[];
 
-  @OneToMany(() => Comment, (comment) => comment.user)
-  comments: Comment[];
+  @OneToMany(() => PlaceComment, (comment) => comment.user)
+  comments: PlaceComment[];
 
   @OneToMany(() => RefreshTokenEntity, (rToken) => rToken.user)
   refreshTokens: RefreshTokenEntity[];

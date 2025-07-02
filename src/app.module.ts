@@ -14,9 +14,7 @@ import { UsersModule } from "./modules/users/users.module";
 import { RolesModule } from "./modules/roles/roles.module";
 import { MailingModule } from "./modules/mailing/mailing.module";
 import { PlaceCategoriesModule } from "./modules/place-categories/place-categories.module";
-import { CommentsModule } from "./modules/comments/comments.module";
 import { ReviewsModule } from "./modules/reviews/reviews.module";
-import { LikesModule } from "./modules/likes/likes.module";
 import { ReportsModule } from "./modules/reports/reports.module";
 import { FeedbackModule } from "./modules/feedback/feedback.module";
 import { FavouritesModule } from "./modules/favourites/favourites.module";
@@ -50,9 +48,7 @@ import { ExcursionsModule } from "./modules/excursions/excursions.module";
     RolesModule,
     MailingModule,
     PlaceCategoriesModule,
-    CommentsModule,
     ReviewsModule,
-    LikesModule,
     ReportsModule,
     FeedbackModule,
     FavouritesModule,

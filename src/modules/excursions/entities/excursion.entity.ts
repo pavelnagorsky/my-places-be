@@ -14,6 +14,10 @@ import { ExcursionTranslation } from "./excursion-translation.entity";
 import { ExcursionStatusesEnum } from "../enums/excursion-statuses.enum";
 import { ExcursionTypesEnum } from "../enums/excursion-types.enum";
 import { Region } from "../../regions/entities/region.entity";
+import { ExcursionLike } from "../modules/excursion-likes/entities/excursion-like.entity";
+import { PlaceComment } from "../../places/modules/place-comments/entities/place-comment.entity";
+import { ExcursionComment } from "../modules/excursion-comments/entities/excursion-comment.entity";
+import { Report } from "../../reports/entities/report.entity";
 
 @Entity()
 export class Excursion extends BaseEntity {
@@ -62,6 +66,17 @@ export class Excursion extends BaseEntity {
   @Column({ default: 0 })
   viewsCount: number;
 
+  @Column({ default: 0 })
+  likesCount: number;
+
+  @OneToMany(() => ExcursionLike, (like) => like.excursion, { cascade: true })
+  likes: ExcursionLike[];
+
+  @OneToMany(() => ExcursionComment, (comment) => comment.excursion, {
+    cascade: true,
+  })
+  comments: ExcursionComment[];
+
   @ManyToOne(() => User, (user) => user.excursionsModeration)
   moderator: User;
 
@@ -70,6 +85,9 @@ export class Excursion extends BaseEntity {
 
   @ManyToOne(() => Region, (region) => region.excursions, { nullable: true })
   region: Region | null;
+
+  @OneToMany(() => Report, (report) => report.excursion, { cascade: true })
+  reports: Report[];
 
   @Column({ type: "varchar", length: 1500, nullable: true, default: null })
   moderationMessage: string | null;
