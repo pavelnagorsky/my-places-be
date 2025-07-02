@@ -5,6 +5,8 @@ import { ExcursionPlace } from "../entities/excursion-place.entity";
 import { ExcursionTypesEnum } from "../enums/excursion-types.enum";
 import { TravelModesEnum } from "src/modules/routes/enums/travel-modes.enum";
 import { Excursion } from "../entities/excursion.entity";
+import { ExcursionComment } from "../modules/excursion-comments/entities/excursion-comment.entity";
+import { ExcursionLike } from "../modules/excursion-likes/entities/excursion-like.entity";
 
 export class ExcursionsSearchItemDto {
   @ApiProperty({ title: "Excursion id", type: Number })
@@ -73,6 +75,15 @@ export class ExcursionsSearchItemDto {
 
   @ApiProperty({ title: "Views count", type: Number })
   viewsCount: number;
+
+  @ApiProperty({ type: Number, description: "Likes count" })
+  likesCount: number;
+
+  @Exclude()
+  comments: ExcursionComment[];
+
+  @Exclude()
+  likes: ExcursionLike[];
 
   constructor(partial: Partial<Excursion>) {
     Object.assign(this, partial);

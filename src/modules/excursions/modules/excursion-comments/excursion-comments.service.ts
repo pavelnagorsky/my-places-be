@@ -2,25 +2,24 @@ import {
   BadRequestException,
   Injectable,
   NotFoundException,
-} from '@nestjs/common';
-import { Equal, Repository } from 'typeorm';
-import { Comment } from './entities/comment.entity';
-import { InjectRepository } from '@nestjs/typeorm';
-import { CreateCommentDto } from './dto/create-comment.dto';
-import { Place } from '../places/entities/place.entity';
-import { User } from '../users/entities/user.entity';
-import { UpdateCommentDto } from './dto/update-comment.dto';
-
+} from "@nestjs/common";
+import { Equal, Repository } from "typeorm";
+import { ExcursionComment } from "./entities/excursion-comment.entity";
+import { InjectRepository } from "@nestjs/typeorm";
+import { User } from "../../../users/entities/user.entity";
+import { UpdateCommentDto } from "../../../places/modules/place-comments/dto/update-comment.dto";
+import { CreateCommentDto } from "../../../places/modules/place-comments/dto/create-comment.dto";
+import { Excursion } from "../../entities/excursion.entity";
 @Injectable()
-export class CommentsService {
+export class ExcursionCommentsService {
   constructor(
-    @InjectRepository(Comment)
-    private readonly commentsRepository: Repository<Comment>,
+    @InjectRepository(ExcursionComment)
+    private readonly commentsRepository: Repository<ExcursionComment>
   ) {}
 
   async checkCanManage(userId: number, commentId: number) {
     // check if user is owner of comment
-    return await this.commentsRepository.exist({
+    return await this.commentsRepository.exists({
       where: {
         user: {
           id: Equal(userId),
@@ -30,18 +29,18 @@ export class CommentsService {
     });
   }
 
-  async findAllPlaceComments(placeId: number, userId?: number) {
+  async findAllExcursionComments(excursionId: number, userId?: number) {
     const comments = await this.commentsRepository.find({
       relations: {
         user: true,
       },
       where: {
-        place: {
-          id: Equal(placeId),
+        excursion: {
+          id: Equal(excursionId),
         },
       },
       order: {
-        createdAt: 'desc',
+        createdAt: "desc",
       },
       select: {
         user: {
@@ -54,7 +53,7 @@ export class CommentsService {
     return comments;
   }
 
-  private async findOnePlaceComment(commentId: number, canManage: boolean) {
+  private async findOneExcursionComment(commentId: number, canManage: boolean) {
     const comment = await this.commentsRepository.findOne({
       relations: {
         user: true,
@@ -71,38 +70,38 @@ export class CommentsService {
       },
     });
     if (!comment)
-      throw new NotFoundException({ message: 'Comment was not found' });
+      throw new NotFoundException({ message: "Comment was not found" });
     return { ...comment, canManage: canManage };
   }
 
-  async createPlaceComment(
-    placeId: number,
+  async createExcursionComment(
+    excursionId: number,
     userId: number,
-    createCommentDto: CreateCommentDto,
+    createCommentDto: CreateCommentDto
   ) {
-    const comment = new Comment();
-    comment.place = new Place();
-    comment.place.id = placeId;
+    const comment = new ExcursionComment();
+    comment.excursion = new Excursion();
+    comment.excursion.id = excursionId;
     comment.user = new User();
     comment.user.id = userId;
     comment.text = createCommentDto.text;
     const saved = await this.commentsRepository.save(comment);
-    return this.findOnePlaceComment(saved.id, true);
+    return this.findOneExcursionComment(saved.id, true);
   }
 
   async updateComment(commentId: number, updateCommentDto: UpdateCommentDto) {
     const comment = await this.commentsRepository.findOne({
       where: { id: Equal(commentId) },
     });
-    if (!comment) throw new NotFoundException({ message: 'Comment not found' });
+    if (!comment) throw new NotFoundException({ message: "Comment not found" });
     comment.text = updateCommentDto.text;
     const saved = await this.commentsRepository.save(comment);
-    return this.findOnePlaceComment(saved.id, true);
+    return this.findOneExcursionComment(saved.id, true);
   }
 
   async deleteComment(id: number) {
     const result = await this.commentsRepository.delete({ id: Equal(id) });
-    if (typeof result.affected === 'number' && result.affected > 0) return true;
-    throw new BadRequestException({ message: 'Comment not found' });
+    if (typeof result.affected === "number" && result.affected > 0) return true;
+    throw new BadRequestException({ message: "Comment not found" });
   }
 }

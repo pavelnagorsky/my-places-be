@@ -1,5 +1,5 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
+import { BadRequestException, Injectable } from "@nestjs/common";
+import { InjectRepository } from "@nestjs/typeorm";
 import {
   Between,
   ILike,
@@ -7,24 +7,23 @@ import {
   LessThanOrEqual,
   MoreThanOrEqual,
   Repository,
-} from 'typeorm';
-import { Report } from './entities/report.entity';
-import { CreateReportDto } from './dto/create-report.dto';
-import { PlacesService } from '../places/places.service';
-import { ReportsRequestDto } from './dto/reports-request.dto';
-import { ReportsOrderByEnum } from './enums/reports-order-by.enum';
-import { ChangeStatusDto } from './dto/change-status-dto';
+} from "typeorm";
+import { Report } from "./entities/report.entity";
+import { CreateReportDto } from "./dto/create-report.dto";
+import { ReportsRequestDto } from "./dto/reports-request.dto";
+import { ReportsOrderByEnum } from "./enums/reports-order-by.enum";
+import { ChangeStatusDto } from "./dto/change-status-dto";
+import { StatisticEntitiesEnum } from "./enums/statistic-entities.enum";
 
 @Injectable()
 export class ReportsService {
   constructor(
     @InjectRepository(Report)
-    private reportsRepository: Repository<Report>,
-    private placesService: PlacesService,
+    private reportsRepository: Repository<Report>
   ) {}
 
   async getAll(dto: ReportsRequestDto) {
-    const orderDirection = dto.orderAsc ? 'ASC' : 'DESC';
+    const orderDirection = dto.orderAsc ? "ASC" : "DESC";
 
     const getDateWhereOption = () => {
       if (!!dto.dateFrom && !!dto.dateTo)
@@ -39,38 +38,57 @@ export class ReportsService {
       take: dto.pageSize,
       where: {
         createdAt: getDateWhereOption(),
+        entityType:
+          !!dto.entityTypes && dto.entityTypes.length > 0
+            ? In(dto.entityTypes)
+            : undefined,
         status:
           !!dto.statuses && dto.statuses.length > 0
             ? In(dto.statuses)
             : undefined,
         text:
           !!dto.search && dto.search.trim().length > 0
-            ? ILike(`%${dto.search || ''}%`)
+            ? ILike(`%${dto.search || ""}%`)
             : undefined,
       },
       order: {
         createdAt:
-          dto.orderBy === ReportsOrderByEnum.CREATED_AT || !dto.orderBy
+          dto.orderBy === ReportsOrderByEnum.CreatedAt || !dto.orderBy
             ? orderDirection
             : undefined,
         place: {
           slug:
-            dto.orderBy === ReportsOrderByEnum.PLACE_SLUG
+            dto.orderBy === ReportsOrderByEnum.EntitySlug
+              ? orderDirection
+              : undefined,
+        },
+        excursion: {
+          slug:
+            dto.orderBy === ReportsOrderByEnum.EntitySlug
               ? orderDirection
               : undefined,
         },
         status:
-          dto.orderBy === ReportsOrderByEnum.STATUS
+          dto.orderBy === ReportsOrderByEnum.Status
+            ? orderDirection
+            : undefined,
+        entityType:
+          dto.orderBy === ReportsOrderByEnum.EntityType
             ? orderDirection
             : undefined,
         text:
-          dto.orderBy === ReportsOrderByEnum.TEXT ? orderDirection : undefined,
+          dto.orderBy === ReportsOrderByEnum.Text ? orderDirection : undefined,
       },
       relations: {
         place: true,
+        excursion: true,
       },
       select: {
         place: {
+          slug: true,
+          id: true,
+        },
+        excursion: {
           slug: true,
           id: true,
         },
@@ -79,14 +97,21 @@ export class ReportsService {
   }
 
   async create(dto: CreateReportDto) {
-    const placeExists = await this.placesService.checkExist(dto.placeId);
-    if (!placeExists)
-      throw new BadRequestException({ message: 'Place not exists' });
     const report = this.reportsRepository.create({
       text: dto.text,
-      place: {
-        id: dto.placeId,
-      },
+      entityType: dto.entityType,
+      place:
+        dto.entityType === StatisticEntitiesEnum.Place
+          ? {
+              id: dto.entityId,
+            }
+          : undefined,
+      excursion:
+        dto.entityType === StatisticEntitiesEnum.Excursion
+          ? {
+              id: dto.entityId,
+            }
+          : undefined,
     });
     const saved = await this.reportsRepository.save(report);
     return saved;
@@ -104,7 +129,7 @@ export class ReportsService {
     });
 
     if (!report)
-      throw new BadRequestException({ message: 'Report not exists' });
+      throw new BadRequestException({ message: "Report not exists" });
 
     report.status = dto.status;
 

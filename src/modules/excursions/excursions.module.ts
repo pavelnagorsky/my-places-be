@@ -11,6 +11,8 @@ import { GoogleMapsModule } from "../google-maps/google-maps.module";
 import { TranslationsModule } from "../translations/translations.module";
 import { MailingModule } from "../mailing/mailing.module";
 import { RegionsModule } from "../regions/regions.module";
+import { ExcursionCommentsModule } from "./modules/excursion-comments/excursion-comments.module";
+import { ExcursionLikesModule } from "./modules/excursion-likes/excursion-likes.module";
 
 @Module({
   imports: [
@@ -18,6 +20,8 @@ import { RegionsModule } from "../regions/regions.module";
     TranslationsModule,
     MailingModule,
     RegionsModule,
+    ExcursionCommentsModule,
+    ExcursionLikesModule,
     TypeOrmModule.forFeature([
       Excursion,
       ExcursionTranslation,
@@ -28,6 +32,6 @@ import { RegionsModule } from "../regions/regions.module";
   ],
   controllers: [ExcursionsController],
   providers: [ExcursionsService],
-  exports: [RegionsModule],
+  exports: [RegionsModule, ExcursionCommentsModule, ExcursionLikesModule],
 })
 export class ExcursionsModule {}

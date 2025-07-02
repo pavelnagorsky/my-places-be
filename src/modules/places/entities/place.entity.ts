@@ -10,22 +10,22 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   JoinColumn,
-} from 'typeorm';
-import { User } from '../../users/entities/user.entity';
-import { PlaceType } from '../../place-types/entities/place-type.entity';
-import { Image } from '../../images/entities/image.entity';
-import { Like } from '../../likes/entities/like.entity';
-import { Comment } from '../../comments/entities/comment.entity';
-import { PlaceCategory } from '../../place-categories/entities/place-category.entity';
-import { PlaceStatusesEnum } from '../enums/place-statuses.enum';
-import { Review } from '../../reviews/entities/review.entity';
-import { Report } from '../../reports/entities/report.entity';
-import { PlaceTranslation } from './place-translation.entity';
-import { Favourite } from '../../favourites/entities/favourite.entity';
-import { Language } from '../../languages/entities/language.entity';
-import { Route } from '../../routes/entities/route.entity';
-import { RoutePlace } from '../../routes/entities/route-place.entity';
-import { ExcursionPlace } from '../../excursions/entities/excursion-place.entity';
+} from "typeorm";
+import { User } from "../../users/entities/user.entity";
+import { PlaceType } from "../../place-types/entities/place-type.entity";
+import { Image } from "../../images/entities/image.entity";
+import { PlaceLike } from "../modules/place-likes/entities/place-like.entity";
+import { PlaceComment } from "../modules/place-comments/entities/place-comment.entity";
+import { PlaceCategory } from "../../place-categories/entities/place-category.entity";
+import { PlaceStatusesEnum } from "../enums/place-statuses.enum";
+import { Review } from "../../reviews/entities/review.entity";
+import { Report } from "../../reports/entities/report.entity";
+import { PlaceTranslation } from "./place-translation.entity";
+import { Favourite } from "../../favourites/entities/favourite.entity";
+import { Language } from "../../languages/entities/language.entity";
+import { Route } from "../../routes/entities/route.entity";
+import { RoutePlace } from "../../routes/entities/route-place.entity";
+import { ExcursionPlace } from "../../excursions/entities/excursion-place.entity";
 
 @Entity()
 export class Place {
@@ -44,13 +44,13 @@ export class Place {
   @OneToMany(() => Image, (image) => image.place, { cascade: true })
   images: Image[];
 
-  @OneToMany(() => Comment, (comment) => comment.place, { cascade: true })
-  comments: Comment[];
+  @OneToMany(() => PlaceComment, (comment) => comment.place, { cascade: true })
+  comments: PlaceComment[];
 
   @OneToMany(() => Report, (report) => report.place, { cascade: true })
   reports: Report[];
 
-  @Column({ type: 'varchar', nullable: true })
+  @Column({ type: "varchar", nullable: true })
   website: string | null;
 
   @ManyToOne(() => PlaceType, (type) => type.places)
@@ -66,7 +66,7 @@ export class Place {
   @Column({ default: false })
   advertisement: boolean;
 
-  @Column({ type: 'datetime', nullable: true })
+  @Column({ type: "datetime", nullable: true })
   advEndDate: Date | null;
 
   @ManyToOne(() => Language, (language) => language.places)
@@ -78,7 +78,7 @@ export class Place {
   @ManyToOne(() => User, (user) => user.placesModeration)
   moderator: User;
 
-  @Column({ type: 'varchar', length: 1500, nullable: true, default: null })
+  @Column({ type: "varchar", length: 1500, nullable: true, default: null })
   moderationMessage: string | null;
 
   @Column({ default: 0 })
@@ -87,8 +87,8 @@ export class Place {
   @Column({ default: 0 })
   viewsCount: number;
 
-  @OneToMany(() => Like, (like) => like.place, { cascade: true })
-  likes: Like[];
+  @OneToMany(() => PlaceLike, (like) => like.place, { cascade: true })
+  likes: PlaceLike[];
 
   @Column({ default: PlaceStatusesEnum.MODERATION })
   status: PlaceStatusesEnum;

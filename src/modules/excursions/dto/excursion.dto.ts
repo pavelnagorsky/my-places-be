@@ -9,6 +9,9 @@ import { Excursion } from "../entities/excursion.entity";
 import { User } from "../../users/entities/user.entity";
 import { ExcursionStatusesEnum } from "../enums/excursion-statuses.enum";
 import { RegionDto } from "../../regions/dto/region.dto";
+import { PlaceLike } from "../../places/modules/place-likes/entities/place-like.entity";
+import { ExcursionLike } from "../modules/excursion-likes/entities/excursion-like.entity";
+import { ExcursionComment } from "../modules/excursion-comments/entities/excursion-comment.entity";
 
 export class ExcursionDto {
   @ApiProperty({ title: "Excursion id", type: Number })
@@ -94,6 +97,9 @@ export class ExcursionDto {
   @ApiProperty({ title: "Views count", type: Number })
   viewsCount: number;
 
+  @ApiProperty({ type: Number, description: "Likes count" })
+  likesCount: number;
+
   @ApiProperty({
     type: String,
     description: "Excursion images",
@@ -130,6 +136,12 @@ export class ExcursionDto {
 
   @Exclude()
   author: User;
+
+  @Exclude()
+  comments: ExcursionComment[];
+
+  @Exclude()
+  likes: ExcursionLike[];
 
   @ApiProperty({ type: String, description: "Author username" })
   @Expose()

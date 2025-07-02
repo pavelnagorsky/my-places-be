@@ -308,9 +308,15 @@ export class ExcursionsService {
             ? orderDirection
             : undefined,
       },
+      loadRelationIds: {
+        relations: ["comments"],
+      },
       select: {
+        id: true,
         translations: { title: true },
         author: { firstName: true, lastName: true, email: true },
+        likesCount: true,
+        viewsCount: true,
         excursionPlaces: {
           position: true,
           id: true,
@@ -387,6 +393,7 @@ export class ExcursionsService {
       },
       select: {
         translations: true,
+        likesCount: true,
         id: true,
         type: true,
         distance: true,
@@ -697,6 +704,7 @@ export class ExcursionsService {
       "excursion.type",
       "excursion.travelMode",
       "excursion.viewsCount",
+      "excursion.likesCount",
       "translations.title",
       "translations.description",
       "excursionPlaces.position",
