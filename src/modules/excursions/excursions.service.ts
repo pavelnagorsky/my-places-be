@@ -312,11 +312,8 @@ export class ExcursionsService {
         relations: ["comments"],
       },
       select: {
-        id: true,
         translations: { title: true },
         author: { firstName: true, lastName: true, email: true },
-        likesCount: true,
-        viewsCount: true,
         excursionPlaces: {
           position: true,
           id: true,
@@ -683,7 +680,8 @@ export class ExcursionsService {
         queryBuilder.orderBy("translations.title", orderDirection);
         break;
       case ExcursionsSearchOrderByEnum.RATING:
-        queryBuilder.orderBy("excursion.viewsCount", orderDirection);
+        queryBuilder.orderBy("excursion.likesCount", orderDirection);
+        queryBuilder.addOrderBy("excursion.viewsCount", orderDirection);
         break;
       case ExcursionsSearchOrderByEnum.CREATED_AT:
       default:
