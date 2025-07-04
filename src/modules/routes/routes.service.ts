@@ -19,7 +19,7 @@ import { RoutesListOrderByEnum } from "./enums/routes-list-order-by.enum";
 import { RoutePlace } from "./entities/route-place.entity";
 import { IGoogleCloudConfig } from "../../config/configuration";
 import { firstValueFrom } from "rxjs";
-import { IGoogleDirectionsApiResponse } from "../search/interfaces/interfaces";
+import { IGoogleDirectionsApiResponse } from "../places/modules/search/interfaces/interfaces";
 import { HttpService } from "@nestjs/axios";
 
 import { Place } from "../places/entities/place.entity";

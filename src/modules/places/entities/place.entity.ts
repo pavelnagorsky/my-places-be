@@ -12,16 +12,16 @@ import {
   JoinColumn,
 } from "typeorm";
 import { User } from "../../users/entities/user.entity";
-import { PlaceType } from "../../place-types/entities/place-type.entity";
+import { PlaceType } from "../modules/place-types/entities/place-type.entity";
 import { Image } from "../../images/entities/image.entity";
 import { PlaceLike } from "../modules/place-likes/entities/place-like.entity";
 import { PlaceComment } from "../modules/place-comments/entities/place-comment.entity";
-import { PlaceCategory } from "../../place-categories/entities/place-category.entity";
+import { PlaceCategory } from "../modules/place-categories/entities/place-category.entity";
 import { PlaceStatusesEnum } from "../enums/place-statuses.enum";
-import { Review } from "../../reviews/entities/review.entity";
+import { Review } from "../modules/reviews/entities/review.entity";
 import { Report } from "../../reports/entities/report.entity";
 import { PlaceTranslation } from "./place-translation.entity";
-import { Favourite } from "../../favourites/entities/favourite.entity";
+import { Favourite } from "../modules/favourites/entities/favourite.entity";
 import { Language } from "../../languages/entities/language.entity";
 import { Route } from "../../routes/entities/route.entity";
 import { RoutePlace } from "../../routes/entities/route-place.entity";

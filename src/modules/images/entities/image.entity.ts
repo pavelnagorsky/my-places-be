@@ -5,12 +5,12 @@ import {
   ManyToOne,
   OneToOne,
   CreateDateColumn,
-} from 'typeorm';
-import { Place } from '../../places/entities/place.entity';
-import { PlaceType } from '../../place-types/entities/place-type.entity';
-import { PlaceCategory } from '../../place-categories/entities/place-category.entity';
-import { User } from '../../users/entities/user.entity';
-import { Review } from '../../reviews/entities/review.entity';
+} from "typeorm";
+import { Place } from "../../places/entities/place.entity";
+import { PlaceType } from "../../places/modules/place-types/entities/place-type.entity";
+import { PlaceCategory } from "../../places/modules/place-categories/entities/place-category.entity";
+import { User } from "../../users/entities/user.entity";
+import { Review } from "../../places/modules/reviews/entities/review.entity";
 
 @Entity()
 export class Image {
@@ -20,38 +20,38 @@ export class Image {
   @Column()
   url: string;
 
-  @Column({ type: 'tinyint', default: 0 })
+  @Column({ type: "tinyint", default: 0 })
   position: number;
 
   @CreateDateColumn()
   createdAt: Date;
 
-  @ManyToOne(() => Place, (place) => place.images, { onDelete: 'CASCADE' })
+  @ManyToOne(() => Place, (place) => place.images, { onDelete: "CASCADE" })
   place: Place;
 
-  @ManyToOne(() => Review, (review) => review.images, { onDelete: 'CASCADE' })
+  @ManyToOne(() => Review, (review) => review.images, { onDelete: "CASCADE" })
   review: Review;
 
   @ManyToOne(() => User, (user) => user.images)
   user: User;
 
   @OneToOne(() => PlaceType, (placeType) => placeType.image, {
-    onDelete: 'CASCADE',
+    onDelete: "CASCADE",
   })
   placeType: PlaceType;
 
   @OneToOne(() => PlaceType, (placeType) => placeType.image2, {
-    onDelete: 'CASCADE',
+    onDelete: "CASCADE",
   })
   placeType2: PlaceType;
 
   @OneToOne(() => PlaceCategory, (placeCategory) => placeCategory.image, {
-    onDelete: 'CASCADE',
+    onDelete: "CASCADE",
   })
   placeCategory: PlaceCategory;
 
   @OneToOne(() => PlaceCategory, (placeCategory) => placeCategory.image2, {
-    onDelete: 'CASCADE',
+    onDelete: "CASCADE",
   })
   placeCategory2: PlaceCategory;
 }

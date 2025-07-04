@@ -3,9 +3,9 @@ import {
   Injectable,
   Logger,
   NotFoundException,
-} from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Place } from './entities/place.entity';
+} from "@nestjs/common";
+import { InjectRepository } from "@nestjs/typeorm";
+import { Place } from "./entities/place.entity";
 import {
   And,
   Between,
@@ -19,34 +19,34 @@ import {
   MoreThanOrEqual,
   Not,
   Repository,
-} from 'typeorm';
-import { CreatePlaceDto } from './dto/create-place.dto';
-import { TranslationsService } from '../translations/translations.service';
-import { PlaceType } from '../place-types/entities/place-type.entity';
-import { PlaceCategory } from '../place-categories/entities/place-category.entity';
-import { ImagesService } from '../images/images.service';
-import { User } from '../users/entities/user.entity';
-import { AccessTokenPayloadDto } from '../auth/dto/access-token-payload.dto';
-import { UpdatePlaceDto } from './dto/update-place.dto';
-import { PlaceStatusesEnum } from './enums/place-statuses.enum';
-import { PlaceTranslation } from './entities/place-translation.entity';
-import { MyPlacesOrderByEnum } from './enums/my-places-order-by.enum';
-import { MyPlacesRequestDto } from './dto/my-places-request.dto';
-import { ModerationPlacesRequestDto } from './dto/moderation-places-request.dto';
-import { ModerationPlacesOrderByEnum } from './enums/moderation-places-order-by.enum';
-import { ModerationDto } from './dto/moderation.dto';
-import { LanguageIdEnum } from '../languages/enums/language-id.enum';
-import { MailingService } from '../mailing/mailing.service';
-import { PlaceEmail } from '../mailing/emails/place.email';
-import { PlaceForEmailDto } from './dto/place-for-email.dto';
-import { ChangePlaceStatusDto } from './dto/change-place-status.dto';
-import { Review } from '../reviews/entities/review.entity';
-import { Cron, CronExpression } from '@nestjs/schedule';
-import { SearchService } from '../search/search.service';
+} from "typeorm";
+import { CreatePlaceDto } from "./dto/create-place.dto";
+import { TranslationsService } from "../translations/translations.service";
+import { PlaceType } from "./modules/place-types/entities/place-type.entity";
+import { PlaceCategory } from "./modules/place-categories/entities/place-category.entity";
+import { ImagesService } from "../images/images.service";
+import { User } from "../users/entities/user.entity";
+import { AccessTokenPayloadDto } from "../auth/dto/access-token-payload.dto";
+import { UpdatePlaceDto } from "./dto/update-place.dto";
+import { PlaceStatusesEnum } from "./enums/place-statuses.enum";
+import { PlaceTranslation } from "./entities/place-translation.entity";
+import { MyPlacesOrderByEnum } from "./enums/my-places-order-by.enum";
+import { MyPlacesRequestDto } from "./dto/my-places-request.dto";
+import { ModerationPlacesRequestDto } from "./dto/moderation-places-request.dto";
+import { ModerationPlacesOrderByEnum } from "./enums/moderation-places-order-by.enum";
+import { ModerationDto } from "./dto/moderation.dto";
+import { LanguageIdEnum } from "../languages/enums/language-id.enum";
+import { MailingService } from "../mailing/mailing.service";
+import { PlaceEmail } from "../mailing/emails/place.email";
+import { PlaceForEmailDto } from "./dto/place-for-email.dto";
+import { ChangePlaceStatusDto } from "./dto/change-place-status.dto";
+import { Review } from "./modules/reviews/entities/review.entity";
+import { Cron, CronExpression } from "@nestjs/schedule";
+import { SearchService } from "./modules/search/search.service";
 
 @Injectable()
 export class PlacesService {
-  private readonly logger = new Logger('Places service');
+  private readonly logger = new Logger("Places service");
   constructor(
     @InjectRepository(Place)
     private placesRepository: Repository<Place>,
@@ -61,7 +61,7 @@ export class PlacesService {
     private imagesService: ImagesService,
     private translationsService: TranslationsService,
     private mailingService: MailingService,
-    private searchService: SearchService,
+    private searchService: SearchService
   ) {}
 
   // create translations for place
@@ -83,7 +83,7 @@ export class PlacesService {
               : await this.translationsService.createTranslation(
                   dto.title,
                   lang.code,
-                  sourceLangId,
+                  sourceLangId
                 ),
           description:
             lang.id === sourceLangId
@@ -91,7 +91,7 @@ export class PlacesService {
               : await this.translationsService.createTranslation(
                   dto.description,
                   lang.code,
-                  sourceLangId,
+                  sourceLangId
                 ),
           address:
             lang.id === sourceLangId
@@ -99,13 +99,13 @@ export class PlacesService {
               : await this.translationsService.createTranslation(
                   dto.address,
                   lang.code,
-                  sourceLangId,
+                  sourceLangId
                 ),
           original: lang.id === sourceLangId,
         });
         translations.push(newTranslation);
         return;
-      }),
+      })
     );
 
     return translations;
@@ -116,14 +116,14 @@ export class PlacesService {
     sourceLangId: number,
     place: Place,
     dto: UpdatePlaceDto,
-    translateAll: boolean,
+    translateAll: boolean
   ) {
     const translations: PlaceTranslation[] = [];
 
     // helper function to merge update translations
     const mergeUpdateTranslations = async (
       arrayToSave: PlaceTranslation[],
-      translation: PlaceTranslation,
+      translation: PlaceTranslation
     ) => {
       const newTranslation = this.placeTranslationsRepository.create({
         id: translation.id,
@@ -140,7 +140,7 @@ export class PlacesService {
             ? await this.translationsService.createTranslation(
                 dto.title,
                 translation.language.code,
-                sourceLangId,
+                sourceLangId
               )
             : translation.title,
         description:
@@ -150,7 +150,7 @@ export class PlacesService {
             ? await this.translationsService.createTranslation(
                 dto.description,
                 translation.language.code,
-                sourceLangId,
+                sourceLangId
               )
             : translation.description,
         address:
@@ -160,7 +160,7 @@ export class PlacesService {
             ? await this.translationsService.createTranslation(
                 dto.address,
                 translation.language.code,
-                sourceLangId,
+                sourceLangId
               )
             : translation.address,
         original: translation.language.id === sourceLangId,
@@ -228,7 +228,7 @@ export class PlacesService {
     }
     if (!success) {
       throw new BadRequestException({
-        message: 'Invalid slug',
+        message: "Invalid slug",
       });
     }
     return validatedSlug;
@@ -239,16 +239,16 @@ export class PlacesService {
     const placeCategories = await this.validatePlaceCategories(createPlaceDto);
 
     const placeImages = await this.imagesService.updatePositions(
-      createPlaceDto.imagesIds,
+      createPlaceDto.imagesIds
     );
 
     const detectedLanguageId =
       await this.translationsService.getLanguageIdOfText(
-        createPlaceDto.description,
+        createPlaceDto.description
       );
     const translations = await this.createTranslations(
       detectedLanguageId || langId,
-      createPlaceDto,
+      createPlaceDto
     );
     const titleTranslationRu =
       translations.find((tr) => tr.language.id === LanguageIdEnum.RU)?.title ||
@@ -277,7 +277,7 @@ export class PlacesService {
   async updatePlaceSlug(placeId: number, slug: string) {
     const placeExists = await this.checkExist(placeId);
     if (!placeExists) {
-      throw new NotFoundException({ message: 'Place not exists' });
+      throw new NotFoundException({ message: "Place not exists" });
     }
     await this.placesRepository.save({
       id: placeId,
@@ -288,7 +288,7 @@ export class PlacesService {
 
   private getPlacesSelectFindOptions(
     langId: number,
-    search: string,
+    search: string
   ): FindManyOptions<Place> {
     const shouldApplySearch = search?.length > 0;
     return {
@@ -317,7 +317,7 @@ export class PlacesService {
     tokenPayload: AccessTokenPayloadDto,
     langId: number,
     search: string,
-    placeId: number | null,
+    placeId: number | null
   ) {
     // default sql request options
     const defaultFindOptions = this.getPlacesSelectFindOptions(langId, search);
@@ -365,7 +365,7 @@ export class PlacesService {
     }
     const filteredSearchPlaces = placesSearch.filter(
       (pSearch) =>
-        !filteredUserPlaces.map((pUser) => pUser.id).includes(pSearch.id),
+        !filteredUserPlaces.map((pUser) => pUser.id).includes(pSearch.id)
     );
 
     const totalPlaces = filteredUserPlaces.concat(filteredSearchPlaces);
@@ -377,7 +377,7 @@ export class PlacesService {
     return this.placesRepository
       .createQueryBuilder()
       .update()
-      .set({ viewsCount: () => 'viewsCount + 1' })
+      .set({ viewsCount: () => "viewsCount + 1" })
       .where({ id: Equal(placeId) })
       .execute();
   }
@@ -431,11 +431,11 @@ export class PlacesService {
       },
       order: {
         images: {
-          position: 'ASC',
+          position: "ASC",
         },
       },
     });
-    if (!place) throw new NotFoundException({ message: 'Place not found' });
+    if (!place) throw new NotFoundException({ message: "Place not found" });
     this.addView(place.id);
     return place;
   }
@@ -453,11 +453,11 @@ export class PlacesService {
 
   async getPlacesSlugs() {
     return this.placesRepository
-      .createQueryBuilder('place')
-      .where('place.status = :approvedStatus', {
+      .createQueryBuilder("place")
+      .where("place.status = :approvedStatus", {
         approvedStatus: PlaceStatusesEnum.APPROVED,
       })
-      .select(['place.id', 'place.slug'])
+      .select(["place.id", "place.slug"])
       .getMany();
   }
 
@@ -465,7 +465,7 @@ export class PlacesService {
     placeId: number,
     langId: number,
     updatePlaceDto: UpdatePlaceDto,
-    byAdmin = false,
+    byAdmin = false
   ) {
     try {
       const oldPlace = await this.placesRepository.findOne({
@@ -479,26 +479,26 @@ export class PlacesService {
         },
       });
       if (!oldPlace)
-        throw new BadRequestException({ message: 'Place not exists' });
+        throw new BadRequestException({ message: "Place not exists" });
 
       const placeType = await this.validatePlaceType(updatePlaceDto);
       const placeCategories = await this.validatePlaceCategories(
-        updatePlaceDto,
+        updatePlaceDto
       );
 
       const placeImages = await this.imagesService.updatePositions(
-        updatePlaceDto.imagesIds,
+        updatePlaceDto.imagesIds
       );
 
       const detectedLanguageId =
         await this.translationsService.getLanguageIdOfText(
-          updatePlaceDto.description,
+          updatePlaceDto.description
         );
       const translations = await this.updateTranslations(
         detectedLanguageId || langId,
         oldPlace,
         updatePlaceDto,
-        updatePlaceDto.shouldTranslate,
+        updatePlaceDto.shouldTranslate
       );
 
       const updatedPlace = this.placesRepository.create({
@@ -533,13 +533,13 @@ export class PlacesService {
       if (e instanceof BadRequestException) {
         throw e;
       }
-      throw new BadRequestException({ message: 'Incorrect details' });
+      throw new BadRequestException({ message: "Incorrect details" });
     }
   }
 
   async removePlace(id: number) {
     const deleted = await this.placesRepository.remove(
-      this.placesRepository.create({ id }),
+      this.placesRepository.create({ id })
     );
     this.searchService.updatePlaceInCache(id);
     return { id };
@@ -571,7 +571,7 @@ export class PlacesService {
         likesCount: true,
       },
       loadRelationIds: {
-        relations: ['comments', 'reviews'],
+        relations: ["comments", "reviews"],
       },
       where: {
         id: id,
@@ -596,9 +596,9 @@ export class PlacesService {
   async findMyPlaces(
     langId: number,
     dto: MyPlacesRequestDto,
-    tokenPayload?: AccessTokenPayloadDto,
+    tokenPayload?: AccessTokenPayloadDto
   ) {
-    const orderDirection = dto.orderAsc ? 'ASC' : 'DESC';
+    const orderDirection = dto.orderAsc ? "ASC" : "DESC";
 
     const getDateWhereOption = () => {
       if (!!dto.dateFrom && !!dto.dateTo)
@@ -666,7 +666,7 @@ export class PlacesService {
         likesCount: true,
       },
       loadRelationIds: {
-        relations: ['comments', 'reviews'],
+        relations: ["comments", "reviews"],
       },
       where: {
         author: {
@@ -715,7 +715,7 @@ export class PlacesService {
 
     return await this.getPlaceForEdit(
       id,
-      place?.originalLanguage?.id || LanguageIdEnum.RU,
+      place?.originalLanguage?.id || LanguageIdEnum.RU
     );
   }
 
@@ -758,7 +758,7 @@ export class PlacesService {
         images: true,
       },
       loadRelationIds: {
-        relations: ['categories', 'type'],
+        relations: ["categories", "type"],
       },
       where: {
         id: id,
@@ -770,16 +770,16 @@ export class PlacesService {
       },
       order: {
         images: {
-          position: 'ASC',
+          position: "ASC",
         },
       },
     });
-    if (!place) throw new NotFoundException({ message: 'Place not found' });
+    if (!place) throw new NotFoundException({ message: "Place not found" });
     return place;
   }
 
   async findModerationPlaces(langId: number, dto: ModerationPlacesRequestDto) {
-    const orderDirection = dto.orderAsc ? 'ASC' : 'DESC';
+    const orderDirection = dto.orderAsc ? "ASC" : "DESC";
 
     const getDateWhereOption = () => {
       if (!!dto.dateFrom && !!dto.dateTo)
@@ -882,14 +882,14 @@ export class PlacesService {
 
   async changePlaceStatus(id: number, dto: ChangePlaceStatusDto) {
     const place = await this.placesRepository.findOne({ where: { id: id } });
-    if (!place) throw new NotFoundException({ message: 'Place not found' });
+    if (!place) throw new NotFoundException({ message: "Place not found" });
     const statusChanged = place.status !== dto.status;
     const isCommercialChanged = place.advertisement !== dto.advertisement;
 
     // update status
     place.status = dto.status;
     if (dto.status === PlaceStatusesEnum.REJECTED)
-      place.moderationMessage = dto.message || '';
+      place.moderationMessage = dto.message || "";
     // update commercial
     place.advertisement = dto.advertisement;
     if (dto.advEndDate) place.advEndDate = new Date(dto.advEndDate);
@@ -920,7 +920,7 @@ export class PlacesService {
             advDateChangedOnly: true,
             comment: dto.message,
           },
-      new PlaceForEmailDto(placeForEmail),
+      new PlaceForEmailDto(placeForEmail)
     );
     await this.mailingService.sendEmail(email);
   }
@@ -938,7 +938,7 @@ export class PlacesService {
     });
     if (!place)
       throw new NotFoundException({
-        message: 'Place not found',
+        message: "Place not found",
       });
 
     const updatedStatus = dto.accept
@@ -965,7 +965,7 @@ export class PlacesService {
         status: updatedStatus,
         comment: dto.feedback,
       },
-      new PlaceForEmailDto(placeForEmail),
+      new PlaceForEmailDto(placeForEmail)
     );
     this.mailingService.sendEmail(email);
   }
@@ -974,7 +974,7 @@ export class PlacesService {
     if (newPlaceIdForReviews) {
       await this.reviewsRepository.update(
         { place: { id: id } },
-        { place: { id: newPlaceIdForReviews } },
+        { place: { id: newPlaceIdForReviews } }
       );
     }
     await this.removePlace(id);
@@ -1022,13 +1022,13 @@ export class PlacesService {
         if (!p.author.receiveEmails) return;
         const email = new PlaceEmail(
           { status: PlaceStatusesEnum.NEEDS_PAYMENT },
-          new PlaceForEmailDto(p),
+          new PlaceForEmailDto(p)
         );
         this.mailingService.sendEmail(email);
       } catch (e) {
         this.logger.error(
-          'Cron job: Failed to handleCommercialOutdatedPlaces',
-          e,
+          "Cron job: Failed to handleCommercialOutdatedPlaces",
+          e
         );
       }
     });
@@ -1039,7 +1039,7 @@ export class PlacesService {
   private async handleCommercialNotifications() {
     const currentDate = new Date();
     const oneWeekFromNow = new Date(
-      currentDate.getTime() + 7 * 24 * 60 * 60 * 1000,
+      currentDate.getTime() + 7 * 24 * 60 * 60 * 1000
     );
 
     const places = await this.placesRepository.find({
@@ -1073,9 +1073,9 @@ export class PlacesService {
             new Date(
               oneWeekFromNow.getFullYear(),
               oneWeekFromNow.getMonth(),
-              oneWeekFromNow.getDate(),
-            ),
-          ),
+              oneWeekFromNow.getDate()
+            )
+          )
         ),
       },
     });
@@ -1083,7 +1083,7 @@ export class PlacesService {
       if (!p.author.receiveEmails) return;
       const email = new PlaceEmail(
         { commercialExpires: true },
-        new PlaceForEmailDto(p),
+        new PlaceForEmailDto(p)
       );
       this.mailingService.sendEmail(email);
     });

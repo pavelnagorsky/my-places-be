@@ -1,6 +1,6 @@
-import { AbstractEmail } from './abstract.email';
-import { ReviewStatusesEnum } from '../../reviews/enums/review-statuses.enum';
-import { ReviewForEmailDto } from '../../reviews/dto/review-for-email.dto';
+import { AbstractEmail } from "./abstract.email";
+import { ReviewStatusesEnum } from "../../places/modules/reviews/enums/review-statuses.enum";
+import { ReviewForEmailDto } from "../../places/modules/reviews/dto/review-for-email.dto";
 
 interface IReviewEmailPayload {
   status: ReviewStatusesEnum;
@@ -9,7 +9,7 @@ interface IReviewEmailPayload {
 
 export class ReviewEmail extends AbstractEmail {
   constructor(config: IReviewEmailPayload, review: ReviewForEmailDto) {
-    super('review');
+    super("review");
     this.to = review.email;
 
     const textContent = this.prepareTextContent(config, review);
@@ -29,7 +29,7 @@ export class ReviewEmail extends AbstractEmail {
 
   private prepareTextContent(
     config: IReviewEmailPayload,
-    review: ReviewForEmailDto,
+    review: ReviewForEmailDto
   ): {
     title: string;
     info: string;
@@ -43,7 +43,7 @@ export class ReviewEmail extends AbstractEmail {
 
   private buildInfoTexts(review: ReviewForEmailDto) {
     const title = review.title.trim();
-    const createdAt = review.createdAt.toLocaleDateString('by');
+    const createdAt = review.createdAt.toLocaleDateString("by");
     return {
       [ReviewStatusesEnum.APPROVED]: `Созданная Вами Заметка "${title}" от ${createdAt} успешно прошла модерацию, и опубликована на сайте!`,
       [ReviewStatusesEnum.REJECTED]: `Созданная Вами Заметка "${title}" от ${createdAt} отклонена от публикации.`,
@@ -52,10 +52,10 @@ export class ReviewEmail extends AbstractEmail {
   }
 
   private buildTitleText(status: ReviewStatusesEnum) {
-    if (status === ReviewStatusesEnum.APPROVED) return 'Заметка опубликована';
+    if (status === ReviewStatusesEnum.APPROVED) return "Заметка опубликована";
     if (status === ReviewStatusesEnum.REJECTED)
-      return 'Заметка отклонена от публикации';
-    return 'Заметка переведена на модерацию';
+      return "Заметка отклонена от публикации";
+    return "Заметка переведена на модерацию";
   }
 
   subject: string;

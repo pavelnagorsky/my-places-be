@@ -1,7 +1,7 @@
-import { AbstractEmail } from './abstract.email';
-import { ReviewStatusesEnum } from '../../reviews/enums/review-statuses.enum';
-import { ReviewForEmailDto } from '../../reviews/dto/review-for-email.dto';
-import { User } from '../../users/entities/user.entity';
+import { AbstractEmail } from "./abstract.email";
+import { ReviewStatusesEnum } from "../../places/modules/reviews/enums/review-statuses.enum";
+import { ReviewForEmailDto } from "../../places/modules/reviews/dto/review-for-email.dto";
+import { User } from "../../users/entities/user.entity";
 
 interface IBlockUserEmailPayload {
   blocked: boolean;
@@ -10,7 +10,7 @@ interface IBlockUserEmailPayload {
 
 export class BlockUserEmail extends AbstractEmail {
   constructor(config: IBlockUserEmailPayload, user: User) {
-    super('block-user');
+    super("block-user");
     this.to = user.email;
 
     const textContent = this.prepareTextContent(config, user);
@@ -26,7 +26,7 @@ export class BlockUserEmail extends AbstractEmail {
 
   private prepareTextContent(
     config: IBlockUserEmailPayload,
-    user: User,
+    user: User
   ): {
     title: string;
     info: string;
@@ -39,8 +39,8 @@ export class BlockUserEmail extends AbstractEmail {
 
   private buildInfoText(config: IBlockUserEmailPayload, user: User) {
     const blockedUntil = user.blockedUntil
-      ? user.blockedUntil.toLocaleDateString('by')
-      : '';
+      ? user.blockedUntil.toLocaleDateString("by")
+      : "";
     if (config.blocked) {
       return `По решению администрации сайта, Ваша учетная запись на сайте "Знай свой край" заблокирована до ${blockedUntil} по следующей причине: ${config.comment}`;
     }
@@ -48,8 +48,8 @@ export class BlockUserEmail extends AbstractEmail {
   }
 
   private buildTitleText(blocked: boolean) {
-    if (blocked) return 'Ваша учетная запись заблокирована';
-    return 'Ваша учетная запись разблокирована';
+    if (blocked) return "Ваша учетная запись заблокирована";
+    return "Ваша учетная запись разблокирована";
   }
 
   subject: string;

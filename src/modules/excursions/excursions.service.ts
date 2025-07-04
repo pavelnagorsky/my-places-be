@@ -34,7 +34,7 @@ import { ExcursionStatusesEnum } from "./enums/excursion-statuses.enum";
 import { LanguageIdEnum } from "../languages/enums/language-id.enum";
 import { ExcursionsListOrderByEnum } from "./enums/excursions-list-order-by.enum";
 import { ExcursionsListRequestDto } from "./dto/excursions-list-request.dto";
-import { ReviewStatusesEnum } from "../reviews/enums/review-statuses.enum";
+import { ReviewStatusesEnum } from "../places/modules/reviews/enums/review-statuses.enum";
 import { ExcursionsModerationListRequestDto } from "./dto/excursions-moderation-list-request.dto";
 import { ExcursionsModerationListOrderByEnum } from "./enums/excursions-moderation-list-order-by.enum";
 import { ModerationDto } from "../places/dto/moderation.dto";
