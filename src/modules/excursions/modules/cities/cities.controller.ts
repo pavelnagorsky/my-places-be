@@ -1,17 +1,16 @@
 import {
-  Controller,
-  Get,
-  Post,
   Body,
-  Patch,
-  Param,
-  Delete,
-  NotFoundException,
-  Put,
-  ParseIntPipe,
-  UseInterceptors,
   ClassSerializerInterceptor,
+  Controller,
+  Delete,
+  Get,
+  NotFoundException,
+  Param,
+  ParseIntPipe,
+  Post,
+  Put,
   Query,
+  UseInterceptors,
 } from "@nestjs/common";
 import { CitiesService } from "./cities.service";
 import { CreateCityDto } from "./dto/create-city.dto";
@@ -27,13 +26,8 @@ import {
   ApiTags,
 } from "@nestjs/swagger";
 import { ValidationExceptionDto } from "../../../../shared/validation/validation-exception.dto";
-import { CreatePlaceTypeDto } from "../../../places/modules/place-types/dto/create-place-type.dto";
 import { Auth } from "../../../auth/decorators/auth.decorator";
 import { RoleNamesEnum } from "../../../roles/enums/role-names.enum";
-import { UpdatePlaceTypeDto } from "../../../places/modules/place-types/dto/update-place-type.dto";
-import { PlaceTypeDto } from "../../../places/modules/place-types/dto/place-type.dto";
-import { CacheInterceptor } from "@nestjs/cache-manager";
-import { PlaceTypeAdminDto } from "../../../places/modules/place-types/dto/place-type-admin.dto";
 import { CityDto } from "./dto/city.dto";
 import { CityAdminDto } from "./dto/city-admin.dto";
 
@@ -53,7 +47,7 @@ export class CitiesController {
   @ApiBody({
     type: CreateCityDto,
   })
-  @Auth(RoleNamesEnum.ADMIN)
+  @Auth(RoleNamesEnum.ADMIN, RoleNamesEnum.MODERATOR)
   @Post()
   async create(@Body() dto: CreateCityDto) {
     const city = await this.citiesService.create(dto);
@@ -79,7 +73,7 @@ export class CitiesController {
   @ApiBody({
     type: UpdateCityDto,
   })
-  @Auth(RoleNamesEnum.ADMIN)
+  @Auth(RoleNamesEnum.ADMIN, RoleNamesEnum.MODERATOR)
   @Put(":id")
   async update(
     @Param("id", ParseIntPipe) id: number,

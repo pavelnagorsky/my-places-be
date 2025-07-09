@@ -53,7 +53,7 @@ export class RegionsController {
   @ApiBody({
     type: CreateRegionDto,
   })
-  @Auth(RoleNamesEnum.ADMIN)
+  @Auth(RoleNamesEnum.ADMIN, RoleNamesEnum.MODERATOR)
   @Post()
   async create(@Body() dto: CreateRegionDto) {
     const region = await this.regionsService.create(dto);
@@ -79,7 +79,7 @@ export class RegionsController {
   @ApiBody({
     type: UpdateRegionDto,
   })
-  @Auth(RoleNamesEnum.ADMIN)
+  @Auth(RoleNamesEnum.ADMIN, RoleNamesEnum.MODERATOR)
   @Put(":id")
   async update(
     @Param("id", ParseIntPipe) id: number,

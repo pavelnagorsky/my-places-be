@@ -34,6 +34,9 @@ export class ExcursionsSearchRequestDto extends PaginationRequestDto<ExcursionsS
   @IsNumber(undefined, { each: true })
   @ValidateIf((object, value) => typeof value !== "undefined")
   regionIds?: number[];
+  @IsNumber(undefined, { each: true })
+  @ValidateIf((object, value) => typeof value !== "undefined")
+  cityIds?: number[];
   @ApiProperty({
     type: Number,
     description: "Place type IDs",
