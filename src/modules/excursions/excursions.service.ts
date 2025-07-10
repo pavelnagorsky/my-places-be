@@ -34,7 +34,7 @@ import { ExcursionStatusesEnum } from "./enums/excursion-statuses.enum";
 import { LanguageIdEnum } from "../languages/enums/language-id.enum";
 import { ExcursionsListOrderByEnum } from "./enums/excursions-list-order-by.enum";
 import { ExcursionsListRequestDto } from "./dto/excursions-list-request.dto";
-import { ReviewStatusesEnum } from "../reviews/enums/review-statuses.enum";
+import { ReviewStatusesEnum } from "../places/modules/reviews/enums/review-statuses.enum";
 import { ExcursionsModerationListRequestDto } from "./dto/excursions-moderation-list-request.dto";
 import { ExcursionsModerationListOrderByEnum } from "./enums/excursions-moderation-list-order-by.enum";
 import { ModerationDto } from "../places/dto/moderation.dto";
@@ -43,6 +43,7 @@ import { ExcursionEmail } from "../mailing/emails/excursion.email";
 import { ExcursionForEmailDto } from "./dto/excursion-for-email.dto";
 import { ExcursionsSearchRequestDto } from "./dto/excursions-search-request.dto";
 import { ExcursionsSearchOrderByEnum } from "./enums/excursions-search-order-by.enum";
+import { ExcursionTypesEnum } from "./enums/excursion-types.enum";
 
 @Injectable()
 export class ExcursionsService {
@@ -119,6 +120,10 @@ export class ExcursionsService {
       type: dto.type,
       travelMode: dto.travelMode,
       region: dto.regionId ? { id: dto.regionId } : null,
+      city:
+        !!dto.cityId && dto.type === ExcursionTypesEnum.Overview
+          ? { id: dto.cityId }
+          : null,
     });
 
     const { id } = await this.excursionsRepository.save(excursion);
@@ -239,6 +244,7 @@ export class ExcursionsService {
         position: index,
       }))
     );
+
     const excursion = this.excursionsRepository.create({
       id: id,
       distance: routeDetails.totalDistance,
@@ -248,6 +254,10 @@ export class ExcursionsService {
       type: dto.type,
       travelMode: dto.travelMode,
       region: dto.regionId ? { id: dto.regionId } : null,
+      city:
+        !!dto.cityId && dto.type === ExcursionTypesEnum.Overview
+          ? { id: dto.cityId }
+          : undefined, // Do not sell null
     });
     if (!byAdmin) {
       excursion.status = ExcursionStatusesEnum.MODERATION;
@@ -369,6 +379,9 @@ export class ExcursionsService {
         region: {
           translations: true,
         },
+        city: {
+          translations: true,
+        },
         author: true,
         excursionPlaces: {
           translations: true,
@@ -404,6 +417,10 @@ export class ExcursionsService {
         moderationMessage: true,
         status: true,
         region: {
+          id: true,
+          translations: { title: true },
+        },
+        city: {
           id: true,
           translations: { title: true },
         },
@@ -443,6 +460,12 @@ export class ExcursionsService {
           },
         },
         region: [
+          { id: IsNull() },
+          {
+            translations: { language: { id: langId } },
+          },
+        ],
+        city: [
           { id: IsNull() },
           {
             translations: { language: { id: langId } },
@@ -621,6 +644,12 @@ export class ExcursionsService {
     if (dto.regionIds?.length) {
       subQuery.andWhere("excursion.regionId IN (:...regionIds)", {
         regionIds: dto.regionIds,
+      });
+    }
+
+    if (dto.cityIds?.length) {
+      subQuery.andWhere("excursion.cityId IN (:...cityIds)", {
+        cityIds: dto.cityIds,
       });
     }
 

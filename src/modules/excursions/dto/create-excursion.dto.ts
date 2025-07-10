@@ -61,4 +61,13 @@ export class CreateExcursionDto {
   @IsOptional()
   @IsNumber()
   regionId: number | null;
+
+  @ApiProperty({
+    type: Number,
+    nullable: true,
+    description: "Excursion city ID",
+  })
+  @IsOptional()
+  @IsNumber()
+  cityId?: number | null;
 }

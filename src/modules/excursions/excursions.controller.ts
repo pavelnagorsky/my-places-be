@@ -204,7 +204,7 @@ export class ExcursionsController {
     description: "The ID of the language",
   })
   @UseInterceptors(ClassSerializerInterceptor)
-  @Get("slug/:slug")
+  @Get("slugs/:slug")
   async findOneBySlug(
     @Param("slug") slug: string,
     @Query("lang", ParseIntPipe) langId: number

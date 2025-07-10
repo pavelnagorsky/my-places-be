@@ -18,10 +18,10 @@ import { PlaceLike } from "../../places/modules/place-likes/entities/place-like.
 import { PlaceComment } from "../../places/modules/place-comments/entities/place-comment.entity";
 import { Role } from "../../roles/entities/role.entity";
 import { Image } from "../../images/entities/image.entity";
-import { Review } from "../../reviews/entities/review.entity";
+import { Review } from "../../places/modules/reviews/entities/review.entity";
 import { Report } from "../../reports/entities/report.entity";
 import { Language } from "../../languages/entities/language.entity";
-import { Favourite } from "../../favourites/entities/favourite.entity";
+import { Favourite } from "../../places/modules/favourites/entities/favourite.entity";
 import { RefreshTokenEntity } from "../../auth/entities/refresh-token.entity";
 import { Route } from "../../routes/entities/route.entity";
 import { Excursion } from "../../excursions/entities/excursion.entity";

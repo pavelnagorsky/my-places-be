@@ -8,10 +8,11 @@ import { TravelModesEnum } from "src/modules/routes/enums/travel-modes.enum";
 import { Excursion } from "../entities/excursion.entity";
 import { User } from "../../users/entities/user.entity";
 import { ExcursionStatusesEnum } from "../enums/excursion-statuses.enum";
-import { RegionDto } from "../../regions/dto/region.dto";
+import { RegionDto } from "../modules/regions/dto/region.dto";
 import { PlaceLike } from "../../places/modules/place-likes/entities/place-like.entity";
 import { ExcursionLike } from "../modules/excursion-likes/entities/excursion-like.entity";
 import { ExcursionComment } from "../modules/excursion-comments/entities/excursion-comment.entity";
+import { CityDto } from "../modules/cities/dto/city.dto";
 
 export class ExcursionDto {
   @ApiProperty({ title: "Excursion id", type: Number })
@@ -93,6 +94,9 @@ export class ExcursionDto {
   })
   @Transform(({ value }) => (value ? new RegionDto(value) : null))
   region: RegionDto | null;
+
+  @Transform(({ value }) => (value ? new CityDto(value) : null))
+  city: CityDto | null;
 
   @ApiProperty({ title: "Views count", type: Number })
   viewsCount: number;

@@ -5,7 +5,7 @@ import { CoordinatesDto } from "../../places/dto/coordinates.dto";
 import { ExcursionPlace } from "../entities/excursion-place.entity";
 import { Image } from "../../images/entities/image.entity";
 import { ExcursionPlaceReviewDto } from "./excursion-place-review.dto";
-import { Review } from "../../reviews/entities/review.entity";
+import { Review } from "../../places/modules/reviews/entities/review.entity";
 
 export class ExcursionPlaceDto {
   @ApiProperty({ title: "Place id", type: Number })

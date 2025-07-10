@@ -13,11 +13,12 @@ import { ExcursionPlace } from "./excursion-place.entity";
 import { ExcursionTranslation } from "./excursion-translation.entity";
 import { ExcursionStatusesEnum } from "../enums/excursion-statuses.enum";
 import { ExcursionTypesEnum } from "../enums/excursion-types.enum";
-import { Region } from "../../regions/entities/region.entity";
+import { Region } from "../modules/regions/entities/region.entity";
 import { ExcursionLike } from "../modules/excursion-likes/entities/excursion-like.entity";
 import { PlaceComment } from "../../places/modules/place-comments/entities/place-comment.entity";
 import { ExcursionComment } from "../modules/excursion-comments/entities/excursion-comment.entity";
 import { Report } from "../../reports/entities/report.entity";
+import { City } from "../modules/cities/entities/city.entity";
 
 @Entity()
 export class Excursion extends BaseEntity {
@@ -85,6 +86,9 @@ export class Excursion extends BaseEntity {
 
   @ManyToOne(() => Region, (region) => region.excursions, { nullable: true })
   region: Region | null;
+
+  @ManyToOne(() => City, (city) => city.excursions, { nullable: true })
+  city: City | null;
 
   @OneToMany(() => Report, (report) => report.excursion, { cascade: true })
   reports: Report[];

@@ -1,10 +1,10 @@
 import { ApiProperty } from "@nestjs/swagger";
 import { Exclude, Expose, Transform } from "class-transformer";
 import { TranslationBaseEntity } from "../../translations/entities/translation-base.entity";
-import { PlaceTypeDto } from "../../place-types/dto/place-type.dto";
-import { PlaceType } from "../../place-types/entities/place-type.entity";
-import { PlaceCategoryDto } from "../../place-categories/dto/place-category.dto";
-import { PlaceCategory } from "../../place-categories/entities/place-category.entity";
+import { PlaceTypeDto } from "../modules/place-types/dto/place-type.dto";
+import { PlaceType } from "../modules/place-types/entities/place-type.entity";
+import { PlaceCategoryDto } from "../modules/place-categories/dto/place-category.dto";
+import { PlaceCategory } from "../modules/place-categories/entities/place-category.entity";
 import { Image } from "../../images/entities/image.entity";
 import { Place } from "../entities/place.entity";
 import { PlaceLike } from "../modules/place-likes/entities/place-like.entity";

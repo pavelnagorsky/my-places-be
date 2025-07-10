@@ -1,21 +1,21 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { Exclude, Expose, Transform } from 'class-transformer';
-import { PlaceTranslation } from '../entities/place-translation.entity';
-import { PlaceType } from '../../place-types/entities/place-type.entity';
-import { Place } from '../entities/place.entity';
-import { User } from '../../users/entities/user.entity';
+import { ApiProperty } from "@nestjs/swagger";
+import { Exclude, Expose, Transform } from "class-transformer";
+import { PlaceTranslation } from "../entities/place-translation.entity";
+import { PlaceType } from "../modules/place-types/entities/place-type.entity";
+import { Place } from "../entities/place.entity";
+import { User } from "../../users/entities/user.entity";
 
 export class ModerationPlaceDto {
-  @ApiProperty({ title: 'Place id', type: Number })
+  @ApiProperty({ title: "Place id", type: Number })
   id: number;
 
-  @ApiProperty({ type: String, description: 'Place url path' })
+  @ApiProperty({ type: String, description: "Place url path" })
   slug: string;
 
-  @ApiProperty({ type: String, description: 'Place title' })
+  @ApiProperty({ type: String, description: "Place title" })
   @Expose()
   get title(): string {
-    return this.translations[0]?.title || '';
+    return this.translations[0]?.title || "";
   }
 
   @Exclude()
@@ -24,42 +24,42 @@ export class ModerationPlaceDto {
   @Exclude()
   author: User;
 
-  @ApiProperty({ type: String, description: 'Author username' })
+  @ApiProperty({ type: String, description: "Author username" })
   @Expose()
   get authorName(): string {
     return `${this.author.firstName} ${this.author.lastName}`;
   }
 
-  @ApiProperty({ type: String, description: 'Author email' })
+  @ApiProperty({ type: String, description: "Author email" })
   @Expose()
   get authorEmail(): string {
     return this.author.email;
   }
 
-  @ApiProperty({ type: String, description: 'Place type title' })
+  @ApiProperty({ type: String, description: "Place type title" })
   @Transform(({ value }: { value: Partial<PlaceType> }) => {
     if (!!value.titles && value.titles.length > 0) {
       return value.titles[0].text;
     }
-    return '';
+    return "";
   })
   type: string;
 
   @ApiProperty({
     type: Boolean,
-    description: 'is place an advertisement',
+    description: "is place an advertisement",
   })
   advertisement: boolean;
 
   @ApiProperty({
     type: Date,
-    description: 'created at',
+    description: "created at",
   })
   createdAt: Date;
 
   @ApiProperty({
     type: Date,
-    description: 'updated at',
+    description: "updated at",
   })
   updatedAt: Date;
 

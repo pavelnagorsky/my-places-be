@@ -5,14 +5,14 @@ import {
   OneToMany,
   PrimaryColumn,
 } from "typeorm";
-import { PlaceTypeTranslation } from "../../place-types/entities/place-type-translation.entity";
-import { PlaceCategoryTranslation } from "../../place-categories/entities/place-category-translation.entity";
+import { PlaceTypeTranslation } from "../../places/modules/place-types/entities/place-type-translation.entity";
+import { PlaceCategoryTranslation } from "../../places/modules/place-categories/entities/place-category-translation.entity";
 import { PlaceTranslation } from "../../places/entities/place-translation.entity";
-import { ReviewTranslation } from "../../reviews/entities/review-translation.entity";
+import { ReviewTranslation } from "../../places/modules/reviews/entities/review-translation.entity";
 import { User } from "../../users/entities/user.entity";
 import { Place } from "../../places/entities/place.entity";
 import { LanguageIdEnum } from "../enums/language-id.enum";
-import { RegionTranslation } from "../../regions/entities/region-translation.entity";
+import { RegionTranslation } from "../../excursions/modules/regions/entities/region-translation.entity";
 
 @Entity()
 export class Language {
