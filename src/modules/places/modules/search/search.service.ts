@@ -372,25 +372,31 @@ export class SearchService implements OnModuleInit {
     }
     let resultPlaces = cachedPlaces;
 
-    const line = lineString(
-      dto.coordinates.map((latLng) => [latLng.lng, latLng.lat])
-    );
-    const buffered = buffer(line as any, dto.radius, { units: "kilometers" });
-    if (!buffered)
-      throw new BadRequestException({ message: "Invalid request route" });
+    try {
+      const line = lineString(
+        dto.coordinates.map((latLng) => [latLng.lng, latLng.lat])
+      );
+      const buffered = buffer(line as any, dto.radius, { units: "kilometers" });
+      if (!buffered)
+        throw new BadRequestException({ message: "Invalid request route" });
 
-    resultPlaces = resultPlaces.filter((place) => {
-      if (!!dto.excludeIds && dto.excludeIds?.length > 0) {
-        if (dto.excludeIds.includes(place.id)) return false;
-      }
-      const placeLatLng = this.getLatLng(place.coordinates);
-      const coordinateToCheck = [placeLatLng.lng, placeLatLng.lat];
-      // Create a Turf.js point
-      const turfPoint = point(coordinateToCheck);
-      // Check if the point is inside the polygon
-      const isInside = booleanPointInPolygon(turfPoint, buffered);
-      return isInside;
-    });
+      resultPlaces = resultPlaces.filter((place) => {
+        if (!!dto.excludeIds && dto.excludeIds?.length > 0) {
+          if (dto.excludeIds.includes(place.id)) return false;
+        }
+        const placeLatLng = this.getLatLng(place.coordinates);
+        const coordinateToCheck = [placeLatLng.lng, placeLatLng.lat];
+        // Create a Turf.js point
+        const turfPoint = point(coordinateToCheck);
+        // Check if the point is inside the polygon
+        const isInside = booleanPointInPolygon(turfPoint, buffered);
+        return isInside;
+      });
+    } catch (e) {
+      throw new BadRequestException({
+        message: e.message || "Invalid request route",
+      });
+    }
 
     const orderedResult = this.applyOrderBy(
       resultPlaces,
