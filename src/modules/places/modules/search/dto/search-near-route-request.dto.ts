@@ -12,6 +12,7 @@ export class SearchNearRouteRequestDto extends PaginationRequestDto<SearchPlaces
   @ApiProperty({
     description: "route coordinates",
     type: CoordinatesDto,
+    isArray: true,
   })
   coordinates: CoordinatesDto[];
 

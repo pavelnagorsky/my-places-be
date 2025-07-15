@@ -81,7 +81,7 @@ export class SearchController {
     description: "The ID of the language",
   })
   @UseInterceptors(ClassSerializerInterceptor)
-  @Post("Route")
+  @Post("route")
   async searchNearRoute(
     @Query("lang", ParseIntPipe) langId: number,
     @Body() searchDto: SearchNearRouteRequestDto
