@@ -25,6 +25,7 @@ import { SearchPlaceDto } from "./dto/search-place.dto";
 import { OptionsSearchResponseDto } from "./dto/options-search-response.dto";
 import { OptionsSearchRequestDto } from "./dto/options-search-request.dto";
 import { PlacesCountByTypesDto } from "./dto/places-count-by-types.dto";
+import { SearchNearRouteRequestDto } from "./dto/search-near-route-request.dto";
 
 @ApiTags("Search")
 @Controller("search")
@@ -55,6 +56,40 @@ export class SearchController {
     @Body() searchDto: SearchRequestDto
   ) {
     const [places, total] = await this.searchService.search(searchDto, langId);
+    return new SearchResponseDto(places, langId, {
+      requestedPage: searchDto.page,
+      pageSize: searchDto.pageSize,
+      totalItems: total,
+    });
+  }
+
+  @ApiOperation({ summary: "Search places near route" })
+  @ApiOkResponse({
+    description: "OK",
+    type: SearchResponseDto,
+  })
+  @ApiBadRequestResponse({
+    description: "Validation failed",
+    type: ValidationExceptionDto,
+  })
+  @ApiBody({
+    type: SearchNearRouteRequestDto,
+  })
+  @ApiQuery({
+    name: "lang",
+    type: Number,
+    description: "The ID of the language",
+  })
+  @UseInterceptors(ClassSerializerInterceptor)
+  @Post("Route")
+  async searchNearRoute(
+    @Query("lang", ParseIntPipe) langId: number,
+    @Body() searchDto: SearchNearRouteRequestDto
+  ) {
+    const [places, total] = await this.searchService.searchNearRoute(
+      searchDto,
+      langId
+    );
     return new SearchResponseDto(places, langId, {
       requestedPage: searchDto.page,
       pageSize: searchDto.pageSize,

@@ -22,11 +22,18 @@ import { Cache } from "cache-manager";
 import { SearchRequestDto } from "./dto/search-request.dto";
 import { Interval } from "@nestjs/schedule";
 import { SearchPlacesOrderByEnum } from "./enums/search-places-order-by.enum";
-import { booleanPointInPolygon, distance, point } from "@turf/turf";
+import {
+  booleanPointInPolygon,
+  buffer,
+  distance,
+  lineString,
+  point,
+} from "@turf/turf";
 import { Review } from "../reviews/entities/review.entity";
 import { OptionsSearchRequestDto } from "./dto/options-search-request.dto";
 import { PaginationRequestDto } from "../../../../shared/dto/pagination-request.dto";
 import { GoogleMapsService } from "../../../google-maps/google-maps.service";
+import { SearchNearRouteRequestDto } from "./dto/search-near-route-request.dto";
 
 @Injectable()
 export class SearchService implements OnModuleInit {
@@ -277,7 +284,7 @@ export class SearchService implements OnModuleInit {
     let resultPlaces = places;
 
     const hasSearch = dto.search?.length > 0;
-    // if has search filter
+    // if it has search filter
     if (hasSearch) {
       resultPlaces = await this.filterPlacesByText(
         resultPlaces,
@@ -350,6 +357,48 @@ export class SearchService implements OnModuleInit {
       throw new NotFoundException();
     }
     return this.searchFromCache(dto, langId, cachedPlaces);
+  }
+
+  public async searchNearRoute(
+    dto: SearchNearRouteRequestDto,
+    langId: number
+  ): Promise<[Place[], number]> {
+    const cachedPlaces = await this.cacheManager.get<Place[]>(
+      this.placesSearchCacheKey
+    );
+    if (!cachedPlaces) {
+      this.handleCreateCacheCron();
+      throw new NotFoundException();
+    }
+    let resultPlaces = cachedPlaces;
+
+    const line = lineString(
+      dto.coordinates.map((latLng) => [latLng.lng, latLng.lat])
+    );
+    const buffered = buffer(line as any, dto.radius, { units: "kilometers" });
+    if (!buffered)
+      throw new BadRequestException({ message: "Invalid request route" });
+
+    resultPlaces = resultPlaces.filter((place) => {
+      if (!!dto.excludeIds && dto.excludeIds?.length > 0) {
+        if (dto.excludeIds.includes(place.id)) return false;
+      }
+      const placeLatLng = this.getLatLng(place.coordinates);
+      const coordinateToCheck = [placeLatLng.lng, placeLatLng.lat];
+      // Create a Turf.js point
+      const turfPoint = point(coordinateToCheck);
+      // Check if the point is inside the polygon
+      const isInside = booleanPointInPolygon(turfPoint, buffered);
+      return isInside;
+    });
+
+    const orderedResult = this.applyOrderBy(
+      resultPlaces,
+      dto.orderBy ?? SearchPlacesOrderByEnum.Rating,
+      langId
+    );
+    const paginationResult = this.applyPagination(orderedResult, dto);
+    return [paginationResult, orderedResult.length];
   }
 
   private async createSearchCache() {
