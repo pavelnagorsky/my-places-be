@@ -1,6 +1,6 @@
 import { ApiProperty } from "@nestjs/swagger";
 import { Exclude, Expose, Transform } from "class-transformer";
-import { TranslationBaseEntity } from "../../translations/entities/translation-base.entity";
+import { TranslationBaseEntity } from "../../AI/translations/entities/translation-base.entity";
 import { PlaceTypeDto } from "../modules/place-types/dto/place-type.dto";
 import { PlaceType } from "../modules/place-types/entities/place-type.entity";
 import { PlaceCategoryDto } from "../modules/place-categories/dto/place-category.dto";

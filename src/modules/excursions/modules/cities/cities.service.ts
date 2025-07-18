@@ -8,7 +8,7 @@ import { CreateCityDto } from "./dto/create-city.dto";
 import { UpdateCityDto } from "./dto/update-city.dto";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
-import { TranslationsService } from "../../../translations/translations.service";
+import { TranslationsService } from "../../../AI/translations/translations.service";
 import { City } from "./entities/city.entity";
 import { CityTranslation } from "./entities/city-translation.entity";
 

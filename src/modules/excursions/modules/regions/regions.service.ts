@@ -9,7 +9,7 @@ import { InjectRepository } from "@nestjs/typeorm";
 import { PlaceType } from "../../../places/modules/place-types/entities/place-type.entity";
 import { Repository } from "typeorm";
 import { PlaceTypeTranslation } from "../../../places/modules/place-types/entities/place-type-translation.entity";
-import { TranslationsService } from "../../../translations/translations.service";
+import { TranslationsService } from "../../../AI/translations/translations.service";
 import { Region } from "./entities/region.entity";
 import { RegionTranslation } from "./entities/region-translation.entity";
 import { CreatePlaceTypeDto } from "../../../places/modules/place-types/dto/create-place-type.dto";

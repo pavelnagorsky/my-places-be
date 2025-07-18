@@ -21,7 +21,7 @@ import {
   Repository,
 } from "typeorm";
 import { CreatePlaceDto } from "./dto/create-place.dto";
-import { TranslationsService } from "../translations/translations.service";
+import { TranslationsService } from "../AI/translations/translations.service";
 import { PlaceType } from "./modules/place-types/entities/place-type.entity";
 import { PlaceCategory } from "./modules/place-categories/entities/place-category.entity";
 import { ImagesService } from "../images/images.service";

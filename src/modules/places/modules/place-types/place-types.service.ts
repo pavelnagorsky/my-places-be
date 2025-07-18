@@ -10,7 +10,7 @@ import { PlaceType } from "./entities/place-type.entity";
 import { Image } from "../../../images/entities/image.entity";
 import { PlaceTypeTranslation } from "./entities/place-type-translation.entity";
 import { UpdatePlaceTypeDto } from "./dto/update-place-type.dto";
-import { TranslationsService } from "../../../translations/translations.service";
+import { TranslationsService } from "../../../AI/translations/translations.service";
 
 @Injectable()
 export class PlaceTypesService {

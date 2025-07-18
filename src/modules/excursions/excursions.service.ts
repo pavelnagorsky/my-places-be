@@ -27,7 +27,7 @@ import { ExcursionTranslation } from "./entities/excursion-translation.entity";
 import { ExcursionPlaceTranslation } from "./entities/excursion-place-translation.entity";
 import { PlaceStatusesEnum } from "../places/enums/place-statuses.enum";
 import { GoogleMapsService } from "../google-maps/google-maps.service";
-import { TranslationsService } from "../translations/translations.service";
+import { TranslationsService } from "../AI/translations/translations.service";
 import { MailingService } from "../mailing/mailing.service";
 import { CreateExcursionPlaceDto } from "./dto/create-excursion-place.dto";
 import { ExcursionStatusesEnum } from "./enums/excursion-statuses.enum";

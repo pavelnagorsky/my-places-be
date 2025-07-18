@@ -1,9 +1,9 @@
 import { ApiProperty } from "@nestjs/swagger";
 import { Exclude, Expose, Transform } from "class-transformer";
-import { TranslationDto } from "../../../../translations/dto/translation.dto";
+import { TranslationDto } from "../../../../AI/translations/dto/translation.dto";
 import { ImageDto } from "../../../../images/dto/image.dto";
 import { PlaceType } from "../entities/place-type.entity";
-import { TranslationBaseEntity } from "../../../../translations/entities/translation-base.entity";
+import { TranslationBaseEntity } from "../../../../AI/translations/entities/translation-base.entity";
 
 export class PlaceTypeAdminDto {
   @ApiProperty({ title: "Place type id", type: Number })

@@ -5,7 +5,7 @@ import { ConfigModule } from "@nestjs/config";
 import configuration from "./config/configuration";
 import { DatabaseModule } from "./database/database.module";
 import { LanguagesModule } from "./modules/languages/languages.module";
-import { TranslationsModule } from "./modules/translations/translations.module";
+import { TranslationsModule } from "./modules/AI/translations/translations.module";
 import { StorageModule } from "./modules/storage/storage.module";
 import { ImagesModule } from "./modules/images/images.module";
 import { AuthModule } from "./modules/auth/auth.module";
@@ -18,6 +18,7 @@ import { ScheduleModule } from "@nestjs/schedule";
 import { CacheModule } from "@nestjs/cache-manager";
 import { RoutesModule } from "./modules/routes/routes.module";
 import { ExcursionsModule } from "./modules/excursions/excursions.module";
+import { SpeechKitModule } from "./modules/AI/speech-kit/speech-kit.module";
 
 @Module({
   imports: [
@@ -45,6 +46,7 @@ import { ExcursionsModule } from "./modules/excursions/excursions.module";
     FeedbackModule,
     RoutesModule,
     ExcursionsModule,
+    SpeechKitModule,
   ],
   controllers: [AppController],
   providers: [],

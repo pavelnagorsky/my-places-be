@@ -4,7 +4,7 @@ import { PlaceCategoriesController } from "./place-categories.controller";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { PlaceCategory } from "./entities/place-category.entity";
 import { PlaceCategoryTranslation } from "./entities/place-category-translation.entity";
-import { TranslationsModule } from "../../../translations/translations.module";
+import { TranslationsModule } from "../../../AI/translations/translations.module";
 
 @Module({
   imports: [

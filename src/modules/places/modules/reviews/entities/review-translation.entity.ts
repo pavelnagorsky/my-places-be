@@ -1,8 +1,8 @@
-import { ITranslation } from "../../../../translations/interfaces/translation.interface";
+import { ITranslation } from "../../../../AI/translations/interfaces/translation.interface";
 import { Column, Entity, ManyToOne } from "typeorm";
 import { Language } from "../../../../languages/entities/language.entity";
 import { Review } from "./review.entity";
-import { TranslationBaseEntity } from "../../../../translations/entities/translation-base.entity";
+import { TranslationBaseEntity } from "../../../../AI/translations/entities/translation-base.entity";
 
 @Entity()
 export class ReviewTranslation
