@@ -8,7 +8,7 @@ import { ExcursionTranslation } from "./entities/excursion-translation.entity";
 import { ExcursionPlace } from "./entities/excursion-place.entity";
 import { ExcursionPlaceTranslation } from "./entities/excursion-place-translation.entity";
 import { GoogleMapsModule } from "../google-maps/google-maps.module";
-import { TranslationsModule } from "../translations/translations.module";
+import { TranslationsModule } from "../AI/translations/translations.module";
 import { MailingModule } from "../mailing/mailing.module";
 import { RegionsModule } from "./modules/regions/regions.module";
 import { ExcursionCommentsModule } from "./modules/excursion-comments/excursion-comments.module";

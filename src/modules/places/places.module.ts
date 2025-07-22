@@ -3,7 +3,7 @@ import { PlacesController } from "./places.controller";
 import { PlacesService } from "./places.service";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { Place } from "./entities/place.entity";
-import { TranslationsModule } from "../translations/translations.module";
+import { TranslationsModule } from "../AI/translations/translations.module";
 import { PlaceType } from "./modules/place-types/entities/place-type.entity";
 import { PlaceCategory } from "./modules/place-categories/entities/place-category.entity";
 import { ImagesModule } from "../images/images.module";

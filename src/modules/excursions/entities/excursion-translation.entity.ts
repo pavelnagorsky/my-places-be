@@ -1,7 +1,7 @@
-import { ITranslation } from "../../translations/interfaces/translation.interface";
+import { ITranslation } from "../../AI/translations/interfaces/translation.interface";
 import { Column, Entity, Index, ManyToOne } from "typeorm";
 import { Language } from "../../languages/entities/language.entity";
-import { TranslationBaseEntity } from "../../translations/entities/translation-base.entity";
+import { TranslationBaseEntity } from "../../AI/translations/entities/translation-base.entity";
 import { Excursion } from "./excursion.entity";
 
 @Entity()

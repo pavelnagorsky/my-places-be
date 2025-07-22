@@ -4,7 +4,7 @@ import { CitiesController } from "./cities.controller";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { PlaceType } from "../../../places/modules/place-types/entities/place-type.entity";
 import { PlaceTypeTranslation } from "../../../places/modules/place-types/entities/place-type-translation.entity";
-import { TranslationsModule } from "../../../translations/translations.module";
+import { TranslationsModule } from "../../../AI/translations/translations.module";
 import { City } from "./entities/city.entity";
 import { CityTranslation } from "./entities/city-translation.entity";
 

@@ -1,7 +1,7 @@
-import { TranslationBaseEntity } from "../../../../translations/entities/translation-base.entity";
+import { TranslationBaseEntity } from "../../../../AI/translations/entities/translation-base.entity";
 import { Column, Entity, ManyToOne } from "typeorm";
 import { PlaceType } from "./place-type.entity";
-import { ITranslation } from "../../../../translations/interfaces/translation.interface";
+import { ITranslation } from "../../../../AI/translations/interfaces/translation.interface";
 import { Language } from "../../../../languages/entities/language.entity";
 
 @Entity()

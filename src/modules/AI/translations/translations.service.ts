@@ -7,10 +7,10 @@ import {
 import { InjectRepository } from "@nestjs/typeorm";
 import { TranslationBaseEntity } from "./entities/translation-base.entity";
 import { Repository } from "typeorm";
-import { Language } from "../languages/entities/language.entity";
+import { Language } from "../../languages/entities/language.entity";
 import { ConfigService } from "@nestjs/config";
-import { IYandexCloudConfig } from "../../config/configuration";
-import { LanguagesService } from "../languages/languages.service";
+import { IYandexCloudConfig } from "../../../config/configuration";
+import { LanguagesService } from "../../languages/languages.service";
 import slugify from "slugify";
 import { HttpService } from "@nestjs/axios";
 import {

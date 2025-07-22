@@ -1,6 +1,6 @@
 import { Column, Entity, Index, ManyToOne } from "typeorm";
-import { TranslationBaseEntity } from "../../../../translations/entities/translation-base.entity";
-import { ITranslation } from "../../../../translations/interfaces/translation.interface";
+import { TranslationBaseEntity } from "../../../../AI/translations/entities/translation-base.entity";
+import { ITranslation } from "../../../../AI/translations/interfaces/translation.interface";
 import { Language } from "../../../../languages/entities/language.entity";
 import { City } from "./city.entity";
 

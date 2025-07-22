@@ -7,7 +7,7 @@ import { CreateReviewDto } from "./dto/create-review.dto";
 import { UpdateReviewDto } from "./dto/update-review.dto";
 import { InjectRepository } from "@nestjs/typeorm";
 import { ImagesService } from "../../../images/images.service";
-import { TranslationsService } from "../../../translations/translations.service";
+import { TranslationsService } from "../../../AI/translations/translations.service";
 import { Review } from "./entities/review.entity";
 import { User } from "../../../users/entities/user.entity";
 import {

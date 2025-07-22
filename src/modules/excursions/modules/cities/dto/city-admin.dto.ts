@@ -1,6 +1,6 @@
 import { ApiProperty } from "@nestjs/swagger";
 import { Exclude, Expose, Transform } from "class-transformer";
-import { TranslationDto } from "../../../../translations/dto/translation.dto";
+import { TranslationDto } from "../../../../AI/translations/dto/translation.dto";
 import { City } from "../entities/city.entity";
 import { CityTranslation } from "../entities/city-translation.entity";
 

@@ -3,7 +3,7 @@ import { ReviewsService } from "./reviews.service";
 import { ReviewsController } from "./reviews.controller";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { ImagesModule } from "../../../images/images.module";
-import { TranslationsModule } from "../../../translations/translations.module";
+import { TranslationsModule } from "../../../AI/translations/translations.module";
 import { Review } from "./entities/review.entity";
 import { Place } from "../../entities/place.entity";
 import { ReviewTranslation } from "./entities/review-translation.entity";
