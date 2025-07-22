@@ -34,19 +34,16 @@ export class SpeechKitController {
   @ApiBody({ type: TTSDto })
   @ApiProduces("audio/mpeg")
   @Post("/tts")
-  async resetPassword(
-    @Body() dto: TTSDto,
-    @Res({ passthrough: true }) res: Response
-  ): Promise<StreamableFile> {
+  async synthesizeSpeech(@Body() dto: TTSDto, @Res() res: Response) {
     const audioStream = await this.speechKitService.synthesizeSpeech(dto);
-    // Set appropriate headers based on audio format
+
     res.set({
       "Content-Type": "audio/mpeg",
-      "Content-Disposition": 'inline; filename="speech.mp3"',
+      "Content-Disposition": `attachment; filename="speech.mp3"`,
+      "Cache-Control": "no-store", // Important for dynamic content
       "Transfer-Encoding": "chunked",
-      "Cache-Control": "no-cache",
     });
 
-    return new StreamableFile(audioStream);
+    audioStream.pipe(res);
   }
 }

@@ -1,14 +1,14 @@
-import { Injectable, Logger } from "@nestjs/common";
-import { Readable } from "stream";
+import { BadRequestException, Injectable, Logger } from "@nestjs/common";
+import { Readable, Transform } from "stream";
 import { HttpService } from "@nestjs/axios";
 import { firstValueFrom } from "rxjs";
-import { IYandexTranslateResponse } from "../translations/interfaces/translation.interface";
 import { IYandexCloudConfig } from "../../../config/configuration";
 import { ConfigService } from "@nestjs/config";
 import { TTSDto } from "./dto/tts.dto";
 import {
   ContainerAudioTypesEnum,
   IUtteranceSynthesisRequest,
+  IUtteranceSynthesisResponse,
 } from "./interfaces/interfaces";
 
 @Injectable()
@@ -19,13 +19,12 @@ export class SpeechKitService {
     private configService: ConfigService
   ) {}
 
-  async synthesizeSpeech(dto: TTSDto): Promise<Readable> {
+  async synthesizeSpeech(dto: TTSDto) {
     const requestBody: IUtteranceSynthesisRequest = {
       text: dto.text,
       hints: [
         {
           voice: dto.voice || "filipp",
-          speed: dto.voiceSpeed || "1.0",
         },
       ],
       outputAudioSpec: {
@@ -40,10 +39,11 @@ export class SpeechKitService {
     this.logger.log(
       `Starting speech synthesis for text length: ${dto.text.length} chars`
     );
+
     try {
       const response = await firstValueFrom(
-        this.httpService.post(
-          "https://translate.api.cloud.yandex.net/translate/v2/translate",
+        this.httpService.post<IUtteranceSynthesisResponse>(
+          "https://tts.api.cloud.yandex.net/tts/v3/utteranceSynthesis",
           requestBody,
           {
             headers: {
@@ -51,18 +51,55 @@ export class SpeechKitService {
                 this.configService.get<IYandexCloudConfig>("yandexCloud")
                   ?.apiKey
               }`,
-              "Content-Type": "application/json",
             },
-            responseType: "stream",
           }
         )
       );
 
       this.logger.log("Successfully synthesized speech");
-      return response.data;
+
+      let audioResponse: IUtteranceSynthesisResponse[] = [];
+      if (typeof response.data === "string") {
+        audioResponse = this.parseStreamedResponse(response.data);
+      } else {
+        audioResponse = [response.data];
+      }
+      return this.createAudioStream(audioResponse);
     } catch (error) {
       this.logger.error("Error synthesizing speech", error.message);
-      throw new Error("Failed to synthesize speech");
+      throw new BadRequestException({
+        message: "Failed to generate speech",
+      });
     }
+  }
+
+  private parseStreamedResponse(
+    ndjsonString: string
+  ): IUtteranceSynthesisResponse[] {
+    return ndjsonString
+      .trim() // Remove leading/trailing whitespace
+      .split("\n") // Split by newlines
+      .map((line) => {
+        try {
+          return JSON.parse(line) as IUtteranceSynthesisResponse;
+        } catch (e) {
+          this.logger.error("Failed to parse chunk:", line);
+          return null;
+        }
+      })
+      .filter(Boolean) as IUtteranceSynthesisResponse[]; // Remove null entries
+  }
+
+  private createAudioStream(audioResponse: IUtteranceSynthesisResponse[]) {
+    const audioStream = new Readable({ read() {} });
+
+    // Process chunks incrementally
+    for (const chunk of audioResponse) {
+      const chunkBuffer = Buffer.from(chunk.result.audioChunk.data, "base64");
+      audioStream.push(chunkBuffer);
+    }
+
+    audioStream.push(null); // End stream
+    return audioStream;
   }
 }

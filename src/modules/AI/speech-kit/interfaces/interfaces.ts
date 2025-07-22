@@ -88,3 +88,22 @@ export interface IUtteranceSynthesisRequest {
   loudnessNormalizationType?: LoudnessNormalizationTypesEnum;
   unsafeMode?: boolean;
 }
+
+interface IAudioChunk {
+  data: string; // Sequence of bytes of the synthesized audio in format specified in output_audio_spec
+}
+
+interface ITextChunk {
+  text: string; // Synthesized text
+}
+
+interface IUtteranceSynthesisResult {
+  audioChunk: IAudioChunk; // Part of synthesized audio
+  textChunk: ITextChunk; // Part of synthesized text
+  startMs: string; // Start time of the audio chunk in milliseconds (int64 as string)
+  lengthMs: string; // Length of the audio chunk in milliseconds (int64 as string)
+}
+
+export interface IUtteranceSynthesisResponse {
+  result: IUtteranceSynthesisResult;
+}
