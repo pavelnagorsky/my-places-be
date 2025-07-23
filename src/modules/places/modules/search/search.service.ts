@@ -532,7 +532,7 @@ export class SearchService implements OnModuleInit {
   }
 
   // Cron job to recreate search cache every 4 hours
-  @Interval(4 * 60 * 60 * 10000)
+  @Interval(4 * 60 * 60 * 1000)
   private async handleCreateCacheCron() {
     if (this.isCacheCreationActive) {
       return;
